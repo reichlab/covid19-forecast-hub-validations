@@ -16,7 +16,7 @@ pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
 
 forecasts = []
 g = Github()
-repo = g.get_repo('reichlab/covid19-forecast-hub')
+repo = g.get_repo('hannanabdul55/covid19-forecast-hub')
 
 local = os.environ.get('CI') != 'true'
 # local = True
