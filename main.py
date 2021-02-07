@@ -18,7 +18,8 @@ forecasts = []
 g = Github()
 repo = g.get_repo('reichlab/covid19-forecast-hub')
 
-local = os.environ.get('LOCAL') == 'true'
+# local = os.environ.get('LOCAL') == 'true'
+local = True
 if local:
     print("Running on LOCAL mode!!")
 print(f"Github event name: {os.environ.get('GITHUB_EVENT_NAME')}")
