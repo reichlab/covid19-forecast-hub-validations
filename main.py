@@ -37,6 +37,7 @@ comment = ''
 if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
     # pr_num = int(os.environ.get('GITHUB_REF').split('/')[-2])
     pr_num = event['pull_request']['number']
+    print(f"PR number: {pr_num}")
     pr = repo.get_pull(pr_num)
     forecasts +=[f for f in pr.get_files()]
 forecasts = [file for file in forecasts if pat.match(file.filename) is not None]
