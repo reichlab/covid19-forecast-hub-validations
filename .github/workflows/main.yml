@@ -34,3 +34,4 @@ jobs:
         run: |
           echo github.context.payload.pull_request.number - ${{ github.context.pull_request.number }}
           echo github.payload.pull_request.number - ${{ github.payload.pull_request.number }}
+          echo github.event_path - ${{ github.event_path }}
