@@ -48,14 +48,14 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     if len(other_files) > 0:
         print(f"PR has other files changed too.")
     else:
-        if pr is not None:
+        if pr is not None and not local:
             pr.add_to_labels('data-submission')
 
     deleted_forecasts = False
     for f in forecasts:
         if f.deletions >0:
             deleted_forecasts = True
-    if deleted_forecasts:
+    if deleted_forecasts and not local:
         pr.add_to_labels('forecast-updated')
         comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion? Thank you!\n\n"
 
