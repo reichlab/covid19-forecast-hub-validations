@@ -31,7 +31,12 @@ if token is None:
     g = Github()
 else:
     g = Github(token)
-repo = g.get_repo('hannanabdul55/covid19-forecast-hub')
+repo_name = os.env.get('GITHUB_REPOSITORY')
+if repo_name is None:
+    repo_name = 'reichlab/covid19-forecast-hub'
+repo = g.get_repo(repo_name)
+
+print(f"Github repository: {repo_name}")
 print(f"Github event name: {os.environ.get('GITHUB_EVENT_NAME')}")
 
 if not local:
