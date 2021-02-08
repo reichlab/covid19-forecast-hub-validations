@@ -30,7 +30,7 @@ if token is None:
     g = Github()
 else:
     g = Github(token)
-repo = g.get_repo('reichlab/covid19-forecast-hub')
+repo = g.get_repo('hannanabdul55/covid19-forecast-hub')
 print(f"Github event name: {os.environ.get('GITHUB_EVENT_NAME')}")
 
 if not local:
