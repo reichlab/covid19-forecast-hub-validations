@@ -15,17 +15,23 @@ from code.test_formatting import forecast_check, validate_forecast_file, print_o
 pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
 
 forecasts = []
-g = Github()
-repo = g.get_repo('reichlab/covid19-forecast-hub')
 
 local = os.environ.get('CI') != 'true'
 # local = True
 if local:
+    token = None
     print("Running on LOCAL mode!!")
+else:
+    print("Added token")
+    token  = os.environ.get('GH_TOKEN')
+    print(f"Token length: {len(token)}")
+
+if token is None:
+    g = Github()
+else:
+    g = Github(token)
+repo = g.get_repo('reichlab/covid19-forecast-hub')
 print(f"Github event name: {os.environ.get('GITHUB_EVENT_NAME')}")
-# if os.environ.get('CI') != 'true' and not local:
-#     print("Not running on Github Actions and the LOCAL environment ariable not set. Exiting")
-#     exit(19)
 
 if not local:
     event = json.load(open(os.environ.get('GITHUB_EVENT_PATH')))
