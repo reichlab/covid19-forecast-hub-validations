@@ -31,7 +31,7 @@ if token is None:
     g = Github()
 else:
     g = Github(token)
-repo_name = os.env.get('GITHUB_REPOSITORY')
+repo_name = os.environ.get('GITHUB_REPOSITORY')
 if repo_name is None:
     repo_name = 'reichlab/covid19-forecast-hub'
 repo = g.get_repo(repo_name)
