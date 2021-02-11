@@ -24,9 +24,11 @@ def validate_metadata_contents(metadata, filepath, cache):
         metadata_error_output.extend(['METADATA_ERROR: %s' % err for err in core.validation_errors])
         is_metadata_error = True
 
-    folder_name = filepath.split('/')[-2]
-    if folder_name != metadata['model_abbr']:
-        metadata_error_output.append(f"METADATA_ERROR: Model abreviation in metadata inconsistent with folder name for model_abbr={metadata['model_abbr']} as specified in metadata. NOTE: Folder name is: {folder_name}")
+    pat_model = re.compile(r"metadata-(.+)\.txt")
+    model_name_file = re.findall(pat_model, os.path.basename(filepath))[0]
+    # print(f"model_name_file: {model_name_file} \t\t filepath: {filepath}")
+    if model_name_file != metadata['model_abbr']:
+        metadata_error_output.append(f"METADATA_ERROR: Model abreviation in metadata inconsistent with folder name for model_abbr={metadata['model_abbr']} as specified in metadata. NOTE: model name on file is: {model_name_file}")
         is_metadata_error = True
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
     # Check if every team has only one `team_model_designation` as `primary`
@@ -106,13 +108,13 @@ def validate_metadata_contents(metadata, filepath, cache):
     #             (filepath, metadata[field])]
 
     # Validate licenses
-    license_df = pd.read_csv('./code/validation/accepted-licenses.csv')
+    license_df = pd.read_csv('./code/accepted-licenses.csv')
     accepted_licenses = list(license_df['license'])
     if 'license' in metadata.keys():
         if metadata['license'] not in accepted_licenses:
             is_metadata_error = True
             metadata_error_output += [
-                "METADATA ERROR: %s 'license' field must be in `./code/validations/accepted-licenses.csv` 'license' column '%s'" %
+                "METADATA ERROR: %s 'license' field must be in `./code/accepted-licenses.csv` 'license' column '%s'" %
                 (filepath, metadata['license'])]
     return is_metadata_error, metadata_error_output
 
@@ -139,17 +141,16 @@ def check_metadata_file(filepath, cache={}):
 
 # Check for metadata file
 def check_for_metadata(filepath, cache= {}):
-    team_model = os.path.basename(os.path.dirname(filepath))
-    metadata_filename = "metadata-" + team_model + ".txt"
     txt_files = []
+    print(f"Filepath search: {filepath}")
     for metadata_file in glob.iglob(filepath + "*.txt", recursive=False):
         txt_files += [os.path.basename(metadata_file)]
-    if metadata_filename in txt_files:
+    print(f"Metadata files lienght: {len(txt_files)}")
+    is_metadata_error, metadata_error_output = False, "no errors"
+    for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
         is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath, cache=cache)
-        return is_metadata_error, metadata_error_output
-    else:
-        return True, ["METADATA ERROR: Missing Metadata: ", metadata_filename]
+    return is_metadata_error, metadata_error_output
 
 
 def get_metadata_model(filepath):

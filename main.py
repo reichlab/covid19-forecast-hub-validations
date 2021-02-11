@@ -16,6 +16,8 @@ from code.test_formatting import forecast_check, validate_forecast_file, print_o
 # Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
 pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
 
+pat_meta = re.compile(r"^data-processed/(.+)/metadata-\1\.txt$")
+
 
 local = os.environ.get('CI') != 'true'
 # local = True
@@ -63,6 +65,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
 
 # Split all files in `files_changed` list into valid forecasts and other files
 forecasts = [file for file in files_changed if pat.match(file.filename) is not None]
+metadatas = [file for file in files_changed if pat_meta.match(file.filename) is not None]
 other_files = [file for file in files_changed if pat.match(file.filename) is None]
 
 if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
@@ -72,6 +75,11 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
         print(f"PR has other files changed too.")
         if pr is not None:
             pr.add_to_labels('other-files-updated')
+    
+    if len(metadatas) >0:
+        print(f"PR has metata files changed.")
+        if pr is not None:
+            pr.add_to_labels('metadata-change')
     # Do not require this as it is done by the PR labeler action.
     # else:
     #     if pr is not None:
@@ -99,6 +107,10 @@ os.makedirs('forecasts', exist_ok=True)
 for f in forecasts:
     urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
 
+# Download all metadat files changed in the PR into the forecasts folder
+for f in metadatas:
+    urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
+
 
 # Run validations on each of these files
 errors = {}
@@ -111,9 +123,21 @@ for file in glob.glob("forecasts/*.csv"):
     is_err, err_message = filename_match_forecast_date(file)
     if is_err:
         comment+= err_message
+
+# Check for metadata file validation
+FILEPATH_META = "forecasts/"
+is_meta_error, meta_err_output = check_for_metadata(filepath=FILEPATH_META)
+
+print(f"Metadata errors? : {is_meta_error}\t\t Metadata error output: {meta_err_output}")
+
+
 if len(errors) > 0:
     comment+="\n\n Your submission has some validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
     print_output_errors(errors, prefix='data')
+
+if is_meta_error:
+    comment+="\n\n Your submission has some metadata validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
+    print_output_errors(meta_err_output, prefix="metadata")
 
 # add the consolidated comment to the PR
 if comment!='' and not local:
