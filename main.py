@@ -66,7 +66,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
 # Split all files in `files_changed` list into valid forecasts and other files
 forecasts = [file for file in files_changed if pat.match(file.filename) is not None]
 metadatas = [file for file in files_changed if pat_meta.match(file.filename) is not None]
-other_files = [file for file in files_changed if pat.match(file.filename) is None]
+other_files = [file for file in files_changed if pat.match(file.filename) is None and pat_meta.match(file.filename) is None]
 
 if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     # IF there are other fiels changed in the PR 
@@ -127,9 +127,6 @@ for file in glob.glob("forecasts/*.csv"):
 # Check for metadata file validation
 FILEPATH_META = "forecasts/"
 is_meta_error, meta_err_output = check_for_metadata(filepath=FILEPATH_META)
-
-print(f"Metadata errors? : {is_meta_error}\t\t Metadata error output: {meta_err_output}")
-
 
 if len(errors) > 0:
     comment+="\n\n Your submission has some validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
