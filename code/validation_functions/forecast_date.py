@@ -19,7 +19,7 @@ def filename_match_forecast_date(filepath):
         today = datetime.now(pytz.timezone('US/Eastern')).date()
         forecast_date = datetime.strptime(file_forecast_date, "%Y-%m-%d").date()
         if abs(forecast_date.day - today.day) >1 or forecast_date.month != today.month or forecast_date.year != today.year:
-            warning = f"Warning: The forecast is not made today. date of the forecast - {file_forecast_date}, today -  {today}."
+            warning = f"Warning: The forecast file {filepath} is not made today. date of the forecast - {file_forecast_date}, today -  {today}."
             print(f"::warning file={os.path.basename(os.path.basename(filepath))}::{warning}")
             return True, warning
         else:

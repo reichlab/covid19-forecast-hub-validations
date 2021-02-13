@@ -142,10 +142,8 @@ def check_metadata_file(filepath, cache={}):
 # Check for metadata file
 def check_for_metadata(filepath, cache= {}):
     txt_files = []
-    print(f"Filepath search: {filepath}")
     for metadata_file in glob.iglob(filepath + "*.txt", recursive=False):
         txt_files += [os.path.basename(metadata_file)]
-    print(f"Metadata files lienght: {len(txt_files)}")
     is_metadata_error, metadata_error_output = False, "no errors"
     for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
