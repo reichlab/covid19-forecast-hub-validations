@@ -96,7 +96,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     if deleted_forecasts:
         # Add the `forecast-updated` label when there are deletions in the forecast file
         pr.add_to_labels('forecast-updated')
-        comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion? Thank you!\n\n"
+        comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion? \n\n If you provided a reason in the original commit message, there is no need to respond. Thank you!\n\n"
 
 
 # Download all forecasts
