@@ -2,6 +2,7 @@
 import json
 import re
 import os
+import sys
 import urllib.request
 import glob
 from github import Github
@@ -120,8 +121,8 @@ for file in glob.glob("forecasts/*.csv"):
         errors[os.path.basename(file)] = error_file
     
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
-    is_err, err_message = filename_match_forecast_date(file)
-    if is_err:
+    is_val_err, err_message = filename_match_forecast_date(file)
+    if is_val_err:
         comment+= err_message
 
 # Check for metadata file validation
@@ -139,6 +140,10 @@ if is_meta_error:
 # add the consolidated comment to the PR
 if comment!='' and not local:
     pr.create_issue_comment(comment)
+
+# fail validations build if any error occurs.
+if is_meta_error or len(errors)>0:
+    sys.exit("\n ERRORS FOUND EXITING BUILD...")
 
 
 
