@@ -16,6 +16,8 @@ from code.test_formatting import forecast_check, validate_forecast_file, print_o
 # Pattern that matches a forecast file add to the data-processed folder.
 # Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
 pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
+# pat_other = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-(.+)\.csv$")
+pat_other = re.compile(r"^data-processed/(.+)\.csv$")
 
 pat_meta = re.compile(r"^data-processed/(.+)/metadata-\1\.txt$")
 
@@ -66,6 +68,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
 
 # Split all files in `files_changed` list into valid forecasts and other files
 forecasts = [file for file in files_changed if pat.match(file.filename) is not None]
+forecasts_err = [file for file in files_changed if pat_other.match(file.filename) is not None]
 metadatas = [file for file in files_changed if pat_meta.match(file.filename) is not None]
 other_files = [file for file in files_changed if pat.match(file.filename) is None and pat_meta.match(file.filename) is None]
 
@@ -76,7 +79,11 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
         print(f"PR has other files changed too.")
         if pr is not None:
             pr.add_to_labels('other-files-updated')
-    
+    # if there are no forecasts matched to the valid regex and the PR has added a CSV file to the data-processed drectory, most likely, it is an erroneous 
+    # forecast which should be caught.
+    if len(forecasts) ==0 and len(forecasts_err)>0:
+        comment+=f"\n\nYou seem to have added a forecast in an incorrect format. Please refer to https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting to correct your error.\n\n "
+
     if len(metadatas) >0:
         print(f"PR has metata files changed.")
         if pr is not None:
