@@ -159,7 +159,7 @@ if comment!='' and not local:
 #      - any changes/additions on a metadata file. 
 #  - There is atleast 1 valid forecast file added that has passed the validations. That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
 
-if comment=='' and not local and not is_meta_error and len(errors)==0 and (len(forecasts_err) + len(metadatas) + len(other_files)) ==0 and len(forecasts)>0:
+if comment=='' and not local and not is_meta_error and len(errors)==0 and (len(metadatas) + len(other_files)) ==0 and len(forecasts_err)==len(forecasts) and len(forecasts)>0:
     print(f"Auto merging PR {pr_num if pr_num else -1}")
     pr.add_to_labels('automerge')
 
