@@ -148,6 +148,21 @@ if is_meta_error:
 if comment!='' and not local:
     pr.create_issue_comment(comment)
 
+# Check if PR could be merged automatically
+# Logic - The PR is set to automatically merge if ALL the following conditions are TRUE: 
+#  - If there are no comments added to PR
+#  - If it is not run locally
+#  - If there are not metadata errors
+#  - If there were no validation errors
+#  - If there were any other files updated which includes: 
+#      - any errorneously named forecast file in data-processed folder
+#      - any changes/additions on a metadata file. 
+#  - There is atleast 1 valid forecast file added that has passed the validations. That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
+
+if comment=='' and not local and not is_meta_error and len(errors)==0 and (len(forecasts_err) + len(metadatas) + len(other_files)) ==0 and len(forecasts)>0:
+    print(f"Auto merging PR {pr_num if pr_num else -1}")
+    pr.add_to_labels('automerge')
+
 # fail validations build if any error occurs.
 if is_meta_error or len(errors)>0:
     sys.exit("\n ERRORS FOUND EXITING BUILD...")
