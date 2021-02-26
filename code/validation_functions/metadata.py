@@ -27,6 +27,13 @@ def validate_metadata_contents(metadata, filepath, cache):
     pat_model = re.compile(r"metadata-(.+)\.txt")
     model_name_file = re.findall(pat_model, os.path.basename(filepath))[0]
     # print(f"model_name_file: {model_name_file} \t\t filepath: {filepath}")
+
+    # This is a critical error and hence do not run further checks.
+    if 'model_abbr' not in metadata:
+        metadata_error_output.extend(['METADATA_ERROR: model_abbr key not present in the metadata file'])
+        is_metadata_error = True
+        return is_metadata_error, metadata_error_output
+
     if model_name_file != metadata['model_abbr']:
         metadata_error_output.append(f"METADATA_ERROR: Model abreviation in metadata inconsistent with folder name for model_abbr={metadata['model_abbr']} as specified in metadata. NOTE: model name on file is: {model_name_file}")
         is_metadata_error = True
