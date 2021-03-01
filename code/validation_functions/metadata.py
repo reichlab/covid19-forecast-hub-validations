@@ -148,6 +148,8 @@ def check_metadata_file(filepath, cache={}):
 
 # Check for metadata file
 def check_for_metadata(filepath, cache= {}):
+    meta_error_outputs = {}
+    is_metadata_error = False
     txt_files = []
     for metadata_file in glob.iglob(filepath + "*.txt", recursive=False):
         txt_files += [os.path.basename(metadata_file)]
@@ -155,7 +157,10 @@ def check_for_metadata(filepath, cache= {}):
     for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
         is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath, cache=cache)
-    return is_metadata_error, metadata_error_output
+        if is_metadata_error:
+            meta_error_outputs[metadata_filepath] = metadata_error_output
+
+    return is_metadata_error, meta_error_outputs
 
 
 def get_metadata_model(filepath):
