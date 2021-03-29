@@ -13,6 +13,9 @@ from code.validation_functions.forecast_filename import validate_forecast_file_n
 from code.validation_functions.forecast_date import filename_match_forecast_date
 from code.test_formatting import forecast_check, validate_forecast_file, print_output_errors
 
+validations_version = 2
+
+
 # Pattern that matches a forecast file add to the data-processed folder.
 # Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
 pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
@@ -81,6 +84,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
             pr.add_to_labels('other-files-updated')
     # if there are no forecasts matched to the valid regex and the PR has added a CSV file to the data-processed drectory, most likely, it is an erroneous 
     # forecast which should be caught.
+    # TODO: add more documentation for this logic
     if len(forecasts) ==0 and len(forecasts_err)>0:
         comment+=f"\n\nYou seem to have added a forecast in an incorrect format. Please refer to https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting to correct your error.\n\n "
 
@@ -98,13 +102,18 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     # `f` is ab object of type: https://pygithub.readthedocs.io/en/latest/github_objects/File.html 
     # `forecasts` is a list of `File`s that are changed in the PR.
     for f in forecasts:
-        # TODO: Add a better way of checking whether a file is deleted or not. Currently, this checks if there are ANY deletion in a forecast file.
-        if f.deletions >0:
-            deleted_forecasts = True
-    if deleted_forecasts:
+        # Taken from https://github.com/KITmetricslab/covid19-forecast-hub-de-validations/blob/main/main.py#L113 
+        # if file status is not "added" it is probably "renamed" or "changed"
+        changed_forecasts = f.status != "added"
+    
+    # if deleted_forecasts:
+    #     pr.add_to_labels('forecast-deleted')
+    #     comment += "\n Your submission seem to have deleted some forecasts. Could you provide a reason for the updation/deletion? Thank you!\n\n"
+    
+    if changed_forecasts:
         # Add the `forecast-updated` label when there are deletions in the forecast file
         pr.add_to_labels('forecast-updated')
-        comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion? \n\n If you provided a reason in the original commit message, there is no need to respond. Thank you!\n\n"
+        comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion and confirm that any updated forecasts only used data that were available at the time the original forecasts were made?\n\n"
 
 
 # Download all forecasts
@@ -163,6 +172,7 @@ if comment=='' and not local and not is_meta_error and len(errors)==0 and (len(m
     print(f"Auto merging PR {pr_num if pr_num else -1}")
     pr.add_to_labels('automerge')
 
+print(f"Using validations version {validations_version}")
 # fail validations build if any error occurs.
 if is_meta_error or len(errors)>0:
     sys.exit("\n ERRORS FOUND EXITING BUILD...")
