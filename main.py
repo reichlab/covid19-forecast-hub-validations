@@ -33,7 +33,6 @@ if local:
 else:
     print("Added token")
     token  = os.environ.get('GH_TOKEN')
-    print(f"Token length: {len(token)}")
 
 if token is None:
     g = Github()
@@ -97,8 +96,8 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     #     if pr is not None:
     #         pr.add_to_labels('data-submission')
 
-    deleted_forecasts = False
-    
+    # deleted_forecasts = False
+    changed_forecasts = False
     # `f` is ab object of type: https://pygithub.readthedocs.io/en/latest/github_objects/File.html 
     # `forecasts` is a list of `File`s that are changed in the PR.
     for f in forecasts:
