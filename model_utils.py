@@ -67,14 +67,14 @@ def compare_forecasts(old, new):
     new_df = pd.read_csv(new, index_col=["forecast_date", "target", "target_end_date", "location",
                                          "type", "quantile"])
 
-    # First check if old dataframe has entries for ALL values of new dataframe
+    # First check if new dataframe has entries for ALL values of old dataframe
     retraction = False
     try:
-        # Access the indices of new forecast file in the old one
+        # Access the indices of old forecast file in the new one
         # TODO: There is definitely a more elegant way to do this!
-        vals = old_df.loc[new_df.index]
+        vals = new_df.loc[old_df.index]
     except KeyError as e:
         print(e)
-        # Old forecast has some values that are NOT in new forecast
+        # New forecast has some indices that are NOT in old forecast
         retraction = True
     return retraction

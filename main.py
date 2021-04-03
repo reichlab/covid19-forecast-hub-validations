@@ -136,6 +136,7 @@ for file in glob.glob("forecasts/*.csv"):
     with open(f"forecasts_master/{f_name}", 'r') as f:
         print("Checking old forecast for any retractions")
         if compare_forecasts(old=f, new=open(file, 'r')) and not local:
+
             pr.add_to_labels('forecast-retraction')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
