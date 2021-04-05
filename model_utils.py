@@ -67,14 +67,21 @@ def compare_forecasts(old, new):
     new_df = pd.read_csv(new, index_col=["forecast_date", "target", "target_end_date", "location",
                                          "type", "quantile"])
 
+    result = {
+        'retraction': False,
+        'invalid': False,
+        'error': None
+    }
     # First check if new dataframe has entries for ALL values of old dataframe
-    retraction = False
     try:
         # Access the indices of old forecast file in the new one
         # TODO: There is definitely a more elegant way to do this!
-        vals = new_df.loc[old_df.index]
+        new_vals = new_df.loc[old_df.index]
+        if (old_df == new_vals).all(axis=None):
+            result['invalid'] = True
+            result['error'] = "Forecast has 100% same values updated."
     except KeyError as e:
         print(e)
         # New forecast has some indices that are NOT in old forecast
-        retraction = True
-    return retraction
+        result['retraction'] = True
+    return result

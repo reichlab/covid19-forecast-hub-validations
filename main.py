@@ -14,7 +14,7 @@ from code.test_formatting import forecast_check, validate_forecast_file, print_o
 
 from model_utils import *
 
-validations_version = 2
+validations_version = 3
 
 # Pattern that matches a forecast file add to the data-processed folder.
 # Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
@@ -135,8 +135,15 @@ for file in glob.glob("forecasts/*.csv"):
     f_name = os.path.basename(file)
     with open(f"forecasts_master/{f_name}", 'r') as f:
         print("Checking old forecast for any retractions")
-        if compare_forecasts(old=f, new=open(file, 'r')) and not local:
-
+        compare_result = compare_forecasts(old=f, new=open(file, 'r'))
+        if compare_result['invalid'] and not local:
+            error_msg = compare_result['error']
+            # if there were no previous errors
+            if len(error_file) == 0:
+                errors[os.path.basename(file)] = [compare_result['error']]
+            else:
+                errors[os.path.basename(file)].append(compare_result['error'])
+        if compare_result['retraction'] and not local:
             pr.add_to_labels('forecast-retraction')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
