@@ -89,7 +89,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
         comment += f"\n\nYou seem to have added a forecast in an incorrect format. Please refer to https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting to correct your error.\n\n "
 
     if len(metadatas) > 0:
-        print(f"PR has metata files changed.")
+        print(f"PR has metadata files changed.")
         if pr is not None:
             pr.add_to_labels('metadata-change')
     # Do not require this as it is done by the PR labeler action.
@@ -113,6 +113,9 @@ if changed_forecasts and not local:
     pr.add_to_labels('forecast-updated')
     comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion and confirm that any updated forecasts only used data that were available at the time the original forecasts were made?\n\n"
 
+# fetch all model directories in the data folder. Used to validate if this is a new submission
+models = get_models(repo)
+
 # Download all forecasts
 # create a forecasts directory
 os.makedirs('forecasts', exist_ok=True)
@@ -121,7 +124,7 @@ os.makedirs('forecasts', exist_ok=True)
 for f in forecasts:
     urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
 
-# Download all metadat files changed in the PR into the forecasts folder
+# Download all metadata files changed in the PR into the forecasts folder
 for f in metadatas:
     urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
 
@@ -129,22 +132,40 @@ for f in metadatas:
 errors = {}
 for file in glob.glob("forecasts/*.csv"):
     error_file = forecast_check(file)
+
+    # extract just the filename and remove the path.
+    f_name = os.path.basename(file)
     if len(error_file) > 0:
         errors[os.path.basename(file)] = error_file
 
-    f_name = os.path.basename(file)
-    with open(f"forecasts_master/{f_name}", 'r') as f:
-        print("Checking old forecast for any retractions")
-        compare_result = compare_forecasts(old=f, new=open(file, 'r'))
-        if compare_result['invalid'] and not local:
-            error_msg = compare_result['error']
-            # if there were no previous errors
-            if len(error_file) == 0:
-                errors[os.path.basename(file)] = [compare_result['error']]
+    # Check whether the `model_abbr`  directory is present in the `data-processed` folder.
+    # This is a test to check if this submission is a new submission or not
+    model = '-'.join(f_name.split('.')[0].split('-')[-2:])  # extract model_abbr from the filename
+    if model not in models:
+        if not local:
+            pr.add_to_labels('new-team-submission')
+        if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
+            error_str = "This seems to be a new submission and you have not included a metadata file."
+            if len(error_file) > 0:
+                errors[f_name].append(error_str)
             else:
-                errors[os.path.basename(file)].append(compare_result['error'])
-        if compare_result['retraction'] and not local:
-            pr.add_to_labels('forecast-retraction')
+                errors[f_name] = [error_str]
+
+    # Check for retractions
+    # `forecasts_master` is a directory with the older version of the forecast (if present).
+    if os.path.isfile(f"forecasts_master/{f_name}"):
+        with open(f"forecasts_master/{f_name}", 'r') as f:
+            print("Checking old forecast for any retractions")
+            compare_result = compare_forecasts(old=f, new=open(file, 'r'))
+            if compare_result['invalid'] and not local:
+                error_msg = compare_result['error']
+                # if there were no previous errors
+                if len(error_file) == 0:
+                    errors[os.path.basename(file)] = [compare_result['error']]
+                else:
+                    errors[os.path.basename(file)].append(compare_result['error'])
+            if compare_result['retraction'] and not local:
+                pr.add_to_labels('forecast-retraction')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
     is_val_err, err_message = filename_match_forecast_date(file)

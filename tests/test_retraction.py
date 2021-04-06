@@ -1,7 +1,8 @@
 import unittest
 from model_utils import *
 
-
+# List of sample PRs that we want to check against
+test_prs = [3448, 3342]
 class ValidationRetractionTest(unittest.TestCase):
     def test_updation_with_no_new_targets(self):
         self.assertFalse(

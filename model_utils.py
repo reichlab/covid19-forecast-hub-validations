@@ -17,6 +17,7 @@ def get_models(repo, directory="data-processed"):
     for model in dirs:
         if model.type == "dir":
             models.append(model.path.split("/")[-1])
+    return models
 
 
 def fetch_url(url, path):
