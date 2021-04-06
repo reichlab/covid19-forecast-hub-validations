@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+forecasts_master/
+.idea/
+forecasts/
