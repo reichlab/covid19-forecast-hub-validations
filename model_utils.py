@@ -57,7 +57,7 @@ def get_model_master(repo, filename=None, model_abbr=None, timezero=None,
 
 def compare_forecasts(old, new):
     """
-    Compare the 2 forecasts and returns whether there are any retractions or not
+    Compare the 2 forecasts and returns whether there are any implicit retractions or not
     @type old: Either a file pointer or a path string.
     @type new: Either a file pointer or a path string.
 
@@ -69,7 +69,8 @@ def compare_forecasts(old, new):
                                          "type", "quantile"])
 
     result = {
-        'retraction': False,
+        'implicit-retraction': False,
+        'retraction':False,
         'invalid': False,
         'error': None
     }
@@ -84,5 +85,10 @@ def compare_forecasts(old, new):
     except KeyError as e:
         print(e)
         # New forecast has some indices that are NOT in old forecast
-        result['retraction'] = True
+        result['implicit-retraction'] = True
+    else:   
+        # check for explicit rectractions
+        # check if mismatches positions have NULLs
+        if ((new_vals.notnull()) & (old_df == new_vals)).any(axis=None):
+             result['retraction'] = True
     return result
