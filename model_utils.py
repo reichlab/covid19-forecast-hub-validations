@@ -63,6 +63,7 @@ def compare_forecasts(old, new):
 
     @return Bool: Whether this update has a retraction or not
     """
+    print(old)
     old_df = pd.read_csv(old, index_col=["forecast_date", "target", "target_end_date", "location",
                                          "type", "quantile"])
     new_df = pd.read_csv(new, index_col=["forecast_date", "target", "target_end_date", "location",
@@ -79,7 +80,8 @@ def compare_forecasts(old, new):
         # Access the indices of old forecast file in the new one
         # TODO: There is definitely a more elegant way to do this!
         new_vals = new_df.loc[old_df.index]
-        if (old_df == new_vals).all(axis=None):
+        comparison = (old_df == new_vals)
+        if (comparison).all(axis=None):
             result['invalid'] = True
             result['error'] = "Forecast has 100% same values updated."
     except KeyError as e:
@@ -89,6 +91,7 @@ def compare_forecasts(old, new):
     else:   
         # check for explicit rectractions
         # check if mismatches positions have NULLs
-        if ((new_vals.notnull()) & (old_df == new_vals)).any(axis=None):
-             result['retraction'] = True
+        if not (comparison).all(axis=None):
+            if ((new_vals.notnull()) & (comparison)).any(axis=None):
+                result['retraction'] = True
     return result
