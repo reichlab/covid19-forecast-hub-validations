@@ -151,7 +151,7 @@ for file in glob.glob("forecasts/*.csv"):
             else:
                 errors[f_name] = [error_str]
 
-    # Check for retractions
+    # Check for implicit and explicit retractions
     # `forecasts_master` is a directory with the older version of the forecast (if present).
     if os.path.isfile(f"forecasts_master/{f_name}"):
         with open(f"forecasts_master/{f_name}", 'r') as f:
@@ -164,14 +164,17 @@ for file in glob.glob("forecasts/*.csv"):
                     errors[os.path.basename(file)] = [compare_result['error']]
                 else:
                     errors[os.path.basename(file)].append(compare_result['error'])
-            if compare_result['retraction'] and not local:
-                pr.add_to_labels('forecast-retraction')
-                retract_error = f"The forecast {os.path.basename(file)} has an invalid retraction. Please review the retraction rules for a forecast in the wiki here - https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
+            if compare_result['implicit-retraction'] and not local:
+                pr.add_to_labels('forecast-implicit-retractions')
+                retract_error = f"The forecast {os.path.basename(file)} has an invalid implicit retraction. Please review the retraction rules for a forecast in the wiki here - https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
                 # throw an error now with Zoltar 4
                 if len(error_file) == 0:
                     errors[os.path.basename(file)] = [retract_error]
                 else:
                     errors[os.path.basename(file)].append(retract_error)
+            # explicit retractions
+            if compare_result['retraction'] and not local:
+                pr.add_to_labels('retractions')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
     is_val_err, err_message = filename_match_forecast_date(file)
