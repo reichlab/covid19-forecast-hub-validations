@@ -63,7 +63,6 @@ def compare_forecasts(old, new):
 
     @return Bool: Whether this update has a retraction or not
     """
-    print(old)
     old_df = pd.read_csv(old, index_col=["forecast_date", "target", "target_end_date", "location",
                                          "type", "quantile"])
     new_df = pd.read_csv(new, index_col=["forecast_date", "target", "target_end_date", "location",
