@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "*"
+requests = "*"
+pymmwr = "*"
+click = "*"
+urllib3 = "*"
+selenium = "*"
+webdriver-manager = "*"
+pyyaml = "*"
+pygithub = "*"
+pytz = "*"
+zoltpy = {editable = true, git = "https://github.com/reichlab/zoltpy"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

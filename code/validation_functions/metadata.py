@@ -38,6 +38,7 @@ def validate_metadata_contents(metadata, filepath, cache):
         metadata_error_output.append(f"METADATA_ERROR: Model abreviation in metadata inconsistent with folder name for model_abbr={metadata['model_abbr']} as specified in metadata. NOTE: model name on file is: {model_name_file}")
         is_metadata_error = True
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
+
     # Check if every team has only one `team_model_designation` as `primary`
     if 'team_abbr' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
@@ -55,9 +56,9 @@ def validate_metadata_contents(metadata, filepath, cache):
     # if `this_model_is_an_emnsemble` is rpesent, show a warning.
     
     # Check for Required Fields
-    required_fields = ['team_name', 'team_abbr', 'model_name', 'model_contributors', 'model_abbr', 'website_url','license', 'team_model_designation', 'methods']
-    # required_fields = ['team_name', 'team_abbr', 'model_name', 'model_abbr',\
-    #                        'methods', 'team_url', 'license', 'include_in_ensemble_and_visualization']
+    required_fields = ['team_name', 'team_abbr', 'model_name', 'model_contributors', 'model_abbr', 'website_url', 'license', 'team_model_designation', 'methods']
+    # required_fields = ['team_name', 'team_abbr', 'model_name', 'model_contributors', 'model_abbr', 'website_url', \
+    #                    'license', 'team_model_designation', 'methods', 'ensemble_of_hub_models']
     
     # for field in required_fields:
     #     if field not in metadata.keys():
@@ -88,7 +89,7 @@ def validate_metadata_contents(metadata, filepath, cache):
 
     # Check if this_model_is_an_ensemble and this_model_is_unconditional are boolean
     boolean_fields = ['this_model_is_an_ensemble', 'this_model_is_unconditional',
-                      'include_in_ensemble_and_visualization']
+                      'include_in_ensemble_and_visualization', 'ensemble_of_hub_models']
     possible_booleans = ['true', 'false']
     for field in boolean_fields:
         if field in metadata.keys():
