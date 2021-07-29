@@ -131,3 +131,6 @@ dmypy.json
 forecasts_master/
 .idea/
 forecasts/
+
+# VSCode related:
+*.code-workspace
