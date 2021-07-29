@@ -134,3 +134,4 @@ forecasts/
 
 # VSCode related:
 *.code-workspace
+.vscode
