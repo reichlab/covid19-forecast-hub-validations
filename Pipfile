@@ -15,6 +15,7 @@ pyyaml = "*"
 pygithub = "*"
 pytz = "*"
 zoltpy = {editable = true, git = "https://github.com/reichlab/zoltpy"}
+numpy = "*"
 
 [dev-packages]
 
