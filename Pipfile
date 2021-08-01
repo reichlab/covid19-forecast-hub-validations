@@ -16,6 +16,7 @@ pygithub = "*"
 pytz = "*"
 zoltpy = {editable = true, git = "https://github.com/reichlab/zoltpy"}
 numpy = "*"
+pykwalify = {file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"}
 
 [dev-packages]
 
