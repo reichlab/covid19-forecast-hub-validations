@@ -130,6 +130,7 @@ for f in metadatas:
 
 # Run validations on each of these files
 errors = {}
+is_forecast_date_mismatch = False
 for file in glob.glob("forecasts/*.csv"):
     error_file = forecast_check(file)
 
@@ -177,8 +178,8 @@ for file in glob.glob("forecasts/*.csv"):
                 pr.add_to_labels('retractions')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
-    is_val_err, err_message = filename_match_forecast_date(file)
-    if is_val_err:
+    is_forecast_date_mismatch, err_message = filename_match_forecast_date(file)
+    if is_forecast_date_mismatch:
         comment += err_message
 
 # Check for metadata file validation
@@ -216,5 +217,5 @@ if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
 
 print(f"Using validations version {validations_version}")
 # fail validations build if any error occurs.
-if is_meta_error or len(errors) > 0:
+if is_meta_error or len(errors) > 0 or is_forecast_date_mismatch:
     sys.exit("\n ERRORS FOUND EXITING BUILD...")
