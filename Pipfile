@@ -14,11 +14,19 @@ webdriver-manager = "*"
 pyyaml = "*"
 pygithub = "*"
 pytz = "*"
-zoltpy = {editable = true, git = "https://github.com/reichlab/zoltpy"}
 numpy = "*"
-pykwalify = {file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"}
 
 [dev-packages]
 
 [requires]
 python_version = "3.9"
+
+[packages.zoltpy]
+editable = true
+git = "https://github.com/reichlab/zoltpy"
+
+[packages.pykwalify]
+file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"
+
+[packages.3effbcc]
+file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"

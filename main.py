@@ -53,6 +53,7 @@ else:
 pr = None
 comment = ''
 files_changed = []
+labels = []
 
 if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
     # Fetch the  PR number from the event json
@@ -81,7 +82,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     if len(other_files) > 0 and len(forecasts) > 0:
         print(f"PR has other files changed too.")
         if pr is not None:
-            pr.add_to_labels('other-files-updated')
+            labels.append('other-files-updated')
     # if there are no forecasts matched to the valid regex and the PR has added a CSV file to the data-processed drectory, most likely, it is an erroneous 
     # forecast which should be caught.
     # TODO: add more documentation for this logic
@@ -91,11 +92,7 @@ if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
     if len(metadatas) > 0:
         print(f"PR has metadata files changed.")
         if pr is not None:
-            pr.add_to_labels('metadata-change')
-    # Do not require this as it is done by the PR labeler action.
-    # else:
-    #     if pr is not None:
-    #         pr.add_to_labels('data-submission')
+            labels.append('metadata-change')
 
 # deleted_forecasts = False
 # `f` is an object of type: https://pygithub.readthedocs.io/en/latest/github_objects/File.html 
@@ -110,7 +107,7 @@ for f in forecasts:
 
 if changed_forecasts and not local:
     # Add the `forecast-updated` label when there are deletions in the forecast file
-    pr.add_to_labels('forecast-updated')
+    labels.append('forecast-updated')
     comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion and confirm that any updated forecasts only used data that were available at the time the original forecasts were made?\n\n"
 
 # fetch all model directories in the data folder. Used to validate if this is a new submission
@@ -144,7 +141,7 @@ for file in glob.glob("forecasts/*.csv"):
     model = '-'.join(f_name.split('.')[0].split('-')[-2:])  # extract model_abbr from the filename
     if model not in models:
         if not local:
-            pr.add_to_labels('new-team-submission')
+            labels.append('new-team-submission')
         if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
             error_str = "This seems to be a new submission and you have not included a metadata file."
             if len(error_file) > 0:
@@ -166,7 +163,7 @@ for file in glob.glob("forecasts/*.csv"):
                 else:
                     errors[os.path.basename(file)].append(compare_result['error'])
             if compare_result['implicit-retraction'] and not local:
-                pr.add_to_labels('forecast-implicit-retractions')
+                labels.append('forecast-implicit-retractions')
                 retract_error = f"The forecast {os.path.basename(file)} has an invalid implicit retraction. Please review the retraction rules for a forecast in the wiki here - https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
                 # throw an error now with Zoltar 4
                 if len(error_file) == 0:
@@ -175,7 +172,7 @@ for file in glob.glob("forecasts/*.csv"):
                     errors[os.path.basename(file)].append(retract_error)
             # explicit retractions
             if compare_result['retraction'] and not local:
-                pr.add_to_labels('retractions')
+                labels.append('retractions')
 
     # Check for the forecast date column check is +-1 day from the current date the PR build is running
     is_forecast_date_mismatch, err_message = filename_match_forecast_date(file)
@@ -213,7 +210,13 @@ if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
         len(metadatas) + len(other_files)) == 0 and len(forecasts_err) == len(forecasts) and len(
         forecasts) == 1:
     print(f"Auto merging PR {pr_num if pr_num else -1}")
-    pr.add_to_labels('automerge')
+    labels.append('automerge')
+
+if pr is not None:
+    if len(labels) > 0:
+        pr.set_labels(labels)
+    else:
+        pr.delete_labels()
 
 print(f"Using validations version {validations_version}")
 # fail validations build if any error occurs.
