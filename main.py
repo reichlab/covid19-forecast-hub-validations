@@ -214,9 +214,9 @@ if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
 
 if pr is not None:
     if len(labels) > 0:
-        print(type(labels))
-        print(labels)
-        pr.set_labels(labels)
+        # dereference list as a list of parameters:
+        # https://github.com/PyGithub/PyGithub/issues/1407
+        pr.set_labels(*labels)
     else:
         pr.delete_labels()
 
