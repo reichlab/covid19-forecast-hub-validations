@@ -221,7 +221,7 @@ if pr is not None:
         # some labels are done using the labeler; leave those
         auto_labeler_labels = {'data-submission', 'viz', 'code'}
         pr.set_labels(*(
-            labels.append(filter(lambda l: l.name not in auto_labeler_labels, pr.labels))
+            labels + filter(lambda l: l.name not in auto_labeler_labels, pr.labels)
         ))
     else:
         pr.delete_labels()
