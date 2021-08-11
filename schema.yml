@@ -35,6 +35,9 @@ mapping:
         type: str
         range:
             max: 200
+    'ensemble_of_hub_models':
+        required: True
+        type: bool
     'repo_url':
         type: str
         pattern: ((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*
@@ -53,5 +56,4 @@ mapping:
         type: str
     'methods_long':
         type: str
-    'ensemble_of_hub_models':
-        type: bool
+    
