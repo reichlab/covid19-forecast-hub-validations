@@ -204,7 +204,8 @@ if comment != '' and not local:
 #  - If there were any other files updated which includes: 
 #      - any errorneously named forecast file in data-processed folder
 #      - any changes/additions on a metadata file. 
-#  - There is ONLY 1 valid forecast file added that has passed the validations. That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
+#  - There is ONLY 1 valid forecast file added that has passed the validations.
+#    That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
 
 if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
         len(metadatas) + len(other_files)) == 0 and len(forecasts_err) == len(forecasts) and len(
@@ -216,7 +217,12 @@ if pr is not None:
     if len(labels) > 0:
         # dereference list as a list of parameters:
         # https://github.com/PyGithub/PyGithub/issues/1407
-        pr.set_labels(*labels)
+
+        # some labels are done using the labeler; leave those
+        auto_labeler_labels = {'data-submission', 'viz', 'code'}
+        pr.set_labels(*(
+            labels.append(filter(lambda l: l.name not in auto_labeler_labels, pr.labels))
+        ))
     else:
         pr.delete_labels()
 
