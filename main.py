@@ -215,9 +215,9 @@ if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
 
 if pr is not None:
     # set labels: labeler labels + validation labels
-    pr.set_labels(
-        *(labels + list(filter(lambda l: l.name in {'data-submission', 'viz', 'code'}, pr.labels)))
-    )
+    labels_to_set = labels + list(filter(lambda l: l.name in {'data-submission', 'viz', 'code'}, pr.labels))
+    if len(labels_to_set) > 0:
+        pr.set_labels(*labels_to_set)
 
 print(f"Using validations version {validations_version}")
 # fail validations build if any error occurs.
