@@ -214,17 +214,10 @@ if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
     labels.append('automerge')
 
 if pr is not None:
-    if len(labels) > 0:
-        # dereference list as a list of parameters:
-        # https://github.com/PyGithub/PyGithub/issues/1407
-
-        # some labels are done using the labeler; leave those
-        auto_labeler_labels = {'data-submission', 'viz', 'code'}
-        pr.set_labels(*(
-            labels + list(filter(lambda l: l.name in auto_labeler_labels, pr.labels))
-        ))
-    else:
-        pr.delete_labels()
+    # set labels: labeler labels + validation labels
+    pr.set_labels(
+        *(labels + list(filter(lambda l: l.name in auto_labeler_labels, pr.labels)))
+    )
 
 print(f"Using validations version {validations_version}")
 # fail validations build if any error occurs.
