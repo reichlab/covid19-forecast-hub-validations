@@ -238,7 +238,7 @@ def remove_all_entries_from_validated_files(files_changed):
             validated_files = validated_files[validated_files.file_path != f]
         validated_files.to_csv(val_path, index=False)
 
-
+# entry point for non CI/CD runs (local test runs)
 def main():
     my_path = "./data-processed"
     forecasts_changed = []
@@ -263,6 +263,7 @@ def main():
     print(f"files changed: {forecasts_changed}")
     check_formatting(my_path)
 
+# entry point for GitHub Actions
 def main_ci():
     forecasts = []
     g = Github()
