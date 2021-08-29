@@ -6,11 +6,9 @@ import urllib.request
 import glob
 from github import Github
 
-from code.validation_functions.metadata import check_for_metadata, get_metadata_model, \
-    output_duplicate_models
-from code.validation_functions.forecast_filename import validate_forecast_file_name
+from code.validation_functions.metadata import check_for_metadata
 from code.validation_functions.forecast_date import filename_match_forecast_date
-from code.test_formatting import forecast_check, validate_forecast_file, print_output_errors
+from code.test_formatting import forecast_check, print_output_errors
 
 from model_utils import *
 
