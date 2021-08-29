@@ -1,3 +1,4 @@
+# external dep.'s
 import json
 import re
 import os
@@ -6,10 +7,10 @@ import urllib.request
 import glob
 from github import Github
 
-from code.validation_functions.metadata import check_for_metadata
-from code.validation_functions.forecast_date import filename_match_forecast_date
-from code.test_formatting import forecast_check, print_output_errors
-
+# internal dep.'s
+from validation_functions.metadata import check_for_metadata
+from validation_functions.forecast_date import filename_match_forecast_date
+from test_formatting import forecast_check, print_output_errors
 from model_utils import *
 
 validations_version = 3
@@ -17,9 +18,7 @@ validations_version = 3
 # Pattern that matches a forecast file add to the data-processed folder.
 # Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
 pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
-# pat_other = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-(.+)\.csv$")
 pat_other = re.compile(r"^data-processed/(.+)\.csv$")
-
 pat_meta = re.compile(r"^data-processed/(.+)/metadata-\1\.txt$")
 
 local = os.environ.get('CI') != 'true'
