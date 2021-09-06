@@ -1,7 +1,8 @@
 # A modest attempt at testing the R functions for plausibility checks
 # Keep in mind that the checks in Python are authoritative.
 
-### THESE FUNCTIONS ARE NO LONGER MAINTAINED OR KEPT IN SYNC WITH THE AUTORITATIVE PYTHON CHECKS
+### THESE FUNCTIONS ARE NO LONGER MAINTAINED OR KEPT IN SYNC WITH THE
+### AUTHORITATIVE PYTHON CHECKS
 ### THEY ARE KEPT HERE MERELY AS A RESOURCE FOR TEAMS SPECIALIZING IN R.
 
 # Johannes Bracher, April 2020
@@ -27,7 +28,10 @@ print(verify_filename("2020-02-23-CU-nointerv.csv"))
 
 
 # get an example data set:
-dat <- read.csv("data-processed/CU-80contact/2020-04-26-CU-80contact.csv", stringsAsFactors = FALSE)
+dat <- read.csv(
+  "data-processed/CU-80contact/2020-04-26-CU-80contact.csv",
+  stringsAsFactors = FALSE
+)
 
 #-----------------------------------------
 # verify_colnames

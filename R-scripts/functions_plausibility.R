@@ -1,10 +1,12 @@
-# Some functions to perform plausibility checks on forecasts in quantiel format
+# Some functions to perform plausibility checks on forecasts in quantile format
 # Johannes Bracher, April 2020
 
-### THESE FUNCTIONS ARE NO LONGER MAINTAINED OR KEPT IN SYNC WITH THE AUTORITATIVE PYTHON CHECKS
+### THESE FUNCTIONS ARE NO LONGER MAINTAINED OR KEPT IN SYNC WITH THE
+### AUTHORITATIVE PYTHON CHECKS
 ### THEY ARE KEPT HERE MERELY AS A RESOURCE FOR TEAMS SPECIALIZING IN R.
 
-#' Checking if the filename corresponds to the requirements for quantile death functions
+#' Checking if the filename corresponds to the requirements for quantile death
+#' functions
 #'
 #' Format should be: YYYY-MM-DD-Team-Model.csv
 #'
@@ -12,31 +14,43 @@
 #'
 #' @return invisibly returns TRUE if file name fulfills criteria, FALSE otherwise
 #'
-verify_filename <- function(filename){
+verify_filename <- function(filename) {
 
   result <- TRUE
 
   # check that fileame has only basename
-  if(basename(filename) != filename){
+  if (basename(filename) != filename) {
     result <- FALSE
-    warning("ERROR: please ensure that the filename does not have any directories in it.")
+    warning(paste0(
+      "ERROR: please ensure that the filename does not have any ",
+      "directories in it."
+    ))
   }
 
   # check that starts with date:
   date0 <- substr(filename, start = 1, stop = 10)
-  date <- tryCatch({as.Date(date0, format = "%Y-%m-%d")}, error = function(e){NA})
-  if(is.na(date) | date < as.Date("2020-03-01")){
+  date <- tryCatch({
+      as.Date(date0, format = "%Y-%m-%d")
+    },
+    error = function(e) {
+      NA
+    }
+  )
+  if (is.na(date) | date < as.Date("2020-03-01")) {
     result <- FALSE
-    warning("ERROR: File name needs to start with a date of format YYYY-MM-DD (and later than 2020-03-01).")
+    warning(paste0(
+      "ERROR: File name needs to start with a date of format ",
+      "YYYY-MM-DD (and later than 2020-03-01)."
+    ))
   }
 
   # check that contains ".csv":
-  if(substr(filename, start = nchar(filename) - 3, nchar(filename)) != ".csv"){
+  if (substr(filename, start = nchar(filename)-3, nchar(filename)) != ".csv") {
     result <- FALSE
     warning("ERROR: File name needs to end in .csv")
   }
 
-  if(result) cat("VALIDATED: filename \n")
+  if (result) cat("VALIDATED: filename \n")
 
   return(invisible(result))
 }
@@ -51,9 +65,14 @@ verify_filename <- function(filename){
 
 check_agreement_forecast_date <- function(file, entry){
   date0 <- substr(file, start = 1, stop = 10)
-  date_file <- tryCatch({as.Date(date0, format = "%Y-%m-%d")}, error = function(e){NA})
+  date_file <- tryCatch({
+      as.Date(date0, format = "%Y-%m-%d")
+    }, error = function(e) {
+      NA
+    }
+  )
   forecast_date_entry <- as.Date(entry$forecast_date)
-  if(!all(forecast_date_entry == date_file)){
+  if (!all(forecast_date_entry == date_file)) {
     warning("ERROR: Date in file name and forecast_date do not agree.")
     return(invisible(FALSE))
   }else{
@@ -64,8 +83,8 @@ check_agreement_forecast_date <- function(file, entry){
 
 #' Checking if a data.frame in quantile format has the right column names
 #'
-#' Column names should be: "target", "location", "location_name" (optional), "type", "quantile", "value",
-#' in that order
+#' Column names should be: "target", "location", "location_name" (optional),
+#' "type", "quantile", "value", in that order
 #'
 #' @param entry the data.frame
 #'
@@ -73,36 +92,57 @@ check_agreement_forecast_date <- function(file, entry){
 #'
 verify_colnames <- function(entry){
   coln <- colnames(entry)
-  colnames_template <- c("forecast_date", "target", "target_end_date",
-                         "location", "location_name", "type", "quantile", "value")
-  compulsory_colnames_template <- c("forecast_date", "target", "target_end_date",
-                                    "location", "type", "quantile", "value") # location_name is optional
+  colnames_template <- c(
+    "forecast_date",
+    "target",
+    "target_end_date",
+    "location",
+    "location_name",
+    "type",
+    "quantile",
+    "value"
+  )
+  compulsory_colnames_template <- c(
+    "forecast_date",
+    "target",
+    "target_end_date",
+    "location",
+    "type",
+    "quantile",
+    "value"
+  ) # location_name is optional
 
   result <- TRUE
 
   # check whether there are colnames present which should not
-  # if(!all(coln %in% colnames_template)){
-  #   warning("ERROR: there is at least one column name which does not conform with the template: ",
-  #           paste(coln[!(coln %in% colnames_template)], collapse = ", "))
+  # if (!all(coln %in% colnames_template)) {
+  #   warning(
+  #     "ERROR: at least one column name does not conform with the template: ",
+  #     paste(coln[!(coln %in% colnames_template)], collapse = ", ")
+  #   )
   #   result <- FALSE
   # }
 
   # check if essential columns are there
-  if(!all(compulsory_colnames_template %in% coln)){
-    warning("ERROR: at least one required column is missing: ",
-            paste(compulsory_colnames_template[!(compulsory_colnames_template %in% coln)],
-                  collapse = ", "))
+  if (!all(compulsory_colnames_template %in% coln)) {
+    warning(
+      "ERROR: at least one required column is missing: ",
+      paste(
+        compulsory_colnames_template[!(compulsory_colnames_template %in% coln)],
+        collapse = ", "
+      )
+    )
     result <- FALSE
   }
 
   # check order
   colnames_template_available <- colnames_template[colnames_template %in% coln]
 
-  if(result){
+  if (result) {
     cat("VALIDATED: column names\n")
 
     # check order and give warning if not as recommended
-    if(any(coln[coln %in% colnames_template_available] != colnames_template_available)){
+    if (any(coln[coln %in% colnames_template_available] != colnames_template_available)) {
       cat("  MESSAGE: Preferred order of columns is (forecast_date, target, target_end_date, location,
           location_name (optional), type, quantile, value), but this is not compulsory.\n")
     }
