@@ -1,9 +1,9 @@
-from enum import Enum, auto
+import enum
 
-class FileType(Enum):
+class FileType(enum.Enum):
     """Represents different types of files in a PR.
     """
-    FORECAST = auto()
-    METADATA = auto()
-    OTHER_FS = auto()
-    OTHER_NONFS = auto()
+    FORECAST = enum.auto()
+    METADATA = enum.auto()
+    OTHER_FS = enum.auto()
+    OTHER_NONFS = enum.auto()

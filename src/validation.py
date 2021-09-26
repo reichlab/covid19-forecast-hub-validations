@@ -1,15 +1,17 @@
-from typing import Any, Optional, Callable, Type, TypeVar, Generic
-from inspect import signature
+from typing import Optional, Callable, Type, TypeVar, Generic
+import inspect
 
-O = TypeVar('O')
+class ValidationStep:
 
-class ValidationStep(Generic[O]):
-
-    def __init__(self, logic: Callable[..., O]) -> None:
+    def __init__(self, logic: Callable) -> None:
         self._executed: bool = False
         self._success: Optional[bool] = None
         self._result_message: Optional[str] = None
-        self._logic: Optional[Callable[..., O]] = logic
+
+        if logic is not None and not isinstance(logic, Callable):
+            raise TypeError("logic must be a Callable (i.e., function)")
+
+        self._logic: Optional[Callable] = logic
 
     def __init__(self) -> None:
         self(logic=None)
@@ -34,33 +36,28 @@ class ValidationStep(Generic[O]):
         return not self._logic
 
     @property
-    def logic(self) -> Optional[Callable[..., O]]:
+    def logic(self) -> Optional[Callable]:
         return self._logic
 
-    @property
-    def input_types(self) -> list[Type]:
-        input_type = []
-
-        input_parameters = signature(self._logic).parameters
-        for parameter_name in input_parameters:
-            parameter
-        return [type(self._logic)]
-
-    @property
-    def output_type(self) -> Type[O]:
-        return type(O)
-
     @logic.setter
-    def logic(self, logic: Callable[...]) -> None:
+    def logic(self, new_logic: Optional[Callable]) -> None:
+        """Sets or clears the logic of the validation step.
+
+        If None is given, then the logic is cleared. Otherwise,
+        the given logic is assigned to the validation step.
+
+        Args:
+            logic: 
+        """
         # TODO: check if self has prev or next steps
         # check output type from prev
         # check input type from next
         # make sure they match
-        self._logic = logic
+        self._logic = new_logic
 
     def execute(self) -> Optional[NotImplemented]:
-        if not self._logic:
-            print('step has no logic registered')
+        if self._logic is None:
+            raise ValueError('validation step has no logic')
         else:
             self._logic()
             self._executed = True

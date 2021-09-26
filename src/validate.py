@@ -1,19 +1,22 @@
 # external dep.'s
-import json
-import re
-import os
-import sys
 from typing import Iterable, Optional, Tuple, Union
-import urllib.request
-import glob
 from github import Github
 from github.File import File
 from github.Label import Label
-from github.PaginatedList import PaginatedList
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+import itertools
+import json
+import glob
 import logging
 import logging.config
+import os
+import os.path
+import pathlib
+import re
+import sys
+import urllib.request
+import github.Label
 
 # internal dep.'s
 from validation_fns.metadata import check_for_metadata
@@ -29,6 +32,9 @@ VALIDATIONS_VERSION: int = 4
 
 # Name of hub repository
 HUB_REPOSITORY_NAME: str = "reichlab/covid19-forecast-hub"
+
+# Name of directory to create for forecasts
+FORECASTS_DIRECTORY: pathlib.Path = pathlib.Path("forecasts")
 
 # Filename regex patterns used in code below
 # Key name indicate the type of files whose filenames the corresponding rege
@@ -54,7 +60,10 @@ logger = logging.getLogger('hub-validations')
 def check_labels_comments(
     labels: Optional[list[Label]],
     comments: Optional[list[str]]
-) -> Tuple[Tuple[bool, list[Label]], Tuple[bool, list[str]]]:
+) -> tuple[Union[
+    tuple[Union[bool, list[Label]]],
+    tuple[Union[bool, list[str]]]
+]]:
     """Helper function to check labels' and comments' initialization.
 
     Makes new lists if one or both lists are not initialized.
@@ -83,7 +92,7 @@ def return_labels_comments(
     labels: list[Label],
     comments: list[str]
 ) -> Optional[Union[
-    Tuple[list[Label], list[str]],
+    tuple[Union[list[Label], list[str]]],
     list[Label],
     list[str]
 ]]:
@@ -207,7 +216,7 @@ def match_file(
 def filter_files(
     files: Iterable[File],
     patterns: dict[FileType, re.Pattern] = FILENAME_PATTERNS
-) -> Tuple[bool, dict[FileType, list[File]]]:
+) -> dict[FileType, list[File]]:
     """Filters a list of filenames into corresponding file types.
 
     Uses match_file() to match File to FileType.
@@ -219,18 +228,19 @@ def filter_files(
         A dictionary keyed by the type of file and contains a list of Files
         of that type as value.
     """
-    filtered_files: dict[FileType, list[File]] = {
-        file_type: [] for file_type in FileType
-    }
+    filtered_files: dict[FileType, list[File]] = {}
     for file in files:
         file_types: list[FileType] = match_file(file, patterns)
         for file_type in file_types:
-            filtered_files[file_type].append(file)
+            if file_type not in filtered_files:
+                filtered_files[file_type] = [file]
+            else:
+                filtered_files[file_type].append(file)
     
     return filtered_files
 
 def is_forecast_submission(
-    filtered_files: dict[FileType, list(File)]
+    filtered_files: dict[FileType, list[File]]
 ) -> bool:
     """Checks types of files to determine if the PR is a forecast submission.
 
@@ -252,19 +262,63 @@ def is_forecast_submission(
     # code that runs on that repository. However, that is a super big change,
     # so more discussion and decision-making is required.
 
-    return (len(filtered_files[FileType.FORECAST]) > 0 or
-            len(filtered_files[FileType.METADATA]) > 0 or
-            len(filtered_files[FileType.OTHER_FS]) > 0)
+    return (FileType.FORECAST in filtered_files or
+            FileType.METADATA in filtered_files or
+            FileType.OTHER_FS in filtered_files)
 
+def check_multiple_model_names(
+    filtered_files: dict[FileType, list[File]],
+    all_labels: dict[str, list[Label]],
+    *, # forces latter parameters to be keyword-only arguments
+    labels_to_apply: Optional[list[Label]] = None,
+    comments_to_apply: Optional[list[str]] = None
+) -> Optional[set[tuple[str]]]:
+    """Extract team and model names from forecast submission files.
+
+    If unable to extract, returns None.
+
+    Args:
+        filtered_files: A dictionary containing lists of files mapped to a
+          file type; filtered from a forecast submission PR.
+
+    Returns:
+        A set of team and model names wrapped in a tuple;
+        None if no names could be extracted.
+    """
+    check_results = check_labels_comments(labels_to_apply, comments_to_apply)
+    is_labels_passed_in, labels_to_apply = check_results[0]
+    is_comments_passed_in, comments_to_apply = check_results[1]
+
+    names: set[tuple[str, str]] = set()
+    if FileType.FORECAST in filtered_files:
+        for file in filtered_files[FileType.FORECAST]:
+            names.add(tuple(os.path.basename(file.filename).split("-")[-2:]))
+    
+    if FileType.METADATA in filtered_files:
+        for file in filtered_files[FileType.METADATA]:
+            names.add(tuple(os.path.basename(file.filename).split("-")[-2:]))
+    
+    if len(names) > 0:
+        # TODO: add new label to hub
+        comments_to_apply.append(
+            "You are adding/updating multiple models' files. Could you provide "
+            "a reason for doing that? If this is unintentional, please check "
+            "to make sure that your files are in the appropriate folder."
+        )
+
+    return return_labels_comments(
+        is_labels_passed_in, is_comments_passed_in,
+        labels_to_apply, comments_to_apply
+    )
 
 def check_file_locations(
-    filtered_files: dict[FileType, list(File)],
-    all_labels: dict[str, list(Label)],
+    filtered_files: dict[FileType, list[File]],
+    all_labels: dict[str, list[Label]],
     *, # forces latter parameters to be keyword-only arguments
     labels_to_apply: Optional[list[Label]] = None,
     comments_to_apply: Optional[list[str]] = None
 ) -> Optional[Union[
-    Tuple[list[Label], list[str]],
+    tuple[Union[list[Label], list[str]]],
     list[Label],
     list[str]
 ]]:
@@ -289,7 +343,7 @@ def check_file_locations(
             "PR contains file changes that are outside the "
             "`data-processed/` folder."
         )
-        labels_to_apply.append(all_labels['other-files-updated'])
+        labels_to_apply.append(all_labels["other-files-updated"])
 
     if (len(filtered_files[FileType.FORECAST]) == 0 and
         len(filtered_files[FileType.OTHER_FS]) > 0):
@@ -302,7 +356,7 @@ def check_file_locations(
 
     if len(filtered_files[FileType.METADATA]) > 0:
         comments_to_apply.append("PR contains metadata file changes.")
-        labels_to_apply.append(all_labels['metadata-change'])
+        labels_to_apply.append(all_labels["metadata-change"])
 
     return return_labels_comments(
         is_labels_passed_in, is_comments_passed_in,
@@ -310,191 +364,268 @@ def check_file_locations(
     )
 
 def check_modified_forecasts(
-    filtered_files: dict[FileType, list(File)],
+    filtered_files: dict[FileType, list[File]],
     repository: Repository,
-    all_labels: dict[str, list(Label)],
+    all_labels: dict[str, list[Label]],
     *, # forces latter parameters to be keyword-only arguments
     labels_to_apply: Optional[list[Label]] = None,
     comments_to_apply: Optional[list[str]] = None
 ) -> Optional[Union[
-    Tuple[list[Label], list[str]],
+    tuple[Union[list[Label], list[str]]],
     list[Label],
     list[str]
 ]]:
+    """
+    
+    Args:
+        filtered_files: 
+        repository:
+        all_labels:
+        labels_to_apply:
+        comments_to_apply:
+
+    Returns:
+    
+    """
     check_results = check_labels_comments(labels_to_apply, comments_to_apply)
     is_labels_passed_in, labels_to_apply = check_results[0]
     is_comments_passed_in, comments_to_apply = check_results[1]
 
-    changed_forecasts = False
+    changed_forecasts: bool = False
     for f in filtered_files[FileType.FORECAST]:
         # GitHub PR file statuses: unofficial, nothing official yet as of 9-4-21
         # "added", "modified", "renamed", "removed"
         # https://stackoverflow.com/questions/10804476/what-are-the-status-types-for-files-in-the-github-api-v3
         # https://github.com/jitterbit/get-changed-files/commit/cfe8ad4269ed4d2edb7f4e39682a649f6675bf89#diff-4fab5baaca5c14d2de62d8d2fceef376ddddcc8e9509d86cfa5643f51b89ce3dR5
         if f.status == "modified" or f.status == "removed":
-            # If file is modified, fetch the original one and save it to the forecasts_master directory
+            # if file is modified, fetch the original one and
+            # save it to the forecasts_master directory
             get_model_master(repository, filename=f.filename)
             changed_forecasts = True
 
     if changed_forecasts:
         # Add the `forecast-updated` label when there are deletions in the forecast file
-        labels_to_apply.append(all_labels['forecast-updated'])
+        labels_to_apply.append(all_labels["forecast-updated"])
         comments_to_apply.append(
             "Your submission seem to have updated/deleted some forecasts. "
             "Could you provide a reason for the updation/deletion and confirm "
             "that any updated forecasts only used data that were available at "
-            "the time the original forecasts were made?")
+            "the time the original forecasts were made?"
+        )
 
     return return_labels_comments(
         is_labels_passed_in, is_comments_passed_in,
         labels_to_apply, comments_to_apply
     )
 
+def download_files(
+    files: Iterable[File],
+    directory: pathlib.Path
+) -> None:
+    """Downloads files into the given directory.
+
+    Creates the directory if it does not exist.
+
+    Args:
+        files:
+        directory:
+    """
+    if not directory.exists():
+        os.makedirs(directory, exist_ok=True)
+    
+    for file in files:
+        urllib.request.urlretrieve(
+            file.raw_url,
+            directory/os.path.basename(file.filename)
+        )
+
 def validate() -> None:
     """Entry point and main body of validations script.
     """
 
-    # 0. Preamble
+    # Preamble
     logger.info("Running validations version %s", VALIDATIONS_VERSION)
+    logger.info("Current working directory: %s", os.getcwd())
     logger.info("GitHub Actions information:")
     logger.info(
         "GitHub Actions event name: %s",
         os.environ.get("GITHUB_EVENT_NAME")
     )
 
-    # 1. Connect to GitHub, get repository
+    # Connect to GitHub, get repository
     logger.info("Connecting to GitHub and retrieving repository...")
 
     github: Github = get_github_object(get_github_token())
     repository: Repository = get_repository(github)
-    possible_labels: dict[str, Label] = get_labels(repository)
+    all_labels: dict[str, Label] = get_labels(repository)
 
     logger.info("Repository succesfully retrieved")
     logger.info("Github repository: %s", repository.name)
 
-    # 2. Get pull request number using event payload from GitHub Actions
+    # Get pull request number using event payload from GitHub Actions
     event: dict = json.load(open(os.environ.get('GITHUB_EVENT_PATH')))
     pull_request_number: str = event['number']
     pull_request: PullRequest = repository.get_pull(pull_request_number)
 
     logger.info("Using PR number: %s", pull_request_number)
 
-    # 3. Fetch all files changed in this PR and split all files into
-    #    valid forecasts and other files
+    # Fetch all files changed in this PR and split all files into
+    # valid forecasts and other files
     logger.info("Filtering PR files by location...")
 
     filtered_files: dict[FileType, list(File)] = filter_files(
         pull_request.get_files()
     )
 
-    # 4. Decide whether this PR is a forecast submission or not
+    # Decide whether this PR is a forecast submission or not
     if not is_forecast_submission(filtered_files):
         logger.info(
             "PR does not contain files that can be interpreted "
             "as part of a forecast submission; validations skipped."
         )
         return
+    else:
+        logger.info(
+            "PR can be interpreted as a forecast submission, "
+            "proceeding with validations."
+        )
 
-    # 5. Check PR file locations and assign appropriate labels and
-    #    make appropriate comments
-    labels, comments = check_file_locations(filtered_files, possible_labels)
+    # Check PR file locations
+    labels: list[Label]
+    comments: list[str]
+    labels, comments = check_file_locations(filtered_files, all_labels)
 
-    # 6. Check if a forecast file is modified
-    check_modified_forecasts(
+    # Check and see if multiple team-models are updated
+    check_multiple_model_names(
         filtered_files,
-        repository,
-        possible_labels,
+        all_labels,
         labels_to_apply=labels,
         comments_to_apply=comments
     )
 
-    # fetch all model directories in the data folder. Used to validate if this is a new submission
-    models = get_models(repository)
+    # Check if forecast files are modified
+    check_modified_forecasts(
+        filtered_files,
+        repository,
+        all_labels,
+        labels_to_apply=labels,
+        comments_to_apply=comments
+    )
 
-    # Download all forecasts
-    # create a forecasts directory
-    os.makedirs('forecasts', exist_ok=True)
+    # Fetch all current model directories from hub.
+    # Used to validate if this is a new submission
+    models: dict[str] = get_models(repository)
 
-    # Download all forecasts changed in the PR into the forecasts folder
-    for f in forecasts:
-        urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
-
-    # Download all metadata files changed in the PR into the forecasts folder
-    for f in metadatas:
-        urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
+    # Download all forecasts and metadata files in the PR
+    # into the forecasts folder
+    download_files(
+        itertools.chain(
+            filtered_files[FileType.FORECAST],
+            filtered_files[FileType.METADATA]
+        ),
+        FORECASTS_DIRECTORY
+    )
 
     # Run validations on each of these files
     errors = {}
     is_forecast_date_mismatch = False
-    for file in glob.glob("forecasts/*.csv"):
-        error_file = forecast_check(file)
+    for file_path in FORECASTS_DIRECTORY.glob("*.csv"):
+
+        # zoltpy checks
+        file_error = forecast_check(file_path)
+
+        # everything below - hub-specific checks
 
         # extract just the filename and remove the path.
-        f_name = os.path.basename(file)
-        if len(error_file) > 0:
-            errors[os.path.basename(file)] = error_file
+        if file_error:
+            errors[file_path.name] = file_error
 
-        # Check whether the `model_abbr`  directory is present in the `data-processed` folder.
+        # Check whether the `model_abbr`  directory is present in the
+        # `data-processed` folder.
         # This is a test to check if this submission is a new submission or not
-        model = '-'.join(f_name.split('.')[0].split('-')[-2:])  # extract model_abbr from the filename
+
+        # extract model_abbr from the filename
+        model = '-'.join(file_path.stem.split('-')[-2:])  
         if model not in models:
-            if not local:
-                labels.append('new-team-submission')
+            labels.append('new-team-submission')
             if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
-                error_str = "This seems to be a new submission and you have not included a metadata file."
-                if len(error_file) > 0:
-                    errors[f_name].append(error_str)
+                error_str = (
+                    "This seems to be a new submission and you have not "
+                    "included a metadata file."
+                )
+                if file_path.name in errors:
+                    errors[file_path.name].append(error_str)
                 else:
-                    errors[f_name] = [error_str]
+                    errors[file_path.name] = [error_str]
 
         # Check for implicit and explicit retractions
-        # `forecasts_master` is a directory with the older version of the forecast (if present).
-        if os.path.isfile(f"forecasts_master/{f_name}"):
-            with open(f"forecasts_master/{f_name}", 'r') as f:
+        # `forecasts_master` is a directory with the older version of the
+        # forecast (if present).
+        if os.path.isfile(f"forecasts_master/{file_path.name}"):
+            with open(f"forecasts_master/{file_path.name}", 'r') as f:
                 print("Checking old forecast for any retractions")
-                compare_result = compare_forecasts(old=f, new=open(file, 'r'))
-                if compare_result['invalid'] and not local:
+                compare_result = compare_forecasts(
+                    old=f,
+                    new=open(file_path, 'r')
+                )
+                if compare_result['invalid']:
                     error_msg = compare_result['error']
                     # if there were no previous errors
-                    if len(error_file) == 0:
-                        errors[os.path.basename(file)] = [compare_result['error']]
+                    if len(file_error) == 0:
+                        errors[file_path.name] = [compare_result['error']]
                     else:
-                        errors[os.path.basename(file)].append(compare_result['error'])
-                if compare_result['implicit-retraction'] and not local:
+                        errors[file_path.name].append(compare_result['error'])
+                if compare_result['implicit-retraction']:
                     labels.append('forecast-implicit-retractions')
-                    retract_error = f"The forecast {os.path.basename(file)} has an invalid implicit retraction. Please review the retraction rules for a forecast in the wiki here - https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
+                    retract_error = (
+                        f"The forecast {file_path.name} has an invalid "
+                        "implicit retraction. Please review the retraction "
+                        "rules for a forecast in the wiki here - "
+                        "https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
+                    )
                     # throw an error now with Zoltar 4
-                    if len(error_file) == 0:
-                        errors[os.path.basename(file)] = [retract_error]
+                    if len(file_error) == 0:
+                        errors[file_path.name] = [retract_error]
                     else:
-                        errors[os.path.basename(file)].append(retract_error)
+                        errors[file_path.name].append(retract_error)
                 # explicit retractions
-                if compare_result['retraction'] and not local:
+                if compare_result['retraction']:
                     labels.append('retractions')
 
-        # Check for the forecast date column check is +-1 day from the current date the PR build is running
-        is_forecast_date_mismatch, err_message = filename_match_forecast_date(file)
+        # Check for the forecast date column check is +-1 day from the current
+        # date the PR build is running
+        is_forecast_date_mismatch, err_message = \
+            filename_match_forecast_date(file_path)
         if is_forecast_date_mismatch:
-            comment += err_message
+            comments.append(err_message)
 
     # Check for metadata file validation
     FILEPATH_META = "forecasts/"
     is_meta_error, meta_err_output = check_for_metadata(filepath=FILEPATH_META)
 
     if len(errors) > 0:
-        comment += "\n\n Your submission has some validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
+        comments.append(
+            "Your submission has some validation errors. Please check the logs "
+            "of the build under the \"Checks\" tab to get more details about "
+            "the error."
+        )
         print_output_errors(errors, prefix='data')
 
     if is_meta_error:
-        comment += "\n\n Your submission has some metadata validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
+        comments.append(
+            "Your submission has some metadata validation errors. Please check "
+            "the logs of the build under the \"Checks\" tab to get more "
+            "details about the error. "
+        )
         print_output_errors(meta_err_output, prefix="metadata")
 
     # add the consolidated comment to the PR
-    if comment != '' and not local:
-        pull_request.create_issue_comment(comment)
+    if comments:
+        pull_request.create_issue_comment("\n\n".join(comments))
 
     # Check if PR could be merged automatically
-    # Logic - The PR is set to automatically merge if ALL the following conditions are TRUE: 
+    # Logic - The PR is set to automatically merge
+    # if ALL the following conditions are TRUE: 
     #  - If there are no comments added to PR
     #  - If it is not run locally
     #  - If there are not metadata errors
@@ -502,20 +633,38 @@ def validate() -> None:
     #  - If there were any other files updated which includes: 
     #      - any errorneously named forecast file in data-processed folder
     #      - any changes/additions on a metadata file. 
-    #  - There is ONLY 1 valid forecast file added that has passed the validations.
-    #    That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
+    #  - There is ONLY 1 valid forecast file added that passed the validations.
+    #    That means, there was atleast one valid forecast file
+    #    (that also passed the validations) added to the PR.
 
-    if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
-            len(metadatas) + len(other_files)) == 0 and len(forecasts_err) == len(forecasts) and len(
-            forecasts) == 1:
-        print(f"Auto merging PR {pr_num if pr_num else -1}")
-        labels.append('automerge')
+    no_errors: bool = len(errors) == 0
+    has_non_csv_or_metadata: bool = (
+            len(filtered_files[FileType.METADATA]) +
+            len(filtered_files[FileType.OTHER_NONFS])
+    ) != 0
+    only_one_forecast_csv: bool = len(filtered_files[FileType.FORECAST]) == 1
+    all_csvs_in_correct_location: bool = (
+        len(filtered_files[FileType.OTHER_FS]) ==
+        len(filtered_files[FileType.FORECAST])
+    )
 
-    if pull_request is not None:
-        # set labels: labeler labels + validation labels
-        labels_to_set = labels + list(filter(lambda l: l.name in {'data-submission', 'viz', 'code'}, pull_request.labels))
-        if len(labels_to_set) > 0:
-            pull_request.set_labels(*labels_to_set)
+    if (comments and
+        not is_meta_error and
+        no_errors and 
+        not has_non_csv_or_metadata and 
+        all_csvs_in_correct_location and
+        only_one_forecast_csv
+    ):
+        logger.info("Auto merging PR %s", pull_request_number)
+        labels.append(all_labels['automerge'])
+
+    # set labels: labeler labels + validation labels
+    labels_to_set = labels + list(filter(
+        lambda l: l.name in {'data-submission', 'viz', 'code'},
+        pull_request.labels)
+    )
+    if len(labels_to_set) > 0:
+        pull_request.set_labels(*labels_to_set)
 
     print(f"Using validations version {VALIDATIONS_VERSION}")
     # fail validations build if any error occurs.
