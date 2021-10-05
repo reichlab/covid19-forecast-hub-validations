@@ -1,6 +1,4 @@
-from typing import Optional, Callable, Type, TypeVar, Generic
-import inspect
-
+from typing import Any, Optional, Callable
 class ValidationStep:
 
     def __init__(self, logic: Callable) -> None:
@@ -55,18 +53,25 @@ class ValidationStep:
         # make sure they match
         self._logic = new_logic
 
-    def execute(self) -> Optional[NotImplemented]:
+    def execute(self, store: dict[str, Any]) -> Optional[NotImplemented]:
         if self._logic is None:
             raise ValueError('validation step has no logic')
         else:
             self._logic()
             self._executed = True
     
+class ValidationStepResult:
+    def __init__(self) -> None:
+        self._to_store = None
+        self._labels = None
+        self._comments = None
+        pass
     
 
 class ValidationRun:
     def __init__(self, steps: list[ValidationStep]) -> None:
         self._steps = steps
+        self._store = {}
 
     def __init__(self) -> None:
         self(steps=[])

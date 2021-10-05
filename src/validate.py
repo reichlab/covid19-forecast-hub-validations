@@ -439,6 +439,32 @@ def download_files(
             directory/os.path.basename(file.filename)
         )
 
+def check_new_model(
+    file: pathlib.Path,
+    existing_models: list[str],
+    all_labels: dict[str, list[Label]],
+    *, # forces latter parameters to be keyword-only arguments
+    labels_to_apply: Optional[list[Label]] = None,
+    comments_to_apply: Optional[list[str]] = None
+) -> None:
+
+    check_results = check_labels_comments(labels_to_apply, comments_to_apply)
+    is_labels_passed_in, labels_to_apply = check_results[0]
+    is_comments_passed_in, comments_to_apply = check_results[1]
+
+    model = '-'.join(file.stem.split('-')[-2:])  
+    if model not in existing_models:
+        labels.append('new-team-submission')
+        if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
+            error_str = (
+                "This seems to be a new submission and you have not "
+                "included a metadata file."
+            )
+            if file_path.name in errors:
+                errors[file_path.name].append(error_str)
+            else:
+                errors[file_path.name] = [error_str]
+
 def validate() -> None:
     """Entry point and main body of validations script.
     """
@@ -458,8 +484,8 @@ def validate() -> None:
     github: Github = get_github_object(get_github_token())
     repository: Repository = get_repository(github)
     all_labels: dict[str, Label] = get_labels(repository)
-
-    logger.info("Repository succesfully retrieved")
+ 
+    logger.info("Repository successfully retrieved")
     logger.info("Github repository: %s", repository.name)
 
     # Get pull request number using event payload from GitHub Actions
@@ -540,7 +566,7 @@ def validate() -> None:
         if file_error:
             errors[file_path.name] = file_error
 
-        # Check whether the `model_abbr`  directory is present in the
+        # Check whether the `model_abbr` directory is present in the
         # `data-processed` folder.
         # This is a test to check if this submission is a new submission or not
 
