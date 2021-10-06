@@ -138,3 +138,7 @@ forecasts/
 
 # R related
 **/.Rhistory
+
+# macOS related
+.DS_Store
+**/.DS_Store
