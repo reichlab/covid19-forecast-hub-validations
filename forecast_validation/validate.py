@@ -7,7 +7,6 @@ from github.PullRequest import PullRequest
 from github.Repository import Repository
 import itertools
 import json
-import glob
 import logging
 import logging.config
 import os
@@ -16,11 +15,11 @@ import pathlib
 import re
 import sys
 import urllib.request
-import github.Label
 
 # internal dep.'s
+from validation import *
 from validation_fns.metadata import check_for_metadata
-from validation_fns.forecast_date import filename_match_forecast_date
+from validation_fns.forecast_date import check_filename_match_forecast_date
 from test_formatting import forecast_check, print_output_errors
 from model_utils import *
 from files import FileType
@@ -454,7 +453,7 @@ def check_new_model(
 
     model = '-'.join(file.stem.split('-')[-2:])  
     if model not in existing_models:
-        labels.append('new-team-submission')
+        labels_to_apply.append(all_labels['new-team-submission'])
         if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
             error_str = (
                 "This seems to be a new submission and you have not "
@@ -621,7 +620,7 @@ def validate() -> None:
         # Check for the forecast date column check is +-1 day from the current
         # date the PR build is running
         is_forecast_date_mismatch, err_message = \
-            filename_match_forecast_date(file_path)
+            check_filename_match_forecast_date(file_path)
         if is_forecast_date_mismatch:
             comments.append(err_message)
 
@@ -696,6 +695,25 @@ def validate() -> None:
     # fail validations build if any error occurs.
     if is_meta_error or len(errors) > 0 or is_forecast_date_mismatch:
         sys.exit("\n ERRORS FOUND EXITING BUILD...")
+
+def register_validation_steps():
+
+    # Connect to GitHub
+    
+
+def validate_2():
+
+    # Preamble
+    logger.info("Running validations version %s", VALIDATIONS_VERSION)
+    logger.info("Current working directory: %s", os.getcwd())
+    logger.info("GitHub Actions information:")
+    logger.info(
+        "GitHub Actions event name: %s",
+        os.environ.get("GITHUB_EVENT_NAME")
+    )
+
+    # Connect to GitHub, get repository
+    logger.info("Connecting to GitHub and retrieving repository...")
 
 if __name__ == '__main__':
     if IS_GITHUB_ACTIONS:
