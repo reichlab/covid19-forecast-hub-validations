@@ -718,7 +718,7 @@ def validate_from_pull_request():
 if __name__ == '__main__':
     if IS_GITHUB_ACTIONS:
         validate_from_pull_request()
-        print("success!")
+        print("****************** success! ******************")
     else:
         # TODO: add local version
         pass
