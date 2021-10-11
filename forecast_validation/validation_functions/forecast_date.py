@@ -1,4 +1,4 @@
-from src import validation
+from forecast_validation import validation
 
 import pandas as pd
 import os

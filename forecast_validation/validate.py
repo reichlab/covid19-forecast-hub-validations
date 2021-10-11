@@ -18,8 +18,11 @@ import urllib.request
 
 # internal dep.'s
 from validation import *
-from validation_fns.metadata import check_for_metadata
-from validation_fns.forecast_date import check_filename_match_forecast_date
+from validation_functions.metadata import check_for_metadata
+from validation_functions.forecast_date import (
+    check_filename_match_forecast_date
+)
+from validation_functions.github_connection import establish_github_connection
 from test_formatting import forecast_check, print_output_errors
 from model_utils import *
 from files import FileType
@@ -696,28 +699,26 @@ def validate() -> None:
     if is_meta_error or len(errors) > 0 or is_forecast_date_mismatch:
         sys.exit("\n ERRORS FOUND EXITING BUILD...")
 
-def register_validation_steps():
+def register_validation_steps_for_pull_request() -> ValidationRun:
+    
+    steps = []
 
     # Connect to GitHub
+    steps.append(ValidationStep(establish_github_connection))
+    
+    # make new validation run
+    validation_run = ValidationRun(steps)
+    return validation_run
     
 
-def validate_2():
-
-    # Preamble
-    logger.info("Running validations version %s", VALIDATIONS_VERSION)
-    logger.info("Current working directory: %s", os.getcwd())
-    logger.info("GitHub Actions information:")
-    logger.info(
-        "GitHub Actions event name: %s",
-        os.environ.get("GITHUB_EVENT_NAME")
-    )
-
-    # Connect to GitHub, get repository
-    logger.info("Connecting to GitHub and retrieving repository...")
-
+def validate_from_pull_request():
+    validation_run = register_validation_steps_for_pull_request()
+    validation_run.run()
+    
 if __name__ == '__main__':
     if IS_GITHUB_ACTIONS:
-        validate()
+        validate_from_pull_request()
+        print("success!")
     else:
         # TODO: add local version
         pass
