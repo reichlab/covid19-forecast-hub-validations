@@ -7,7 +7,6 @@ import os
 # internal dependencies
 from forecast_validation.validation import ValidationStepResult
 from forecast_validation.utils import get_github_token, get_github_object
-from forecast_validation.validate import VALIDATIONS_VERSION
 
 logger = logging.getLogger('hub-validations')
 
@@ -20,7 +19,7 @@ def establish_github_connection() -> ValidationStepResult:
         dictionary.
     """
     # Preamble
-    logger.info("Running validations version %s", VALIDATIONS_VERSION)
+    logger.info("Running validations version %s", 4)
     logger.info("Current working directory: %s", os.getcwd())
     logger.info("GitHub Actions information:")
     logger.info(
