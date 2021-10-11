@@ -63,6 +63,7 @@ def validate_from_pull_request():
     
 if __name__ == '__main__':
     print("---------- here ----------")
+    print(os.environ)
     if IS_GITHUB_ACTIONS:
         validate_from_pull_request()
         print("****************** success! ******************")
