@@ -17,15 +17,17 @@ import sys
 import urllib.request
 
 # internal dep.'s
-from validation import *
-from validation_functions.metadata import check_for_metadata
-from validation_functions.forecast_date import (
+from forecast_validation.validation import *
+from forecast_validation.validation_functions.metadata import check_for_metadata
+from forecast_validation.validation_functions.forecast_date import (
     check_filename_match_forecast_date
 )
-from validation_functions.github_connection import establish_github_connection
-from test_formatting import forecast_check, print_output_errors
-from model_utils import *
-from files import FileType
+from forecast_validation.validation_functions.github_connection import (
+    establish_github_connection
+)
+from forecast_validation.test_formatting import forecast_check, print_output_errors
+from forecast_validation.model_utils import *
+from forecast_validation.files import FileType
 
 # --- configurations ---
 
@@ -709,7 +711,6 @@ def register_validation_steps_for_pull_request() -> ValidationRun:
     # make new validation run
     validation_run = ValidationRun(steps)
     return validation_run
-    
 
 def validate_from_pull_request():
     validation_run = register_validation_steps_for_pull_request()

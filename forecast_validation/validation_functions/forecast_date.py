@@ -1,14 +1,14 @@
-from forecast_validation import validation
-
 import pandas as pd
 import os
 import pytz
 import datetime
 
+from forecast_validation.validation import ValidationStepResult
+
 def check_filename_match_forecast_date(
     filepath: str,
     forecast_date_column_name: str = "forecast_date"
-) -> validation.ValidationStepResult:
+) -> ValidationStepResult:
     
     # read only the forecast date column to save space
     try:
