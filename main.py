@@ -38,7 +38,7 @@ FILENAME_PATTERNS: dict[FileType, re.Pattern] = {
 # True/False indicating whether the script is run in a CI environment or not
 # The "CI" system environment variable is always set to "true" for GitHub
 # Actions: https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") != "true"
+IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
 
 # Logging
 logging.config.fileConfig('logging.conf')
