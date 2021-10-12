@@ -108,7 +108,7 @@ def compare_forecasts(old, new):
             result['invalid'] = True
             result['error'] = "Forecast has 100% same values updated."
     except KeyError as e:
-        print(e)
+        # print(e)
         # New forecast has some indices that are NOT in old forecast
         result['implicit-retraction'] = True
     else:   

@@ -1,9 +1,5 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
-
 import unittest
-from model_utils import *
+from forecast_validation.model_utils import *
 
 # List of sample PRs that we want to check against
 test_prs = [3448, 3342]
