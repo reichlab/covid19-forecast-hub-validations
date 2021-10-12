@@ -93,6 +93,9 @@ class ValidationStep:
             if not isinstance(result, ValidationStepResult):
                 raise RuntimeError("validation step result type mismatch")
 
+            return result
+            
+
 class ValidationPerFileStep(ValidationStep):
     def execute(
         self,
