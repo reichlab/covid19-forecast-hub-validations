@@ -48,9 +48,6 @@ class ValidationStep:
         self._result: Optional[ValidationStepResult] = None
         self._logic: Optional[Callable] = logic
 
-    def __init__(self) -> None:
-        self(logic=None)
-
     @property
     def executed(self) -> bool:
         return self._executed
@@ -106,7 +103,7 @@ class ValidationPerFileStep(ValidationStep):
             raise RuntimeError("validation step has no logic")
         else:
             parameters = set(inspect.signature(self._logic).parameters)
-            
+
             if "files" not in parameters:
                 raise RuntimeError((
                     "per-file validation step must contain logic that takes "
