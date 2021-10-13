@@ -38,7 +38,7 @@ class ValidationStepResult:
 
 class ValidationStep:
     @staticmethod
-    def check_logic(logic: Callable) -> None:
+    def check_logic(logic: Optional[Callable]) -> None:
         if logic is not None and not isinstance(logic, Callable):
             raise TypeError("logic must be a Callable (i.e., function)")
 
@@ -64,8 +64,7 @@ class ValidationStep:
     def logic(self) -> Optional[Callable]:
         return self._logic
 
-    @logic.setter
-    def logic(self, new_logic: Optional[Callable]) -> None:
+    def set_logic(self, new_logic: Optional[Callable]) -> None:
         """Sets or clears the logic of the validation step.
 
         If None is given, then the logic is cleared. Otherwise,
