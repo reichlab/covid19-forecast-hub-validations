@@ -32,14 +32,14 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     comments = []
     filtered_files: dict[FileType, list[File]] = store["filtered_files"]
 
-    names: set[tuple[str, str]] = set()
+    names: set[str] = set()
     if FileType.FORECAST in filtered_files:
         for file in filtered_files[FileType.FORECAST]:
-            names.add(tuple(os.path.basename(file.filename).split("-")[-2:]))
+            names.add("-".join(os.path.basename(file.filename).split("-")[-2:]))
     
     if FileType.METADATA in filtered_files:
         for file in filtered_files[FileType.METADATA]:
-            names.add(tuple(os.path.basename(file.filename).split("-")[-2:]))
+            names.add("-".join(os.path.basename(file.filename).split("-")[-2:]))
     if len(names) > 0:
         updated_models = ", ".join(names)
         logger.info(
