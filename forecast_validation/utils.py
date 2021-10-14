@@ -28,6 +28,8 @@ def match_file(
     if len(matched) == 0:
         matched.append[FileType.OTHER_NONFS]
 
+    return matched
+
 def filter_files(
     files: Iterable[File],
     patterns: dict[FileType, re.Pattern]
