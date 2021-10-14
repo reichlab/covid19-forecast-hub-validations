@@ -63,7 +63,7 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
     validation_run = ValidationRun(steps)
 
     # add initial values to store
-    validation_run.store += {
+    validation_run.store.update({
         "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
         "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
         "FORECASTS_DIRECTORY": FORECASTS_DIRECTORY,
@@ -71,7 +71,7 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
         "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \
             GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
-    }
+    })
 
     return validation_run
 
