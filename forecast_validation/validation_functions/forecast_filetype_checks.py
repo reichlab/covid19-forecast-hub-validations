@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 from github.File import File
 from github.Label import Label
 from github.Repository import Repository
-import os.path
+import pathlib
 
 from yaml import scan
 
@@ -33,13 +33,13 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     filtered_files: dict[FileType, list[File]] = store["filtered_files"]
 
     names: set[str] = set()
-    if FileType.FORECAST in filtered_files:
-        for file in filtered_files[FileType.FORECAST]:
-            names.add("-".join(os.path.basename(file.filename).split("-")[-2:]))
-    
-    if FileType.METADATA in filtered_files:
-        for file in filtered_files[FileType.METADATA]:
-            names.add("-".join(os.path.basename(file.filename).split("-")[-2:]))
+    files_to_check: list[File] = (
+        filtered_files.get(FileType.FORECAST, []) +
+        filtered_files.get(FileType.METADATA, [])
+    )
+    for file in files_to_check:
+        filepath = pathlib.Path(file.filename)
+        names.add("-".join(filepath.stem.split("-")[-2:]))
     if len(names) > 0:
         updated_models = ", ".join(names)
         logger.info(

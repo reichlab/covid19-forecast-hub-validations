@@ -186,7 +186,7 @@ class ValidationRun:
                     if step.result.file_errors is not None:
                         errors |= step.result.file_errors
 
-            pull_request.set_labels(labels)
+            pull_request.set_labels(list(labels))
             pull_request.create_issue_comment(
                 "\n\n".join(comments)
             )
