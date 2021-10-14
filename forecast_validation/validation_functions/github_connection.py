@@ -1,5 +1,5 @@
 # external dependencies
-from typing import Any, Optional
+from typing import Any
 from github import Github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -58,7 +58,7 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     possible_labels = {l.name: l for l in repository.get_labels()}
 
     logger.info("Repository successfully retrieved")
-    logger.info("Github repository: %s", repository.name)
+    logger.info("Github repository: %s", repository.full_name)
 
     return ValidationStepResult(
         success=True,

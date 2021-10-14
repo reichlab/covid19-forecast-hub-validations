@@ -21,7 +21,7 @@ from forecast_validation.files import FileType
 VALIDATIONS_VERSION: int = 4
 
 # Name of hub repository
-HUB_REPOSITORY_NAME: str = "reichlab/covid19-forecast-hub"
+HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
 
 # Name of directory to create for forecasts
 FORECASTS_DIRECTORY: pathlib.Path = pathlib.Path("forecasts")
