@@ -14,19 +14,13 @@ from forecast_validation.validation_functions.metadata import (
     get_metadata_model,
     output_duplicate_models
 )
-from forecast_validation.validation_functions.forecast_filename import (
-    validate_forecast_file_name
-)
-from forecast_validation.validation_functions.forecast_date import (
-    check_filename_match_forecast_date
-)
 
-metadata_version = 6
-
-# this is the root of the repository. 
-root = (Path(__file__) /'..'/'..').resolve()
-pop_df = pd.read_csv(open(root/'data-locations'/'locations.csv')).astype({'location':str})
-
+METADATA_VERSION = 6
+REPOSITORY_ROOT = (Path(__file__)/".."/"..").resolve()
+with open(
+    REPOSITORY_ROOT/"data-locations"/"locations.csv", "r"
+) as locations_csv:
+    POPULATION_DATAFRAME = pd.read_csv(locations_csv).astype({'location': str})
 
 '''
     Get the numer of invalid predictions in a forecast file.
@@ -44,20 +38,20 @@ pop_df = pd.read_csv(open(root/'data-locations'/'locations.csv')).astype({'locat
     County population aggregated to state and state thereafter aggregated to national. 
 '''
 def get_num_invalid_predictions(forecast_filename):
-    model_df = pd.read_csv(open(forecast_filename, 'r'))
-    # preprocess model dataframe
-#     model_df['location'].replace('US', -1, inplace=True)
-    model_df = model_df.astype({'location':str})
-    merged = model_df.merge(pop_df[['location', 'population']], on='location', how='left')
+    with open(forecast_filename) as file:
+        model_df = pd.read_csv(file).astype({'location': str})
+    merged = model_df.merge(
+        POPULATION_DATAFRAME[['location', 'population']],
+        on='location', how='left'
+    )
     num_invalid_preds = np.sum(merged['value'] >= merged['population'])
     return num_invalid_preds, merged[merged['value'] >= merged['population']]
     
-
 def validate_forecast_values(filepath):
     num_invalid, preds = get_num_invalid_predictions(filepath)
-    if  num_invalid> 0:
+    if num_invalid > 0:
         return True, [f"PREDICTION ERROR: You have {num_invalid} invalid predictions in your file. Invalid Predictions:\n {preds}"]
-    return  False, "no errors"
+    return False, "no errors"
 
 def validate_forecast_file(filepath, silent=False):
     """
@@ -75,7 +69,12 @@ def validate_forecast_file(filepath, silent=False):
         return False, file_error
 
 
-def compile_output_errors(filepath, is_filename_error, filename_error_output, is_error, forecast_error_output):
+def compile_output_errors(
+    is_filename_error,
+    filename_error_output,
+    is_error,
+    forecast_error_output
+):
     """
     purpose: update locally_validated_files.csv and remove deleted files
 
@@ -136,10 +135,15 @@ def print_output_errors(output_errors, prefix=""):
             print("\n* ERROR IN ", filename)
             for error in errors:
                 print(error)
-        print("\n✗ %s error found in %d file%s. Error details are above." % (prefix, len(output_errors) ,("s" if len(output_errors)>1 else "")))
+        print(
+            "\n✗ %s error found in %d file %s. Error details are above." % (
+                prefix,
+                len(output_errors),
+                "s" if len(output_errors) > 1 else ""
+            )
+        )
     else:
         print("\n✓ no %s errors"% (prefix))
-
 
 # Check forecast formatting
 def check_formatting(my_path):
@@ -158,7 +162,6 @@ def check_formatting(my_path):
     meta_output_errors = {}
     existing_metadata_name = collections.defaultdict(list)
     existing_metadata_abbr = collections.defaultdict(list)
-    errors_exist = False  # Keep track of errors
     metadata_validation_cache = {}
     # Iterate through processed csvs
     for path in glob.iglob(my_path + "**/**/", recursive=False):
@@ -180,18 +183,12 @@ def check_formatting(my_path):
         if is_metadata_error:
             meta_output_errors[path] = metadata_error_output
 
-        # Get filepath
-        forecast_file_path = os.path.basename(os.path.dirname(path))
-
         # Iterate through forecast files to validate format
         for filepath in glob.iglob(path + "*.csv", recursive=False):
             files_in_repository += [filepath]
 
             # Check if file has been edited since last checked
             if filepath not in previous_checked:
-
-                # Validate forecast file name = forecast file path
-                # is_filename_error, filename_error_output = validate_forecast_file_name(filepath, forecast_file_path)
 
                 # Validate forecast file formatting
                 output_error_text = forecast_check(filepath)
@@ -214,7 +211,7 @@ def check_formatting(my_path):
     # Error if necessary and print to console
     print_output_errors(meta_output_errors, prefix='metadata')
     print_output_errors(output_errors, prefix='data')
-    print('Using validation code v%g.' % metadata_version)
+    print('Using validation code v%g.' % METADATA_VERSION)
     if len(meta_output_errors) + len(output_errors) > 0:
         sys.exit("\n ERRORS FOUND EXITING BUILD...")
 
@@ -282,8 +279,6 @@ def main_ci():
     files_changed = [f"./{file.filename}" for file in forecasts if file.filename.startswith('data-processed') and (file.filename.endswith('.csv') or file.filename.endswith('.txt'))]
     print(f"files changed: {files_changed}")
     
-
-
 if __name__ == "__main__":
     if os.environ.get('GITHUB_ACTIONS')=='true':
         main_ci()

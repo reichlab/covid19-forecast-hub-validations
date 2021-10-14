@@ -185,3 +185,5 @@ def download_all_forecast_and_metadata_files(
         )
 
     logger.info("Download successful")
+
+    return ValidationStepResult(True)

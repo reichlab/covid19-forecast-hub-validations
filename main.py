@@ -25,6 +25,9 @@ from forecast_validation.validation_functions.forecast_filetype_checks import (
     check_file_locations,
     check_modified_forecasts
 )
+from forecast_validation.validation_functions.forecast_file_checks import (
+    get_all_forecast_and_metadata_filepaths
+)
 
 
 # --- configurations ---
@@ -88,6 +91,8 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Download all forecast and metadata files
     steps.append(ValidationStep(download_all_forecast_and_metadata_files))
+
+    steps.append(ValidationStep(get_all_forecast_and_metadata_filepaths))
 
     # make new validation run
     validation_run = ValidationRun(steps)
