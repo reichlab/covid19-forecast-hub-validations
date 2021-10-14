@@ -57,6 +57,10 @@ class ValidationStep:
         return None if self._result is None else self._result.success
 
     @property
+    def result(self) -> Optional[ValidationStepResult]:
+        return self._result
+
+    @property
     def has_logic(self) -> bool:
         return self._logic is not None
 
@@ -89,6 +93,7 @@ class ValidationStep:
                 result = self._logic()
 
             self._executed = True
+            self._result = result
             if not isinstance(result, ValidationStepResult):
                 raise RuntimeError("validation step result type mismatch")
 
@@ -96,6 +101,18 @@ class ValidationStep:
             
 
 class ValidationPerFileStep(ValidationStep):
+
+    def check_logic(logic: Callable) -> None:
+        ValidationStep.check_logic(logic)
+        
+        parameters = set(inspect.signature(logic).parameters)
+        if "files" not in parameters:
+            raise ValueError((
+                "per-file validation step must contain logic that takes "
+                "a parameter called `files` on which to run the per-file "
+                "logic"
+            ))
+
     def execute(
         self,
         store: dict[str, Any],
@@ -105,22 +122,17 @@ class ValidationPerFileStep(ValidationStep):
             raise RuntimeError("validation step has no logic")
         else:
             parameters = set(inspect.signature(self._logic).parameters)
-
-            if "files" not in parameters:
-                raise RuntimeError((
-                    "per-file validation step must contain logic that takes "
-                    "a parameter called `files` on which to run the per-file "
-                    "logic"
-                ))
-            
             if "store" in parameters:
                 result = self._logic(store=store, files=files)
             else:
                 result = self._logic(files=files)
 
             self._executed = True
+            self._result = result
             if not isinstance(result, ValidationStepResult):
                 raise RuntimeError("validation step result type mismatch")
+
+            return result
 
 class ValidationRun:
     def __init__(
@@ -148,6 +160,14 @@ class ValidationRun:
                 self._forecast_files |= result.forecast_files
 
         self._upload_labels_comments_and_errors()
+
+    @property
+    def store(self) -> dict[str, Any]:
+        return self._store
+
+    @property
+    def validation_steps(self) -> list[ValidationStep]:
+        return self._steps
 
     def _upload_labels_comments_and_errors(self):
         pass

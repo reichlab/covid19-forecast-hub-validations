@@ -33,3 +33,29 @@ def get_github_object(token: Optional[str] = None) -> Github:
         A PyGithub Github object that can be used to make GitHub REST API calls.
     """
     return Github(token) if token is not None else Github()
+
+def get_repository(
+    github: Github,
+    environment_variable_name: str = "GITHUB_REPOSITORY",
+    fallback_repository_name: str = HUB_REPOSITORY_NAME
+) -> Repository:
+    """Returns the repository object that we will be working on.
+
+    Uses the repository named in the system environment variable
+    "GITHUB_REPOSITORY" if it exists. If not, default to the hub repository
+    which is named in the configurations above.
+
+    Args:
+        github_object: PyGithub Github object used to make the API call to
+          retrieve the repository object.
+        fallback_repository_name: Optional; a fallback repository name to use
+          in case the GITHUB_REPOSITORY environment varialbe is not set.
+    
+    Returns:
+        A PyGithub Repository object representing the repository that we
+        will be working on.
+    """
+    repository_name: str = os.environ.get(environment_variable_name)
+    if repository_name is None:
+        repository_name = fallback_repository_name
+    return github.get_repo(repository_name)

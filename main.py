@@ -9,7 +9,8 @@ import re
 # internal dep.'s
 from forecast_validation.validation import *
 from forecast_validation.validation_functions.github_connection import (
-    establish_github_connection
+    establish_github_connection,
+    extract_pull_request
 )
 from forecast_validation.model_utils import *
 from forecast_validation.files import FileType
@@ -40,26 +41,42 @@ FILENAME_PATTERNS: dict[FileType, re.Pattern] = {
 # Actions: https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
 IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
 
+GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME = "GH_TOKEN"
+
 # Logging
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('hub-validations')
 
 # --- configurations end ---
 
-def register_validation_steps_for_pull_request() -> ValidationRun:
+def setup_validation_run_for_pull_request() -> ValidationRun:
     
     steps = []
 
     # Connect to GitHub
     steps.append(ValidationStep(establish_github_connection))
+
+    # Extract PR
+    steps.append(ValidationStep(extract_pull_request))
     
     # make new validation run
     validation_run = ValidationRun(steps)
+
+    # add initial values to store
+    validation_run.store += {
+        "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
+        "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
+        "FORECASTS_DIRECTORY": FORECASTS_DIRECTORY,
+        "FILENAME_PATTERNS": FILENAME_PATTERNS,
+        "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
+        "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \
+            GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+    }
+
     return validation_run
 
 def validate_from_pull_request():
-    validation_run = register_validation_steps_for_pull_request()
-    validation_run.run()
+    setup_validation_run_for_pull_request().run()
     
 if __name__ == '__main__':
     print("---------- here ----------")
