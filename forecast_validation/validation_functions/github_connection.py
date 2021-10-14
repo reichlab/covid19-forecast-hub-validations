@@ -23,49 +23,22 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     """
     Establishes the connection to GitHub.
 
-    Returns:
-        A ValidationStepResult object with the Github object in the to_store
-        dictionary.
-    """
-    """Returns the GitHub PAT stored as a environment variable.
-
     If the name of the environment variable storing the GitHub PAT is not given,
-    then it will default to searching for one named "GH_TOKEN".
-
-    Args:
-        github_token_envvar_name: Optional; name of the environment variable
-          that stores the GitHub PAT. Defaults to "GH_TOKEN".
-
-    Returns:
-        The stored GitHub PAT, None if not found.
-    """
-    """Returns a PyGithub Github object.
-    
-    Once created, require a network connection for subsequent calls.
-
-    Args:
-        token: Optional; GitHub PAT. If provided can help rate-limiting
-          be less limiting. See https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
-          for more details.
-
-    Returns:
-        A PyGithub Github object that can be used to make GitHub REST API calls.
-    """
-    """Returns the repository object that we will be working on.
+    then it will default to searching for one named "GH_TOKEN". If provided, 
+    can help rate-limiting be less stringent. See https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
+    for more details.
 
     Uses the repository named in the system environment variable
     "GITHUB_REPOSITORY" if it exists. If not, default to the hub repository
-    which is named in the configurations above.
+    which is named in the configurations (loaded in using the store).
 
-    Args:
-        github_object: PyGithub Github object used to make the API call to
-          retrieve the repository object.
-        fallback_repository_name: Optional; a fallback repository name to use
-          in case the GITHUB_REPOSITORY environment varialbe is not set.
-    
     Returns:
-        A PyGithub Repository object representing the repository that we
-        will be working on.
+        A ValidationStepResult object with
+            * the Github object,
+            * the object of the repository from which the pull
+                request originated
+            * a dictionary of label names to labels that can be applied to the
+                pull request.
     """
     
     logger.info(
@@ -116,6 +89,8 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     )
 
 def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
+    """Extracts the pull request that the validations will be run on.
+    """
     repository: Repository = store["repository"]
     with open(os.environ.get("GITHUB_EVENT_PATH")) as event_file:
         event: dict = json.load(event_file)
@@ -130,6 +105,12 @@ def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
     )
 
 def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
+    """Determines whether the pull request is a forecast submission or not.
+
+    If it decides it is not, then a ValidationStepResult with the
+    skip_steps_after flag set to True will be returned, which will cause the
+    validation engine to skip the rest of the validation steps.
+    """
     pull_request: PullRequest = store["pull_request"]
 
     filtered_files: dict[FileType, list(File)] = filter_files(
