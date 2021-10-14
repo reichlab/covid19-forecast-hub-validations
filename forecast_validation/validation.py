@@ -1,16 +1,17 @@
-import inspect
-from logging import log
-from types import MappingProxyType
-from typing import Any, Optional, Callable, Union
+from typing import Any, Optional, Callable
 from github.Label import Label
 import dataclasses
+import inspect
+import logging
 import os
+
+logger = logging.getLogger("hub-validations")
 
 @dataclasses.dataclass(frozen=True)
 class ValidationStepResult:
     """
-    Data class to store the result of a validation step. The fields `success`
-    and `fatal` are parameters required to create a ValidationStepResult object.
+    Data class to store the result of a validation step. The `success` field
+    is required for initialization.
 
     See https://docs.python.org/3.9/library/dataclasses.html?highlight=dataclasses
     for how data classes work.
@@ -30,7 +31,8 @@ class ValidationStepResult:
             error(s) that are specific to forecast files; keyed by file path
     """
     success: bool
-    to_store: Optional[dict] = None
+    skip_steps_after: bool = False
+    to_store: Optional[dict[str, Any]] = None
     forecast_files: Optional[set[os.PathLike]] = None
     labels: Optional[set[Label]] = None
     comments: Optional[list[str]] = None
@@ -87,10 +89,12 @@ class ValidationStep:
             needs_store: bool = (
                 "store" in set(inspect.signature(self._logic).parameters)
             )
+
             if needs_store:
                 result = self._logic(store=store)
             else:
                 result = self._logic()
+
 
             self._executed = True
             self._result = result
@@ -141,7 +145,7 @@ class ValidationRun:
     ) -> None:
         self._steps: list[ValidationStep] = steps
         self._forecast_files: set[os.PathLike] = None
-        self._store: dict = {}
+        self._store: dict[str, Any] = {}
 
     def run(self):
         for step in self._steps:
@@ -159,7 +163,9 @@ class ValidationRun:
             elif result.forecast_files is not None:
                 self._forecast_files |= result.forecast_files
 
-        self._upload_labels_comments_and_errors()
+            if result.skip_steps_after:
+                logger.info("Skipping the rest of validation steps")
+                return
 
     @property
     def store(self) -> dict[str, Any]:
@@ -168,6 +174,3 @@ class ValidationRun:
     @property
     def validation_steps(self) -> list[ValidationStep]:
         return self._steps
-
-    def _upload_labels_comments_and_errors(self):
-        pass

@@ -4,9 +4,7 @@ import github.Repository
 import os
 import yaml
 import urllib.request
-import sys
 import pandas as pd
-
 
 def get_models(
     repository: github.Repository.Repository,
@@ -39,22 +37,20 @@ def get_models(
             models.add(os.path.basename(item.path))
     return models
 
-
 def fetch_url(url: str, path: str) -> str:
     urllib.request.urlretrieve(url, path)
     return path
 
-
 def get_metadata_for_model(repo, model_abbr, directory="data-processed"):
-    """
-        return contents of the metadata file as a python dictionary. If not available, return None
+    """return contents of the metadata file as a python dictionary.
+    
+    If not available, return None
     """
     meta = repo.get_contents(f"{directory}/{model_abbr}/metadata-{model_abbr}.txt")
     try:
         return yaml.safe_load(meta.decoded_content)
     except:
         return None
-
 
 def get_model_master(
     repository: github.Repository.Repository,
@@ -64,7 +60,9 @@ def get_model_master(
     remote_directory: str = "data-processed",
     local_directory: str = "forecasts_master"
 ) -> Optional[str]:
-    """Retrieve the forecast from master branch of repo. If not present, return None
+    """Retrieve the forecast from master branch of repo.
+    
+    If not present, return None.
     """
     try:
         os.makedirs(local_directory, exist_ok=True)
@@ -78,14 +76,16 @@ def get_model_master(
         print(f"{filename} : Forecast not present in master")
         return None
 
-
-def compare_forecasts(old, new):
+def compare_forecasts(old, new) -> bool:
     """
     Compare the 2 forecasts and returns whether there are any implicit retractions or not
-    @type old: Either a file pointer or a path string.
-    @type new: Either a file pointer or a path string.
 
-    @return Bool: Whether this update has a retraction or not
+    Args:
+        old: Either a file pointer or a path string.
+        new: Either a file pointer or a path string.
+
+    Returns:
+        Whether this update has a retraction or not
     """
     old_df = pd.read_csv(old, index_col=["forecast_date", "target", "target_end_date", "location",
                                          "type", "quantile"])

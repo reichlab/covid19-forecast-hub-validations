@@ -1,61 +1,82 @@
-from typing import Optional
+from typing import Optional, Iterable
 from github import Github
+from github.File import File
+from github.Repository import Repository
 import os
+import re
 
-def get_github_token(
-    github_token_environment_variable_name: str = "GH_TOKEN"
-) -> Optional[str]:
-    """Returns the GitHub PAT stored as a environment variable.
+from forecast_validation.files import FileType
 
-    If the name of the environment variable storing the GitHub PAT is not given,
-    then it will default to searching for one named "GH_TOKEN".
+def match_file(
+    file: File, patterns: dict[FileType, re.Pattern]
+) -> list[FileType]:
+    """Returns the type of the file given the filename.
+
+    Uses FILENAME_PATTERNS dictionary in the configuration section
+    to do the filename-filetype matching.
 
     Args:
-        github_token_envvar_name: Optional; name of the environment variable
-          that stores the GitHub PAT. Defaults to "GH_TOKEN".
+        file: A PyGithub File object representing the file to match.
 
     Returns:
-        The stored GitHub PAT, None if not found.
+        A list of all possible file types that the file matched on.
     """
-    return os.environ.get(github_token_environment_variable_name)
+    matched = []
+    for filetype in patterns:
+        if patterns[filetype].match(file.filename):
+            matched.append[filetype]
+    if len(matched) == 0:
+        matched.append[FileType.OTHER_NONFS]
 
-def get_github_object(token: Optional[str] = None) -> Github:
-    """Returns a PyGithub Github object.
+def filter_files(
+    files: Iterable[File],
+    patterns: dict[FileType, re.Pattern]
+) -> dict[FileType, list[File]]:
+    """Filters a list of filenames into corresponding file types.
+
+    Uses match_file() to match File to FileType.
+
+    Args:
+        files: List of PyGithub File objects.
+
+    Returns:
+        A dictionary keyed by the type of file and contains a list of Files
+        of that type as value.
+    """
+    filtered_files: dict[FileType, list[File]] = {}
+    for file in files:
+        file_types: list[FileType] = match_file(file, patterns)
+        for file_type in file_types:
+            if file_type not in filtered_files:
+                filtered_files[file_type] = [file]
+            else:
+                filtered_files[file_type].append(file)
     
-    Once created, require a network connection for subsequent calls.
+    return filtered_files
+
+def is_forecast_submission(
+    filtered_files: dict[FileType, list[File]]
+) -> bool:
+    """Checks types of files to determine if the PR is a forecast submission.
+
+    There must be at least one file that is not of type `FileType.OTHER_NONFS`.
+    To see how file types are determined, check the `FILENAME_PATTERNS`
+    dictionary in the configuration section or a similar dictionary passed into
+    a preceding call of `filter_files()`.
 
     Args:
-        token: Optional; GitHub PAT. If provided can help rate-limiting
-          be less limiting. See https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting
-          for more details.
+        filtered_files: A dictionary containing lists of PyGithub File objects
+          mapped to their type.
 
     Returns:
-        A PyGithub Github object that can be used to make GitHub REST API calls.
+        True if the given file dictionary represents a forecast submission PR,
+        False if not.
     """
-    return Github(token) if token is not None else Github()
 
-def get_repository(
-    github: Github,
-    environment_variable_name: str = "GITHUB_REPOSITORY",
-    fallback_repository_name: str = HUB_REPOSITORY_NAME
-) -> Repository:
-    """Returns the repository object that we will be working on.
+    # TODO: this is really better done by separating the data repository from
+    # code that runs on that repository. However, that is a super big change,
+    # so more discussion and decision-making is required.
 
-    Uses the repository named in the system environment variable
-    "GITHUB_REPOSITORY" if it exists. If not, default to the hub repository
-    which is named in the configurations above.
-
-    Args:
-        github_object: PyGithub Github object used to make the API call to
-          retrieve the repository object.
-        fallback_repository_name: Optional; a fallback repository name to use
-          in case the GITHUB_REPOSITORY environment varialbe is not set.
-    
-    Returns:
-        A PyGithub Repository object representing the repository that we
-        will be working on.
-    """
-    repository_name: str = os.environ.get(environment_variable_name)
-    if repository_name is None:
-        repository_name = fallback_repository_name
-    return github.get_repo(repository_name)
+    return (FileType.FORECAST in filtered_files or
+            FileType.METADATA in filtered_files or
+            FileType.OTHER_FS in filtered_files)

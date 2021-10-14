@@ -10,7 +10,8 @@ import re
 from forecast_validation.validation import *
 from forecast_validation.validation_functions.github_connection import (
     establish_github_connection,
-    extract_pull_request
+    extract_pull_request,
+    determine_pull_request_type
 )
 from forecast_validation.model_utils import *
 from forecast_validation.files import FileType
@@ -44,7 +45,7 @@ IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
 GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME = "GH_TOKEN"
 
 # Logging
-logging.config.fileConfig('logging.conf')
+logging.config.fileConfig("logging.conf")
 
 # --- configurations end ---
 
@@ -57,6 +58,9 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Extract PR
     steps.append(ValidationStep(extract_pull_request))
+
+    # Determine whether this PR is a forecast submission
+    steps.append(ValidationStep(determine_pull_request_type))
     
     # make new validation run
     validation_run = ValidationRun(steps)
