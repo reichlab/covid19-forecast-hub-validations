@@ -193,10 +193,13 @@ class ValidationRun:
             )
             if len(errors) == 0:
                 pull_request.create_issue_comment(
+                    "Errors: \n\n"
                     "✔️ No validation errors in this PR."
                 )
             else:
-                error_comment = "❌ There are errors in this PR: \n\n"
+                error_comment = (
+                    "Errors: \n\n"
+                    "❌ There are errors in this PR. \n\n")
                 for path in errors:
                     error_comment += f"{path}: {errors[path]} \n"
                 pull_request.create_issue_comment(error_comment.rstrip())
