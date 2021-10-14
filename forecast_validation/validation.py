@@ -146,7 +146,7 @@ class ValidationRun:
         steps: list[ValidationStep] = []
     ) -> None:
         self._steps: list[ValidationStep] = steps
-        self._forecast_files: set[os.PathLike] = None
+        self._forecast_files: set[os.PathLike] = set()
         self._store: dict[str, Any] = {}
 
     def run(self):
