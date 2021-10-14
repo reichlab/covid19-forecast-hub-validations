@@ -25,7 +25,7 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     logger.info(
         "Running validations version %s",
         store.get(
-            "VALIDATION_VERSION",
+            "VALIDATIONS_VERSION",
             "<missing validation version number>"
         )
     )
