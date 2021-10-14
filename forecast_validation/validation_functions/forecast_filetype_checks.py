@@ -9,22 +9,12 @@ from yaml import scan
 
 from forecast_validation.files import FileType
 from forecast_validation.validation import ValidationStepResult
-from forecast_validation.model_utils import get_model_master
+from forecast_validation.utils import get_existing_model
 
 logger = logging.getLogger("hub-validations")
 
 def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
-    """Extract team and model names from forecast submission files.
-
-    If unable to extract, returns None.
-
-    Args:
-        filtered_files: A dictionary containing lists of files mapped to a
-          file type; filtered from a forecast submission PR.
-
-    Returns:
-        A set of team and model names wrapped in a tuple;
-        None if no names could be extracted.
+    """Checks if the PR is updating multiple models.
     """
 
     logger.info("Checking if the PR is adding to/updating multiple models...")
@@ -64,14 +54,6 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
 
 def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     """Checks file locations and returns appropriate labels and comments.
-
-    Args:
-        filtered_filenames: a dictionary of FileType to list of filenames.
-
-    Returns:
-        A tuple of a list of Label object and a list of comments as strings.
-        Uses `labels_to_apply` and `comments_to_apply` if given, and will
-        return appropriately.
     """
     success: bool = True
     filtered_files: dict[FileType, list[File]] = store["filtered_files"]
@@ -122,17 +104,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     )
 
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
-    """
-    
-    Args:
-        filtered_files: 
-        repository:
-        all_labels:
-        labels_to_apply:
-        comments_to_apply:
-
-    Returns:
-    
+    """Checks if a PR contains updates to existing forecasts.
     """
     repository: Repository = store["repository"]
     filtered_files: dict[FileType, list[File]] = store["filtered_files"]
@@ -152,7 +124,7 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
         if f.status == "modified" or f.status == "removed":
             # if file is modified, fetch the original one and
             # save it to the forecasts_master directory
-            get_model_master(repository, filename=f.filename)
+            get_existing_model(repository, filename=f.filename)
             changed_forecasts = True
 
     if changed_forecasts:

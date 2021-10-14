@@ -16,7 +16,9 @@ from forecast_validation.validation import (
 from forecast_validation.validation_functions.github_connection import (
     establish_github_connection,
     extract_pull_request,
-    determine_pull_request_type
+    determine_pull_request_type,
+    get_all_models_from_repository,
+    download_all_forecast_and_metadata_files
 )
 from forecast_validation.validation_functions.forecast_filetype_checks import (
     check_multiple_model_names,
@@ -80,6 +82,12 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Check if the PR has updated existing forecasts
     steps.append(ValidationStep(check_modified_forecasts))
+
+    # Get all current models from hub repository
+    steps.append(ValidationStep(get_all_models_from_repository))
+
+    # Download all forecast and metadata files
+    steps.append(ValidationStep(download_all_forecast_and_metadata_files))
 
     # make new validation run
     validation_run = ValidationRun(steps)

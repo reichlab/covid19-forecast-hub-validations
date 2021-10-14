@@ -326,42 +326,6 @@ def validate() -> None:
     """Entry point and main body of validations script.
     """
 
-    # Check PR file locations
-    labels: list[Label]
-    comments: list[str]
-    labels, comments = check_file_locations(filtered_files, all_labels)
-
-    # Check and see if multiple team-models are updated
-    check_multiple_model_names(
-        filtered_files,
-        all_labels,
-        labels_to_apply=labels,
-        comments_to_apply=comments
-    )
-
-    # Check if forecast files are modified
-    check_modified_forecasts(
-        filtered_files,
-        repository,
-        all_labels,
-        labels_to_apply=labels,
-        comments_to_apply=comments
-    )
-
-    # Fetch all current model directories from hub.
-    # Used to validate if this is a new submission
-    models: dict[str] = get_models(repository)
-
-    # Download all forecasts and metadata files in the PR
-    # into the forecasts folder
-    download_files(
-        itertools.chain(
-            filtered_files[FileType.FORECAST],
-            filtered_files[FileType.METADATA]
-        ),
-        FORECASTS_DIRECTORY
-    )
-
     # Run validations on each of these files
     errors = {}
     is_forecast_date_mismatch = False

@@ -1,17 +1,22 @@
 # external dependencies
+import pathlib
 from typing import Any
 from github import Github
 from github.File import File
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+import itertools
 import json
 import logging
 import os
+import os.path
+import urllib.request
 
 # internal dependencies
 from forecast_validation.files import FileType
 from forecast_validation.utils import (
     filter_files,
+    get_models,
     is_forecast_submission
 )
 from forecast_validation.validation import ValidationStepResult
@@ -118,7 +123,7 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         store["FILENAME_PATTERNS"]
     )
 
-    # Decide whether this PR is a forecast submission or not
+    logger.info("Determining if PR is a forecast submission...")
     if not is_forecast_submission(filtered_files):
         logger.info(
             "PR does not contain files that can be interpreted "
@@ -138,3 +143,45 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         success=True,
         to_store={"filtered_files": filtered_files}
     )
+
+def get_all_models_from_repository(
+    store: dict[str, Any]
+) -> ValidationStepResult:
+    repository: Repository = store["repository"]
+
+    logger.info("Retrieving all existing model names...")
+
+    model_names: set[str] = get_models(repository)
+
+    logger.info("All model names successfully retrieved")
+
+    return ValidationStepResult(
+        success=True,
+        to_store={
+            "model_names": model_names
+        }
+    )
+
+def download_all_forecast_and_metadata_files(
+    store: dict[str, Any]
+) -> ValidationStepResult:
+    directory: pathlib.Path = store["FORECASTS_DIRECTORY"]
+    filtered_files: dict[FileType, list[File]] = store["filtered_files"]
+
+    logger.info("Downloading forecast and metadata files...")
+
+    files = itertools.chain(
+        filtered_files.get(FileType.FORECAST, []),
+        filtered_files.get(FileType.METADATA, []),
+        filtered_files.get(FileType.OTHER_FS, [])
+    )
+    if not directory.exists():
+        os.makedirs(directory, exist_ok=True)
+
+    for file in files:
+        urllib.request.urlretrieve(
+            file.raw_url,
+            directory/os.path.basename(file.filename)
+        )
+
+    logger.info("Download successful")
