@@ -24,7 +24,7 @@ def match_file(
     matched = []
     for filetype in patterns:
         if patterns[filetype].match(file.filename):
-            matched.append[filetype]
+            matched.append(filetype)
     if len(matched) == 0:
         matched.append[FileType.OTHER_NONFS]
 
