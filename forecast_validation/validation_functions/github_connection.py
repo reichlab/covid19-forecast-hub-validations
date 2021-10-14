@@ -11,6 +11,7 @@ import os
 from forecast_validation.validation import ValidationStepResult
 
 logger = logging.getLogger('hub-validations')
+print(logger)
 
 def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     """

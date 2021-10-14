@@ -45,7 +45,6 @@ GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME = "GH_TOKEN"
 
 # Logging
 logging.config.fileConfig('logging.conf')
-logger = logging.getLogger('hub-validations')
 
 # --- configurations end ---
 
