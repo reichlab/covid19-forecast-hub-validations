@@ -41,13 +41,18 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
         for file in filtered_files[FileType.METADATA]:
             names.add(tuple(os.path.basename(file.filename).split("-")[-2:]))
     if len(names) > 0:
-        logger.info("⚠️ PR is adding to/updating multiple models")
+        updated_models = ", ".join(names)
+        logger.info(
+            "⚠️ PR is adding to/updating multiple models: %s",
+            updated_models
+        )
         comments.append(
             "⚠️ You are adding/updating multiple models' files. Could you "
             "provide a reason for this? If this is unintentional, please check "
             "to make sure to put your files are in the appropriate folder, "
             "and update the PR when you have done that. If you do mean to "
-            "update multiple models, we will review the PR manually."
+            "update multiple models, we will review the PR manually.\n"
+            f"Models that are being updated: {updated_models}"
         )
     else:
         logger.info("✔️ PR is not adding to/updating multiple models")

@@ -179,9 +179,12 @@ class ValidationRun:
             errors: dict[os.PathLike, str] = {}
             for step in self._steps:
                 if step.executed:
-                    labels.union(step.result.labels)
-                    comments.extend(step.result.comments)
-                    errors |= step.result.file_errors
+                    if step.result.labels is not None:
+                        labels.union(step.result.labels)
+                    if step.result.comments is not None:
+                        comments.extend(step.result.comments)
+                    if step.result.file_errors is not None:
+                        errors |= step.result.file_errors
 
             pull_request.set_labels(labels)
             pull_request.create_issue_comment(
