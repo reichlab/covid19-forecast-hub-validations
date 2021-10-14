@@ -5,6 +5,8 @@ import inspect
 import logging
 import os
 
+from github.PullRequest import PullRequest
+
 logger = logging.getLogger("hub-validations")
 
 @dataclasses.dataclass(frozen=True)
@@ -165,7 +167,35 @@ class ValidationRun:
 
             if result.skip_steps_after:
                 logger.info("Skipping the rest of validation steps")
-                return
+                break
+
+        # apply labels, comments, and errors to pull request
+        # if applicable
+        if "pull_request" in self._store:
+            pull_request: PullRequest = self._store["pull_request"]
+
+            labels: set[Label] = set()
+            comments: list[str] = ["Comments: "]
+            errors: dict[os.PathLike, str] = {}
+            for step in self._steps:
+                if step.executed:
+                    labels.union(step.result.labels)
+                    comments.extend(step.result.comments)
+                    errors |= step.result.file_errors
+
+            pull_request.set_labels(labels)
+            pull_request.create_issue_comment(
+                "\n\n".join(comments)
+            )
+            if len(errors) == 0:
+                pull_request.create_issue_comment(
+                    "✔️ No validation errors in this PR."
+                )
+            else:
+                error_comment = "❌ There are errors in this PR: \n\n"
+                for path in errors:
+                    error_comment += f"{path}: {errors[path]} \n"
+                pull_request.create_issue_comment(error_comment.rstrip())
 
     @property
     def store(self) -> dict[str, Any]:
@@ -174,3 +204,7 @@ class ValidationRun:
     @property
     def validation_steps(self) -> list[ValidationStep]:
         return self._steps
+
+    @property
+    def success(self) -> bool:
+        return all([s.success for s in self._steps if s.success is not None])

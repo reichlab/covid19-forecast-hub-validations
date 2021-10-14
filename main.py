@@ -5,16 +5,25 @@ import os
 import os.path
 import pathlib
 import re
+import sys
 
 # internal dep.'s
-from forecast_validation.validation import *
+from forecast_validation.files import FileType
+from forecast_validation.validation import (
+    ValidationStep,
+    ValidationRun
+)
 from forecast_validation.validation_functions.github_connection import (
     establish_github_connection,
     extract_pull_request,
     determine_pull_request_type
 )
-from forecast_validation.model_utils import *
-from forecast_validation.files import FileType
+from forecast_validation.validation_functions.forecast_filetype_checks import (
+    check_multiple_model_names,
+    check_file_locations,
+    check_modified_forecasts
+)
+
 
 # --- configurations ---
 
@@ -61,7 +70,17 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Determine whether this PR is a forecast submission
     steps.append(ValidationStep(determine_pull_request_type))
-    
+
+    # Check if the PR tries to add to/update multiple models
+    steps.append(ValidationStep(check_multiple_model_names))
+
+    # Check the locations of some PR files to apply appropriate labels:
+    #   other-files-updated, metadata-change
+    steps.append(ValidationStep(check_file_locations))
+
+    # Check if the PR has updated existing forecasts
+    steps.append(ValidationStep(check_modified_forecasts))
+
     # make new validation run
     validation_run = ValidationRun(steps)
 
@@ -78,14 +97,21 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     return validation_run
 
-def validate_from_pull_request():
-    setup_validation_run_for_pull_request().run()
+def validate_from_pull_request() -> bool:
+    validation_run: ValidationRun = setup_validation_run_for_pull_request()
+    
+    validation_run.run()
+
+    return validation_run.success
     
 if __name__ == '__main__':
     print("---------- here ----------")
     if IS_GITHUB_ACTIONS:
-        validate_from_pull_request()
-        print("****************** success! ******************")
+        success = validate_from_pull_request()
+        if success:
+            print("****************** success! ******************")
+        else:
+            sys.exit("\n Errors found during validation...")
     else:
         # TODO: add local version
         pass

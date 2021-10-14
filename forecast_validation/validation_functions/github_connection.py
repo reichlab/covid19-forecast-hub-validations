@@ -138,4 +138,3 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         success=True,
         to_store={"filtered_files": filtered_files}
     )
-
