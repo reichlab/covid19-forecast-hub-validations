@@ -40,7 +40,7 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     for file in files_to_check:
         filepath = pathlib.Path(file.filename)
         names.add("-".join(filepath.stem.split("-")[-2:]))
-    if len(names) > 0:
+    if len(names) > 1:
         updated_models = ", ".join(names)
         logger.info(
             "⚠️ PR is adding to/updating multiple models: %s",
@@ -83,14 +83,14 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         "Checking if the PR is updating outside the data-processed/ folder..."
     )
     if FileType.OTHER_NONFS in filtered_files:
-        logger.info("⚠️ PR is updating outside the data-processed/ folder.")
+        logger.info("⚠️ PR is updating outside the data-processed/ folder")
         comments.append(
             "⚠️ PR contains file changes that are outside the "
             "`data-processed/` folder."
         )
         labels.add(all_labels["other-files-updated"])
     else:
-        logger.info("✔️ PR is not updating outside the data-processed/ folder.")
+        logger.info("✔️ PR is not updating outside the data-processed/ folder")
 
     logger.info("Checking if the PR contains misplaced CSVs...")
     if (FileType.FORECAST not in filtered_files and
@@ -107,11 +107,11 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
             "be sure that the CSVs are correct, or correct any errors if not."
         )
     else:
-        logger.info("✔️ PR does not contain misplaced forecasts.")
+        logger.info("✔️ PR does not contain misplaced forecasts")
 
     logger.info("Checking if the PR contains metadata updates...")
     if FileType.METADATA in filtered_files:
-        logger.info("💡 PR contains metadata updates.")
+        logger.info("💡 PR contains metadata updates")
         comments.append("💡 PR contains metadata file changes.")
         labels.add(all_labels["metadata-change"])
 
@@ -157,16 +157,16 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
 
     if changed_forecasts:
         # Add the `forecast-updated` label when there are deletions in the forecast file
-        logger.info("💡 PR contains updates to existing forecasts.")
+        logger.info("💡 PR contains updates to existing forecasts")
         labels.add(all_labels["forecast-updated"])
         comments.append(
-            "💡 Your submission seem to have updated/deleted some forecasts. "
-            "Could you provide a reason for the updation/deletion and confirm "
-            "that any updated forecasts only used data that were available at "
-            "the time the original forecasts were made?"
+            "💡 Your submission seem to have updated/deleted some existing "
+            " forecasts. Could you provide a reason for the updation/deletion "
+            "and confirm that any updated forecasts only used data that were "
+            "available at the time the original forecasts were made?"
         )
     else:
-        logger.info("PR does not contain forecast updates.")
+        logger.info("✔️ PR does not contain updates to existing forecasts")
 
     return ValidationStepResult(
         success=True,
