@@ -1,5 +1,4 @@
 # external dependencies
-import pathlib
 from typing import Any
 from github import Github
 from github.File import File
@@ -10,17 +9,19 @@ import json
 import logging
 import os
 import os.path
+import pathlib
 import urllib.request
 
 # internal dependencies
-from forecast_validation.files import FileType
-from forecast_validation.utils import (
+from forecast_validation import PullRequestFileType
+from forecast_validation.checks.forecast_file_type import (
     filter_files,
-    get_models,
     is_forecast_submission
 )
+from forecast_validation.utilities.github import (
+    get_models
+)
 from forecast_validation.validation import ValidationStepResult
-
 
 logger = logging.getLogger("hub-validations")
 
@@ -118,7 +119,7 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
     """
     pull_request: PullRequest = store["pull_request"]
 
-    filtered_files: dict[FileType, list(File)] = filter_files(
+    filtered_files: dict[PullRequestFileType, list(File)] = filter_files(
         pull_request.get_files(),
         store["FILENAME_PATTERNS"]
     )
@@ -166,14 +167,14 @@ def download_all_forecast_and_metadata_files(
     store: dict[str, Any]
 ) -> ValidationStepResult:
     directory: pathlib.Path = store["FORECASTS_DIRECTORY"]
-    filtered_files: dict[FileType, list[File]] = store["filtered_files"]
+    filtered_files: dict[PullRequestFileType, list[File]] = store["filtered_files"]
 
     logger.info("Downloading forecast and metadata files...")
 
     files = itertools.chain(
-        filtered_files.get(FileType.FORECAST, []),
-        filtered_files.get(FileType.METADATA, []),
-        filtered_files.get(FileType.OTHER_FS, [])
+        filtered_files.get(PullRequestFileType.FORECAST, []),
+        filtered_files.get(PullRequestFileType.METADATA, []),
+        filtered_files.get(PullRequestFileType.OTHER_FS, [])
     )
     if not directory.exists():
         os.makedirs(directory, exist_ok=True)

@@ -6,9 +6,11 @@ import logging
 import pathlib
 import os
 
-from forecast_validation.files import FileType
+from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
-from forecast_validation.utils import get_existing_model
+from forecast_validation.utilities.github import (
+    get_existing_model
+)
 
 logger = logging.getLogger("hub-validations")
 
@@ -19,12 +21,14 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     logger.info("Checking if the PR is adding to/updating multiple models...")
 
     comments = []
-    filtered_files: dict[FileType, list[File]] = store["filtered_files"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
 
     names: set[str] = set()
     files_to_check: list[File] = (
-        filtered_files.get(FileType.FORECAST, []) +
-        filtered_files.get(FileType.METADATA, [])
+        filtered_files.get(PullRequestFileType.FORECAST, []) +
+        filtered_files.get(PullRequestFileType.METADATA, [])
     )
     for file in files_to_check:
         filepath = pathlib.Path(file.filename)
@@ -55,7 +59,9 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     """Checks file locations and returns appropriate labels and comments.
     """
     success: bool = True
-    filtered_files: dict[FileType, list[File]] = store["filtered_files"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
     all_labels: dict[str, Label] = store["possible_labels"]
     labels: set[Label] = set()
     comments: list[str] = []
@@ -64,7 +70,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     logger.info(
         "Checking if the PR is updating outside the data-processed/ folder..."
     )
-    if FileType.OTHER_NONFS in filtered_files:
+    if PullRequestFileType.OTHER_NONFS in filtered_files:
         logger.info("⚠️ PR is updating outside the data-processed/ folder")
         comments.append(
             "⚠️ PR contains file changes that are outside the "
@@ -75,11 +81,11 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         logger.info("✔️ PR is not updating outside the data-processed/ folder")
 
     logger.info("Checking if the PR contains misplaced CSVs...")
-    if (FileType.FORECAST not in filtered_files and
-        FileType.OTHER_FS in filtered_files):
+    if (PullRequestFileType.FORECAST not in filtered_files and
+        PullRequestFileType.OTHER_FS in filtered_files):
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
-        for github_file in filtered_files[FileType.OTHER_FS]:
+        for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
             path = pathlib.Path(github_file.filename)
 
             errors[path] = (
@@ -96,7 +102,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         logger.info("✔️ PR does not contain misplaced forecasts")
 
     logger.info("Checking if the PR contains metadata updates...")
-    if FileType.METADATA in filtered_files:
+    if PullRequestFileType.METADATA in filtered_files:
         logger.info("💡 PR contains metadata updates")
         comments.append("💡 PR contains metadata file changes.")
         labels.add(all_labels["metadata-change"])
@@ -112,14 +118,16 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
     repository: Repository = store["repository"]
-    filtered_files: dict[FileType, list[File]] = store["filtered_files"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
     all_labels: dict[str, Label] = store["possible_labels"]
     labels: set[Label] = set()
     comments: list[str] = []
 
     logger.info("Checking if the PR contains updates to existing forecasts...")
 
-    forecasts = filtered_files.get(FileType.FORECAST, [])
+    forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
     changed_forecasts: bool = False
     for f in forecasts:
         # GitHub PR file statuses: unofficial, nothing official yet as of 9-4-21
