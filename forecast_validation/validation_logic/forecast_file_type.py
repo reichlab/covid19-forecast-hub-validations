@@ -6,7 +6,10 @@ import logging
 import pathlib
 import os
 
-from forecast_validation import PullRequestFileType
+from forecast_validation import (
+    PullRequestFileType,
+    RepositoryRelativeFilePath
+)
 from forecast_validation.validation import ValidationStepResult
 from forecast_validation.utilities.github import (
     get_existing_model
@@ -86,7 +89,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
         for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
-            path = pathlib.Path(github_file.filename)
+            path = RepositoryRelativeFilePath(github_file.filename)
 
             errors[path] = [(
                 "You have placed forecast CSV(s)/text files in an "

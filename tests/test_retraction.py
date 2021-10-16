@@ -1,5 +1,5 @@
 import unittest
-from forecast_validation.model_utils import *
+from forecast_validation.checks.forecast_file_content import compare_forecasts
 
 # List of sample PRs that we want to check against
 test_prs = [3448, 3342]

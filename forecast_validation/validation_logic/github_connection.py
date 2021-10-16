@@ -13,7 +13,10 @@ import pathlib
 import urllib.request
 
 # internal dependencies
-from forecast_validation import PullRequestFileType
+from forecast_validation import (
+    PullRequestFileType,
+    RepositoryRelativeFilePath
+)
 from forecast_validation.checks.forecast_file_type import (
     filter_files,
     is_forecast_submission
@@ -166,8 +169,11 @@ def get_all_models_from_repository(
 def download_all_forecast_and_metadata_files(
     store: dict[str, Any]
 ) -> ValidationStepResult:
-    directory: pathlib.Path = store["FORECASTS_DIRECTORY"]
-    filtered_files: dict[PullRequestFileType, list[File]] = store["filtered_files"]
+    root_directory: pathlib.Path = store["HUB_MIRRORED_DIRECTORY_ROOT"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
+    downloaded_file_paths: list[RepositoryRelativeFilePath] = []
 
     logger.info("Downloading forecast and metadata files...")
 
@@ -176,15 +182,28 @@ def download_all_forecast_and_metadata_files(
         filtered_files.get(PullRequestFileType.METADATA, []),
         filtered_files.get(PullRequestFileType.OTHER_FS, [])
     )
-    if not directory.exists():
-        os.makedirs(directory, exist_ok=True)
+    if not root_directory.exists():
+        os.makedirs(root_directory, exist_ok=True)
 
     for file in files:
+        filepath = pathlib.Path(file.filename)
+
+        parent_directory = (root_directory/filepath.parent).resolve()
+        if not parent_directory.exists():
+            os.makedirs(parent_directory)
+
+        local_path = RepositoryRelativeFilePath(
+            (parent_directory/os.path.basename(file.filename)).resolve()
+        )
         urllib.request.urlretrieve(
             file.raw_url,
-            directory/os.path.basename(file.filename)
+            local_path,
         )
+        downloaded_file_paths.append(local_path)
 
     logger.info("Download successful")
 
-    return ValidationStepResult(True)
+    return ValidationStepResult(
+        success=True,
+        to_store={"all_downloaded_files": downloaded_file_paths}
+    )

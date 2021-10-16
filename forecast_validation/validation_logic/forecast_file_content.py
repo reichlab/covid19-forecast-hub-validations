@@ -6,8 +6,10 @@ import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
-from forecast_validation import ParseDateError
 
+from forecast_validation import (
+    ParseDateError, RepositoryRelativeFilePath
+)
 from forecast_validation.checks.forecast_file_content import (
     date_parser
 )
@@ -21,7 +23,9 @@ def get_all_forecast_filepaths(
     directory: pathlib.Path = store["FORECASTS_DIRECTORY"]
     return ValidationStepResult(
         success=True,
-        forecast_files={filepath for filepath in directory.glob("*.csv")}
+        forecast_files={
+            RepositoryRelativeFilePath(fp) for fp in directory.glob("*.csv")
+        }
     )
 
 def validate_forecast_files(
@@ -29,11 +33,40 @@ def validate_forecast_files(
     files: list[os.PathLike]
 ) -> ValidationStepResult:
 
-    errors: dict[os.PathLike, list[str]]
+    success: bool = True
+    errors: dict[os.PathLike, list[str]] = {}
+    correctly_formatted_files = []
 
     for file in files:
         file_result = zoltpy.covid19.validate_quantile_csv_file(file)
+        if file_result == "no errors":
+            correctly_formatted_files.append(file)
+        else:
+            success = False
+            error = errors.get(file, )
+            logger.error()
     pass
+
+def forecast_check(filepath: os.PathLike):
+    
+    forecast_errors = validate_forecast_file(filepath)
+
+    # validate predictions
+    if forecast_errors is not None:
+        is_error, forecast_error_output = validate_forecast_values(filepath)
+    else:
+        logger.
+
+    # Add to previously checked files
+    output_error_text = compile_output_errors(
+        filepath,
+        False,
+        [],
+        is_error,
+        forecast_error_output
+    )
+    
+    return output_error_text
 
 def check_filename_match_forecast_date(
     store: dict[str, Any],

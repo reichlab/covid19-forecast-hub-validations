@@ -8,10 +8,21 @@ import re
 import sys
 
 # internal dep.'s
-from forecast_validation import PullRequestFileType
+from forecast_validation import (
+    PullRequestFileType,
+    REPOSITORY_ROOT_ONDISK
+)
 from forecast_validation.validation import (
     ValidationStep,
     ValidationRun
+)
+from forecast_validation.validation_logic.forecast_file_content import (
+    get_all_forecast_filepaths
+)
+from forecast_validation.validation_logic.forecast_file_type import (
+    check_multiple_model_names,
+    check_file_locations,
+    check_modified_forecasts
 )
 from forecast_validation.validation_logic.github_connection import (
     establish_github_connection,
@@ -20,14 +31,7 @@ from forecast_validation.validation_logic.github_connection import (
     get_all_models_from_repository,
     download_all_forecast_and_metadata_files
 )
-from forecast_validation.validation_logic.forecast_filetype import (
-    check_multiple_model_names,
-    check_file_locations,
-    check_modified_forecasts
-)
-from forecast_validation.validation_logic.forecast_file import (
-    get_all_forecast_filepaths
-)
+
 
 
 # --- configurations and constants ---
@@ -35,10 +39,9 @@ from forecast_validation.validation_logic.forecast_file import (
 VALIDATIONS_VERSION: int = 4 # as of 10/16/2021
 METADATA_VERSION: int = 6 # as of 10/16/2021
 HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
-VALIDATION_REPOSITORY_ROOT_ONDISK: pathlib.Path = (
-    pathlib.Path(__file__)/".."
-).resolve()
-FORECASTS_DIRECTORY: pathlib.Path = pathlib.Path("./forecasts").resolve()
+HUB_MIRRORED_DIRECTORY_ROOT: pathlib.Path = (
+    (REPOSITORY_ROOT_ONDISK/"hub").resolve()
+)
 GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME: str = "GH_TOKEN"
 
 # Filename regex patterns used in code below
@@ -102,7 +105,7 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
     validation_run.store.update({
         "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
         "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
-        "FORECASTS_DIRECTORY": FORECASTS_DIRECTORY,
+        "HUB_MIRRORED_DIRECTORY_ROOT": HUB_MIRRORED_DIRECTORY_ROOT,
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \

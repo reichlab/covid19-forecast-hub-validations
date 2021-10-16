@@ -211,10 +211,11 @@ class ValidationRun:
             if step.result.comments is not None:
                 comments.extend(step.result.comments)
             if step.result.file_errors is not None:
-                for file_path in step.result.file_errors:
-                    if file_path in errors:
-                        errors[file_path].extend(
-                            step.result.file_errors[file_path]
+                for filepath in step.result.file_errors:
+                    
+                    if filepath in errors:
+                        errors[filepath].extend(
+                            step.result.file_errors[filepath]
                         )
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
