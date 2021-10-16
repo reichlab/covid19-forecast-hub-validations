@@ -29,7 +29,7 @@ class RepositoryRelativeFilePath(os.PathLike):
             self._path = path
         
     def __fspath__(self) -> str:
-        return self._path
+        return str(REPOSITORY_ROOT_ONDISK/self._path)
 
     def __str__(self) -> str:
         return str(self._path)
