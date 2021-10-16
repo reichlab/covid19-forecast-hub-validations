@@ -163,9 +163,7 @@ class ValidationRun:
             if result.to_store is not None:
                 self._store |= result.to_store
             elif result.forecast_files is not None:
-                print("here")
                 self._forecast_files |= result.forecast_files
-                print(self._forecast_files)
 
             if result.skip_steps_after:
                 logger.info("Skipping the rest of validation steps")

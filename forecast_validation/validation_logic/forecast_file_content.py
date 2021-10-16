@@ -25,7 +25,7 @@ def get_all_forecast_filepaths(
     return ValidationStepResult(
         success=True,
         forecast_files={
-            RepositoryRelativeFilePath(fp) for fp in directory.glob("*.csv")
+            RepositoryRelativeFilePath(fp) for fp in directory.glob("**/*.csv")
         }
     )
 
