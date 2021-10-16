@@ -1,42 +1,6 @@
-def check_new_model(
-    file: pathlib.Path,
-    existing_models: list[str],
-    all_labels: dict[str, list[Label]],
-    *, # forces latter parameters to be keyword-only arguments
-    labels_to_apply: Optional[list[Label]] = None,
-    comments_to_apply: Optional[list[str]] = None
-) -> None:
-
-    model = '-'.join(file.stem.split('-')[-2:])  
-    if model not in existing_models:
-        labels_to_apply.append(all_labels['new-team-submission'])
-        if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
-            error_str = (
-                "This seems to be a new submission and you have not "
-                "included a metadata file."
-            )
-            if file_path.name in errors:
-                errors[file_path.name].append(error_str)
-            else:
-                errors[file_path.name] = [error_str]
-
 def validate() -> None:
     """Entry point and main body of validations script.
     """
-
-    # Run validations on each of these files
-    errors = {}
-    is_forecast_date_mismatch = False
-    for file_path in FORECASTS_DIRECTORY.glob("*.csv"):
-
-        # zoltpy checks
-        file_error = forecast_check(file_path)
-
-        # everything below - hub-specific checks
-
-        # extract just the filename and remove the path.
-        if file_error:
-            errors[file_path.name] = file_error
 
         # Check whether the `model_abbr` directory is present in the
         # `data-processed` folder.

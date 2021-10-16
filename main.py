@@ -9,15 +9,22 @@ import sys
 
 # internal dep.'s
 from forecast_validation import (
-    PullRequestFileType,
-    REPOSITORY_ROOT_ONDISK
+    VALIDATIONS_VERSION,
+    REPOSITORY_ROOT_ONDISK,
+    HUB_REPOSITORY_NAME,
+    HUB_MIRRORED_DIRECTORY_ROOT,
+    POPULATION_DATAFRAME_PATH,
+    FILENAME_PATTERNS,
+    IS_GITHUB_ACTIONS,
+    GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
 )
 from forecast_validation.validation import (
     ValidationStep,
     ValidationRun
 )
 from forecast_validation.validation_logic.forecast_file_content import (
-    get_all_forecast_filepaths
+    get_all_forecast_filepaths,
+    filename_match_forecast_date_check
 )
 from forecast_validation.validation_logic.forecast_file_type import (
     check_multiple_model_names,
@@ -32,36 +39,6 @@ from forecast_validation.validation_logic.github_connection import (
     download_all_forecast_and_metadata_files
 )
 
-
-
-# --- configurations and constants ---
-
-VALIDATIONS_VERSION: int = 4 # as of 10/16/2021
-METADATA_VERSION: int = 6 # as of 10/16/2021
-HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
-HUB_MIRRORED_DIRECTORY_ROOT: pathlib.Path = (
-    (REPOSITORY_ROOT_ONDISK/"hub").resolve()
-)
-GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME: str = "GH_TOKEN"
-
-# Filename regex patterns used in code below
-# Key name indicate the type of files whose filenames the corresponding rege
-# (value) matches on
-FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
-    PullRequestFileType.FORECAST:
-        re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$"),
-    PullRequestFileType.METADATA:
-        re.compile(r"^data-processed/(.+)/metadata-\1\.txt$"),
-    PullRequestFileType.OTHER_FS:
-        re.compile(r"^data-processed/(.+)\.(csv|txt)$"),
-}
-
-# True/False indicating whether the script is run in a CI environment or not
-# The "CI" system environment variable is always set to "true" for GitHub
-# Actions: https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
-
-# Logging
 logging.config.fileConfig("logging.conf")
 
 # --- configurations and constants end ---
@@ -98,14 +75,18 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
     # Extract filepaths for downloaded *.csv files
     steps.append(ValidationStep(get_all_forecast_filepaths))
 
+    steps.append(ValidationStep(filename_match_forecast_date_check))
+
     # make new validation run
     validation_run = ValidationRun(steps)
 
     # add initial values to store
     validation_run.store.update({
         "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
+        "REPOSITORY_ROOT_ONDISK": REPOSITORY_ROOT_ONDISK,
         "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
         "HUB_MIRRORED_DIRECTORY_ROOT": HUB_MIRRORED_DIRECTORY_ROOT,
+        "POPULATION_DATAFRAME_PATH": POPULATION_DATAFRAME_PATH,
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \

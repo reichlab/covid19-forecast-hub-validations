@@ -1,9 +1,10 @@
-from typing import Union, Optional
+from typing import Optional, Tuple, Union
 import datetime
 import logging
 import numpy as np
 import os
 import pandas as pd
+from pandas.io.stata import invalid_name_doc
 import zoltpy.covid19
 
 from forecast_validation import ParseDateError
@@ -96,11 +97,10 @@ def date_parser(date_str: str) -> datetime.date:
 
     return datetime.datetime.strptime(date_str, "%Y-%M-%d").date()
 
-
-def get_num_invalid_predictions(
+def validate_forecast_values(
     forecast_file_path: os.PathLike,
-    population_dataframe: pd.DataFrame
-):
+    population_dataframe_path: os.PathLike
+) -> Optional[str]:
     '''
         Get the numer of invalid predictions in a forecast file.
         
@@ -122,22 +122,22 @@ def get_num_invalid_predictions(
         County population aggregated to state and state thereafter aggregated 
         to national. 
     '''
-    with open(forecast_file_path) as file:
-        model_df = pd.read_csv(file).astype({'location': str})
-    merged = model_df.merge(
+    model_dataframe = pd.read_csv(forecast_file_path).astype({'location': str})
+    population_dataframe = (
+        pd.read_csv(population_dataframe_path).astype({"location": str})
+    )
+
+    merged = model_dataframe.merge(
         population_dataframe[['location', 'population']],
         on='location', how='left'
     )
-    num_invalid_preds = np.sum(merged['value'] >= merged['population'])
-    return num_invalid_preds, merged[merged['value'] >= merged['population']]
-    
-def validate_forecast_values(filepath: os.PathLike) -> Optional[str]:
-    num_invalid, preds = get_num_invalid_predictions(filepath)
-    if num_invalid > 0:
+    invalid_predictions = merged['value'] >= merged['population']
+    num_invalid_predictions = np.sum(invalid_predictions)
+
+    if num_invalid_predictions > 0:
         return (
-            f"PREDICTION ERROR: You have {num_invalid} invalid (predicted "
-            "value greater than population of locality) predictions in your "
-            "file. Invalid predictions (predicted value greater than "
-            f"population of locality): \n {preds}"
+            f"PREDICTION ERROR: You have {num_invalid_predictions} invalid "
+            "predictions in your file. Invalid predictions (predicted value "
+            f"greater than population of locality): \n {invalid_predictions}"
         )
     return None

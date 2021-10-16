@@ -11,7 +11,8 @@ from forecast_validation import (
     ParseDateError, RepositoryRelativeFilePath
 )
 from forecast_validation.checks.forecast_file_content import (
-    date_parser
+    date_parser,
+    validate_forecast_values
 )
 from forecast_validation.validation import ValidationStepResult
 
@@ -35,40 +36,50 @@ def validate_forecast_files(
 
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
-    correctly_formatted_files = []
+    correctly_formatted_files: set(os.PathLike) = set()
+    population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
     for file in files:
         file_result = zoltpy.covid19.validate_quantile_csv_file(file)
         if file_result == "no errors":
-            correctly_formatted_files.append(file)
+            correctly_formatted_files.add(file)
         else:
+            file_result = [
+                f"Error when validating format for {file}: " + e
+                for e in file_result
+            ]
             success = False
-            error = errors.get(file, )
-            logger.error()
-    pass
+            error_list = errors.get(file, [])
+            error[file] = error_list.extend(file_result)
+            for error in file_result:
+                logger.error(error)
 
-def forecast_check(filepath: os.PathLike):
-    
-    forecast_errors = validate_forecast_file(filepath)
+    for file in files:
+        if file not in correctly_formatted_files:
+            success = False
+            error_list = errors.get(file, [])
+            error[file] = error_list.append((
+                f"Error when validating forecast values for {file}: "
+                "skipped due to incorrect file format "
+            ))
+        else:
+            file_result = validate_forecast_values(
+                file, population_dataframe_path
+            )
+            if file_result is not None:
+                success = False
+                error_list = errors.get(file, [])
+                error[file] = error_list.append((
+                    f"Error when validating forecast values for {file}: "
+                    f"{file_result}"
+                ))
 
-    # validate predictions
-    if forecast_errors is not None:
-        is_error, forecast_error_output = validate_forecast_values(filepath)
-    else:
-        logger.
-
-    # Add to previously checked files
-    output_error_text = compile_output_errors(
-        filepath,
-        False,
-        [],
-        is_error,
-        forecast_error_output
+    return ValidationStepResult(
+        success=success,
+        file_errors=errors
     )
-    
-    return output_error_text
 
-def check_filename_match_forecast_date(
+def filename_match_forecast_date_check(
     store: dict[str, Any],
     files: set[os.PathLike]
 ) -> ValidationStepResult:
@@ -95,8 +106,8 @@ def check_filename_match_forecast_date(
                 date_parser=date_parser
             )
         except ValueError:
-            logger.info(
-                "%s is missing the %s column",
+            logger.error(
+                "Forecast file %s is missing the %s column",
                 basename, forecast_date_column_name
             )
             return ValidationStepResult(
@@ -141,7 +152,7 @@ def check_filename_match_forecast_date(
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
             if (file_forecast_date != forecast_date):
-                logger.info(
+                logger.error(
                     "Forecast dates do not match: %s vs %s",
                     str(file_forecast_date),
                     str(forecast_date)
@@ -166,10 +177,13 @@ def check_filename_match_forecast_date(
                     f"today. date of the forecast - {file_forecast_date}, "
                     f"today - {today}."
                 ))
-                logger.info(
+                logger.warning(
                     "Forecast file %s is made more than 1 day ago.",
                     basename
                 )
+
+    if success:
+        logger.info("Forecast date validation successful.")
     
     return ValidationStepResult(
         success=success,

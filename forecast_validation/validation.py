@@ -212,7 +212,6 @@ class ValidationRun:
                 comments.extend(step.result.comments)
             if step.result.file_errors is not None:
                 for filepath in step.result.file_errors:
-                    
                     if filepath in errors:
                         errors[filepath].extend(
                             step.result.file_errors[filepath]
@@ -234,5 +233,7 @@ class ValidationRun:
                 "Errors: \n\n"
                 "❌ There are errors in this PR. \n\n")
             for path in errors:
-                error_comment += f"{path}: {errors[path]} \n"
+                error_comment += f"{path}:"
+                for error in errors[path]:
+                    error_comment += f"\t{error}\n"
             pull_request.create_issue_comment(error_comment.rstrip())
