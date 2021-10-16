@@ -21,7 +21,7 @@ logger = logging.getLogger("hub-validations")
 def get_all_forecast_filepaths(
     store: dict[str, Any]
 ) -> ValidationStepResult:
-    directory: pathlib.Path = store["FORECASTS_DIRECTORY"]
+    directory: pathlib.Path = store["HUB_MIRRORED_DIRECTORY_ROOT"]
     return ValidationStepResult(
         success=True,
         forecast_files={
