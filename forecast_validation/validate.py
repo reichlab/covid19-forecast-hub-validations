@@ -128,8 +128,8 @@ def validate() -> None:
             with open(f"forecasts_master/{file_path.name}", 'r') as f:
                 print("Checking old forecast for any retractions")
                 compare_result = compare_forecasts(
-                    old=f,
-                    new=open(file_path, 'r')
+                    old_forecast_file_path=f,
+                    new_forecast_file_path=open(file_path, 'r')
                 )
                 if compare_result['invalid']:
                     error_msg = compare_result['error']

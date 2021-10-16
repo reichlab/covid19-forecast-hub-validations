@@ -8,7 +8,7 @@ import re
 import sys
 
 # internal dep.'s
-from forecast_validation.files import FileType
+from forecast_validation import PullRequestFileType
 from forecast_validation.validation import (
     ValidationStep,
     ValidationRun
@@ -26,29 +26,31 @@ from forecast_validation.validation_functions.forecast_filetype_checks import (
     check_modified_forecasts
 )
 from forecast_validation.validation_functions.forecast_file_checks import (
-    get_all_forecast_and_metadata_filepaths
+    get_all_forecast_filepaths
 )
 
 
-# --- configurations ---
+# --- configurations and constants ---
 
-# Current validation version
-VALIDATIONS_VERSION: int = 4
-
-# Name of hub repository
+VALIDATIONS_VERSION: int = 4 # as of 10/16/2021
+METADATA_VERSION: int = 6 # as of 10/16/2021
 HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
-
-# Name of directory to create for forecasts
-FORECASTS_DIRECTORY: pathlib.Path = pathlib.Path("forecasts")
+VALIDATION_REPOSITORY_ROOT_ONDISK: pathlib.Path = (
+    pathlib.Path(__file__)/".."
+).resolve()
+FORECASTS_DIRECTORY: pathlib.Path = pathlib.Path("./forecasts").resolve()
+GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME: str = "GH_TOKEN"
 
 # Filename regex patterns used in code below
 # Key name indicate the type of files whose filenames the corresponding rege
 # (value) matches on
-FILENAME_PATTERNS: dict[FileType, re.Pattern] = {
-    FileType.FORECAST:
+FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
+    PullRequestFileType.FORECAST:
         re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$"),
-    FileType.METADATA: re.compile(r"^data-processed/(.+)/metadata-\1\.txt$"),
-    FileType.OTHER_FS: re.compile(r"^data-processed/(.+)\.(csv|txt)$"),
+    PullRequestFileType.METADATA:
+        re.compile(r"^data-processed/(.+)/metadata-\1\.txt$"),
+    PullRequestFileType.OTHER_FS:
+        re.compile(r"^data-processed/(.+)\.(csv|txt)$"),
 }
 
 # True/False indicating whether the script is run in a CI environment or not
@@ -56,12 +58,10 @@ FILENAME_PATTERNS: dict[FileType, re.Pattern] = {
 # Actions: https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
 IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
 
-GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME = "GH_TOKEN"
-
 # Logging
 logging.config.fileConfig("logging.conf")
 
-# --- configurations end ---
+# --- configurations and constants end ---
 
 def setup_validation_run_for_pull_request() -> ValidationRun:
     
@@ -92,7 +92,8 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
     # Download all forecast and metadata files
     steps.append(ValidationStep(download_all_forecast_and_metadata_files))
 
-    steps.append(ValidationStep(get_all_forecast_and_metadata_filepaths))
+    # Extract filepaths for downloaded *.csv files
+    steps.append(ValidationStep(get_all_forecast_filepaths))
 
     # make new validation run
     validation_run = ValidationRun(steps)

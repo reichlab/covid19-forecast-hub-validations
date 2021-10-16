@@ -1,11 +1,10 @@
-import logging
 from typing import Any, Optional, Union
 from github.File import File
 from github.Label import Label
 from github.Repository import Repository
+import logging
 import pathlib
-
-from yaml import scan
+import os
 
 from forecast_validation.files import FileType
 from forecast_validation.validation import ValidationStepResult
@@ -60,6 +59,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     all_labels: dict[str, Label] = store["possible_labels"]
     labels: set[Label] = set()
     comments: list[str] = []
+    errors: dict[os.PathLike, list[str]] = {}
 
     logger.info(
         "Checking if the PR is updating outside the data-processed/ folder..."
@@ -79,15 +79,19 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         FileType.OTHER_FS in filtered_files):
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
-        comments.append(
-            "❌ You have placed forecast CSV(s)/text files in an incorrect "
-            "location. Currently, your PR contains CSV(s) and/or text files "
-            "that are directly in the `data_processed/` folder and not in your "
-            "team's subfolder. Please move your files to the appropriate "
-            "location.\n\n"
-            "We will still check the misplaced CSV(s) for you, so that you can "
-            "be sure that the CSVs are correct, or correct any errors if not."
-        )
+        for github_file in filtered_files[FileType.OTHER_FS]:
+            path = pathlib.Path(github_file.filename)
+
+            errors[path] = (
+                "❌ You have placed forecast CSV(s)/text files in an "
+                "incorrect location. Currently, your PR contains CSV(s) "
+                "and/or text files that are directly in the "
+                "`data_processed/` folder and not in your team's "
+                "subfolder. Please move your files to the appropriate "
+                "location.\n We will still check the misplaced CSV(s) for "
+                "you, so that you can be sure that the CSVs are correct, "
+                "or correct any errors if not."
+            )
     else:
         logger.info("✔️ PR does not contain misplaced forecasts")
 
@@ -100,7 +104,8 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     return ValidationStepResult(
         success=success,
         labels=labels,
-        comments=comments
+        comments=comments,
+        errors=errors
     )
 
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:

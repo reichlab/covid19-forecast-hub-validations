@@ -1,4 +1,4 @@
-from typing import Any, Optional, Callable
+from typing import Any, Iterable, Optional, Callable
 from github.Label import Label
 import dataclasses
 import inspect
@@ -38,7 +38,7 @@ class ValidationStepResult:
     forecast_files: Optional[set[os.PathLike]] = None
     labels: Optional[set[Label]] = None
     comments: Optional[list[str]] = None
-    file_errors: Optional[dict[os.PathLike, str]] = None
+    file_errors: Optional[dict[os.PathLike, list[str]]] = None
 
 class ValidationStep:
     @staticmethod
@@ -172,26 +172,30 @@ class ValidationRun:
         # apply labels, comments, and errors to pull request
         # if applicable
         if "pull_request" in self._store:
+            
             pull_request: PullRequest = self._store["pull_request"]
 
             labels: set[Label] = set()
             comments: list[str] = ["Comments: "]
-            errors: dict[os.PathLike, str] = {}
-            for step in self._steps:
-                if step.executed:
-                    if step.result.labels is not None:
-                        labels.union(step.result.labels)
-                    if step.result.comments is not None:
-                        comments.extend(step.result.comments)
-                    if step.result.file_errors is not None:
-                        errors |= step.result.file_errors
+            errors: dict[os.PathLike, list[str]] = {}
+            for step in self.executed_steps:
+                if step.result.labels is not None:
+                    labels.union(step.result.labels)
+                if step.result.comments is not None:
+                    comments.extend(step.result.comments)
+                if step.result.file_errors is not None:
+                    for file_path in step.result.file_errors:
+                        if file_path in errors:
+                            errors[file_path].extend(
+                                step.result.file_errors[file_path]
+                            )
 
             if len(labels) > 0:
                 pull_request.set_labels(list(labels))
             pull_request.create_issue_comment(
                 "\n\n".join(comments)
             )
-            if len(errors) == 0:
+            if self.success:
                 pull_request.create_issue_comment(
                     "Errors: \n\n"
                     "✔️ No validation errors in this PR."
@@ -213,5 +217,17 @@ class ValidationRun:
         return self._steps
 
     @property
+    def executed_steps(self) -> Iterable[ValidationStep]:
+        """The steps that were executed during this run.
+
+        Returns:
+            an iterator that iterates over all executed steps in this
+        run.
+        """
+        return filter(lambda s: s.executed, self._steps)
+
+    @property
     def success(self) -> bool:
-        return all([s.success for s in self._steps if s.success is not None])
+        return all(
+            [s.success for s in self.executed_steps]
+        )
