@@ -171,42 +171,8 @@ class ValidationRun:
 
         # apply labels, comments, and errors to pull request
         # if applicable
-        if "pull_request" in self._store:
-            
-            pull_request: PullRequest = self._store["pull_request"]
-
-            labels: set[Label] = set()
-            comments: list[str] = ["Comments: "]
-            errors: dict[os.PathLike, list[str]] = {}
-            for step in self.executed_steps:
-                if step.result.labels is not None:
-                    labels.union(step.result.labels)
-                if step.result.comments is not None:
-                    comments.extend(step.result.comments)
-                if step.result.file_errors is not None:
-                    for file_path in step.result.file_errors:
-                        if file_path in errors:
-                            errors[file_path].extend(
-                                step.result.file_errors[file_path]
-                            )
-
-            if len(labels) > 0:
-                pull_request.set_labels(list(labels))
-            pull_request.create_issue_comment(
-                "\n\n".join(comments)
-            )
-            if self.success:
-                pull_request.create_issue_comment(
-                    "Errors: \n\n"
-                    "✔️ No validation errors in this PR."
-                )
-            else:
-                error_comment = (
-                    "Errors: \n\n"
-                    "❌ There are errors in this PR. \n\n")
-                for path in errors:
-                    error_comment += f"{path}: {errors[path]} \n"
-                pull_request.create_issue_comment(error_comment.rstrip())
+        if "pull_request" in self._store:   
+            self._upload_results_to_pull_request()
 
     @property
     def store(self) -> dict[str, Any]:
@@ -231,3 +197,41 @@ class ValidationRun:
         return all(
             [s.success for s in self.executed_steps]
         )
+
+    def _upload_results_to_pull_request(self):
+        pull_request: PullRequest = self._store["pull_request"]
+
+        # merge all labels, comments, and errors generated at each step
+        labels: set[Label] = set()
+        comments: list[str] = ["Comments: "]
+        errors: dict[os.PathLike, list[str]] = {}
+        for step in self.executed_steps:
+            if step.result.labels is not None:
+                labels.union(step.result.labels)
+            if step.result.comments is not None:
+                comments.extend(step.result.comments)
+            if step.result.file_errors is not None:
+                for file_path in step.result.file_errors:
+                    if file_path in errors:
+                        errors[file_path].extend(
+                            step.result.file_errors[file_path]
+                        )
+
+        # apply labels, comments, and errors (if any) to pull request on GitHub
+        if len(labels) > 0:
+            pull_request.set_labels(list(labels))
+        pull_request.create_issue_comment(
+            "\n\n".join(comments)
+        )
+        if self.success:
+            pull_request.create_issue_comment(
+                "Errors: \n\n"
+                "✔️ No validation errors in this PR."
+            )
+        else:
+            error_comment = (
+                "Errors: \n\n"
+                "❌ There are errors in this PR. \n\n")
+            for path in errors:
+                error_comment += f"{path}: {errors[path]} \n"
+            pull_request.create_issue_comment(error_comment.rstrip())
