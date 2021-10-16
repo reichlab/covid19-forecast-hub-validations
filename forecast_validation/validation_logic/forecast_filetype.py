@@ -111,7 +111,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         success=success,
         labels=labels,
         comments=comments,
-        errors=errors
+        file_errors=errors
     )
 
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
