@@ -13,19 +13,19 @@ from forecast_validation.validation import (
     ValidationStep,
     ValidationRun
 )
-from forecast_validation.validation_functions.github_connection import (
+from forecast_validation.validation_logic.github_connection import (
     establish_github_connection,
     extract_pull_request,
     determine_pull_request_type,
     get_all_models_from_repository,
     download_all_forecast_and_metadata_files
 )
-from forecast_validation.validation_functions.forecast_filetype_checks import (
+from forecast_validation.validation_logic.forecast_filetype import (
     check_multiple_model_names,
     check_file_locations,
     check_modified_forecasts
 )
-from forecast_validation.validation_functions.forecast_file_checks import (
+from forecast_validation.validation_logic.forecast_file import (
     get_all_forecast_filepaths
 )
 
