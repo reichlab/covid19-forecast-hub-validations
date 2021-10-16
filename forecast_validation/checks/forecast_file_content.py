@@ -1,7 +1,10 @@
 from typing import Union
+import datetime
 import logging
 import os
 import pandas as pd
+
+from forecast_validation import ParseDateError
 
 logger: logging.Logger = logging.getLogger("hub-validations")
 
@@ -62,3 +65,30 @@ def compare_forecasts(
             if ((new_vals.notnull()) & (comparison)).any(axis=None):
                 result['retraction'] = True
     return result
+
+def date_parser(date_str: str) -> datetime.date:
+    try:
+        year, month, day = date_str.split("-")
+    except ValueError as ve:
+        error_message = (
+            "error while parsing date string %s: too many components "
+            "(found 4 dashes in date string; should only have 3)"
+        )
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+    
+    if len(month) != 2:
+        error_message = (
+            "error while parsing date string %s: must have 2-digit month"
+        ),
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+
+    if len(day) != 2:
+        error_message = (
+            "error while parsing date string %s: must have 2-digit day"
+        ),
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+
+    return datetime.datetime.strptime(date_str, "%Y-%M-%d").date()

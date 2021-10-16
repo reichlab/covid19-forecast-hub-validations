@@ -7,3 +7,6 @@ class PullRequestFileType(enum.Enum):
     METADATA = enum.auto()
     OTHER_FS = enum.auto()
     OTHER_NONFS = enum.auto()
+
+class ParseDateError(BaseException):
+    pass

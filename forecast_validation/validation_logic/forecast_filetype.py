@@ -88,8 +88,8 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
             path = pathlib.Path(github_file.filename)
 
-            errors[path] = (
-                "❌ You have placed forecast CSV(s)/text files in an "
+            errors[path] = [(
+                "You have placed forecast CSV(s)/text files in an "
                 "incorrect location. Currently, your PR contains CSV(s) "
                 "and/or text files that are directly in the "
                 "`data_processed/` folder and not in your team's "
@@ -97,7 +97,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
                 "location.\n We will still check the misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
                 "or correct any errors if not."
-            )
+            )]
     else:
         logger.info("✔️ PR does not contain misplaced forecasts")
 

@@ -6,7 +6,11 @@ import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
+from forecast_validation import ParseDateError
 
+from forecast_validation.checks.forecast_file_content import (
+    date_parser
+)
 from forecast_validation.validation import ValidationStepResult
 
 logger = logging.getLogger("hub-validations")
@@ -38,7 +42,7 @@ def check_filename_match_forecast_date(
 
     forecast_date_column_name: str = "forecast_date"
     success: bool = True
-    errors: dict[os.PathLike, str] = {}
+    errors: dict[os.PathLike, list[str]] = {}
     comments: list[str] = []
 
     for filepath in files:
@@ -52,7 +56,11 @@ def check_filename_match_forecast_date(
 
         # read only the forecast date column to save space
         try:
-            df = pd.read_csv(filepath, usecols=[forecast_date_column_name])
+            df = pd.read_csv(filepath,
+                usecols=[forecast_date_column_name],
+                parse_dates=[forecast_date_column_name],
+                date_parser=date_parser
+            )
         except ValueError:
             logger.info(
                 "%s is missing the %s column",
@@ -64,6 +72,15 @@ def check_filename_match_forecast_date(
                     f"{basename} must have a column named "
                     f"{forecast_date_column_name} that contains the forecast "
                     "date of the file."
+                )}
+            )
+        except ParseDateError as pde:
+            return ValidationStepResult(
+                success=False,
+                file_errors={filepath: (
+                    f"column {forecast_date_column_name} contains dates that "
+                    "are not in the YYYY-MM-DD format; specifically, \n\t"
+                    + pde.args[0]
                 )}
             )
 
@@ -97,28 +114,29 @@ def check_filename_match_forecast_date(
                     str(forecast_date)
                 )
                 success = False
-                error = errors.get(filepath, "")
-                errors[filepath] = error + (
+                error = errors.get(filepath, [])
+                errors[filepath] = error.append(
                     f"date in {basename} does not match date in "
                     f"`forecast_date` column: {file_forecast_date} vs "
                     f"{forecast_date}.\n"
                 )
         
-        # forecast dates must be <1day within each other
-        today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
-        forecast_date = datetime.datetime.strptime(
-            file_forecast_date, "%Y-%m-%d"
-        ).date()
-        if abs(forecast_date.day - today.day) > datetime.timedelta(days=1):
-            success = False
-            comments.append((
-                f"⚠️ Warning: The forecast file {filepath} is not made today. "
-                f"date of the forecast - {file_forecast_date}, today - {today}."
-            ))
-            logger.info(
-                "Forecast file %s is made more than 1 day ago.",
-                basename
-            )
+            # forecast dates must be <1day within each other
+            today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
+            forecast_date = datetime.datetime.strptime(
+                file_forecast_date, "%Y-%m-%d"
+            ).date()
+            if abs(forecast_date.day - today.day) > datetime.timedelta(days=1):
+                success = False
+                comments.append((
+                    f"⚠️ Warning: The forecast file {filepath} is not made "
+                    f"today. date of the forecast - {file_forecast_date}, "
+                    f"today - {today}."
+                ))
+                logger.info(
+                    "Forecast file %s is made more than 1 day ago.",
+                    basename
+                )
     
     return ValidationStepResult(
         success=success,
