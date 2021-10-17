@@ -170,7 +170,7 @@ def filename_match_forecast_date_check(
             forecast_date = datetime.datetime.strptime(
                 file_forecast_date, "%Y-%m-%d"
             ).date()
-            if abs(forecast_date.day - today.day) > datetime.timedelta(days=1):
+            if abs(forecast_date - today) > datetime.timedelta(days=1):
                 success = False
                 comments.append((
                     f"⚠️ Warning: The forecast file {filepath} is not made "
