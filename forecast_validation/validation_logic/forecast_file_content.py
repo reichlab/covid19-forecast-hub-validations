@@ -133,6 +133,7 @@ def filename_match_forecast_date_check(
         # extract date from filename
         file_forecast_date = os.path.basename(os.path.basename(filepath))[:10]
         print(file_forecast_date)
+        print(df)
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = set(df['forecast_date'])
