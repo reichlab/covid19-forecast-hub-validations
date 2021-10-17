@@ -36,7 +36,7 @@ def validate_forecast_files(
 
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
-    correctly_formatted_files: set(os.PathLike) = set()
+    correctly_formatted_files: set[os.PathLike] = set()
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
     for file in files:
