@@ -237,7 +237,6 @@ class ValidationRun:
                 "Errors: \n\n"
                 "❌ There are errors in this PR. \n\n"
             )
-            print(errors)
             for path in errors:
                 error_comment += f"**{path}**:\n"
                 for error in errors[path]:

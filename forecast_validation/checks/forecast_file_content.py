@@ -137,8 +137,8 @@ def validate_forecast_values(
     if num_invalid_predictions > 0:
         return (
             f"PREDICTION ERROR: You have {num_invalid_predictions} invalid "
-            "predictions in your file. Invalid predictions (predicted value "
-            f"greater than population of locality): \n {invalid_predictions}"
+            f"predictions in your file, at rows "
+            f"{list(merged[invalid_predictions].index)}"
         )
     else:
         return None
