@@ -95,7 +95,7 @@ def filename_match_forecast_date_check(
         logger.info(
             (
                 "Checking if the date in %s's filename matches the date inside "
-                "said forecast file...",
+                "said forecast file..."
             ),
             basename
         )
