@@ -66,7 +66,7 @@ def validate_forecast_files(
                 f"Error when validating forecast values for {file}: "
                 "skipped due to incorrect file format "
             ))
-            error[file] = error_list
+            errors[file] = error_list
         else:
             file_result = validate_forecast_values(
                 file, population_dataframe_path
@@ -78,7 +78,7 @@ def validate_forecast_files(
                     f"Error when validating forecast values for {file}: "
                     f"{file_result}"
                 ))
-                error[file] = error_list
+                errors[file] = error_list
 
     return ValidationStepResult(
         success=success,
