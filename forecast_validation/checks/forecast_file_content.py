@@ -84,14 +84,14 @@ def check_date_format(date_str: str) -> None:
     if len(month) != 2:
         error_message = (
             "error while parsing date string %s: must have 2-digit month"
-        ),
+        )
         logger.error(error_message, date_str)
         raise ParseDateError(error_message)
 
     if len(day) != 2:
         error_message = (
             "error while parsing date string %s: must have 2-digit day"
-        ),
+        )
         logger.error(error_message, date_str)
         raise ParseDateError(error_message)
 

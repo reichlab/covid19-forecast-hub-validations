@@ -131,7 +131,8 @@ def filename_match_forecast_date_check(
                 logger.error("❌ " + error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error_list.append(error_message)
+                error_list.append(error_message)
+                errors[filepath] = error_list
 
             try:
                 date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -143,7 +144,8 @@ def filename_match_forecast_date_check(
                 logger.error(error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error_list.append(error_message)
+                error_list.append(error_message)
+                errors[filepath] = error_list
                 
             forecast_dates.add(date)
 
@@ -160,7 +162,8 @@ def filename_match_forecast_date_check(
             logger.error("❌ " + error_message)
             success = False
             error_list = errors.get(filepath, [])
-            errors[filepath] = error_list.append(error_message)
+            error_list.append(error_message)
+            errors[filepath] = error_list
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
@@ -176,11 +179,12 @@ def filename_match_forecast_date_check(
             )
             success = False
             error_list = errors.get(filepath, [])
-            errors[filepath] = error_list.append((
+            error_list.append((
                 f"{basename} has multiple forecast dates: "
                 f"{forecast_dates}. There must only be one unique "
                 "forecast date in one forecast file.\n"
             ))
+            errors[filepath] = error_list
         
         # forecast dates must match
         while len(forecast_dates) > 0:
@@ -193,11 +197,12 @@ def filename_match_forecast_date_check(
                 )
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error_list.append(
+                error_list.append((
                     f"date in {basename} does not match date in "
                     f"`forecast_date` column: {file_forecast_date} vs "
                     f"{forecast_date}.\n"
-                )
+                ))
+                errors[filepath] = error_list
         
             # forecast dates must be <1day within each other
             today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
