@@ -239,7 +239,7 @@ class ValidationRun:
             )
             print(errors)
             for path in errors:
-                error_comment += f"{path}:"
+                error_comment += f"### `{path}`\n"
                 for error in errors[path]:
                     error_comment += f"{error}\n"
                 error_comment += "\n"
