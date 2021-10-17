@@ -50,7 +50,8 @@ def validate_forecast_files(
             ]
             success = False
             error_list = errors.get(file, [])
-            error[file] = error_list.extend(file_result)
+            error_list.extend(file_result)
+            errors[file] = error_list.extend(file_result)
             for error in file_result:
                 logger.error(error)
 
