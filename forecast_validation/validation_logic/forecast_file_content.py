@@ -2,6 +2,7 @@ from typing import Any
 import datetime
 import logging
 import os
+from numpy import true_divide
 import pandas as pd
 import pathlib
 import pytz
@@ -40,7 +41,9 @@ def validate_forecast_files(
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
     for file in files:
-        file_result = zoltpy.covid19.validate_quantile_csv_file(file)
+        file_result = zoltpy.covid19.validate_quantile_csv_file(
+            file, silent=True
+        )
         if file_result == "no errors":
             correctly_formatted_files.add(file)
         else:
@@ -51,7 +54,7 @@ def validate_forecast_files(
             success = False
             error_list = errors.get(file, [])
             error_list.extend(file_result)
-            errors[file] = error_list.extend(file_result)
+            errors[file] = error_list
             for error in file_result:
                 logger.error(error)
 
