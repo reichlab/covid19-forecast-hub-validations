@@ -132,7 +132,9 @@ def filename_match_forecast_date_check(
                 logger.error("❌ " + error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error.append(error_message + pde.args[0])
+                errors[filepath] = error_list.append(
+                    error_message + pde.args[0]
+                )
 
             try:
                 date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -145,7 +147,9 @@ def filename_match_forecast_date_check(
                 logger.error(error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error.append(error_message + ve.args[0])
+                errors[filepath] = error_list.append(
+                    error_message + ve.args[0]
+                )
                 
             forecast_dates.add(date)
 
@@ -178,8 +182,8 @@ def filename_match_forecast_date_check(
                 forecast_date_column_name
             )
             success = False
-            error = errors.get(filepath, [])
-            errors[filepath] = error.append((
+            error_list = errors.get(filepath, [])
+            errors[filepath] = error_list.append((
                 f"{basename} has multiple forecast dates: "
                 f"{forecast_dates}. There must only be one unique "
                 "forecast date in one forecast file.\n"
@@ -195,8 +199,8 @@ def filename_match_forecast_date_check(
                     str(forecast_date)
                 )
                 success = False
-                error = errors.get(filepath, [])
-                errors[filepath] = error.append(
+                error_list = errors.get(filepath, [])
+                errors[filepath] = error_list.append(
                     f"date in {basename} does not match date in "
                     f"`forecast_date` column: {file_forecast_date} vs "
                     f"{forecast_date}.\n"
