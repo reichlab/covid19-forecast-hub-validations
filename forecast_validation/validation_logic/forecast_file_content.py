@@ -127,12 +127,12 @@ def filename_match_forecast_date_check(
 
         # extract date from filename
         file_forecast_date = datetime.datetime.strptime(
-            os.path.basename(basename)[:10], "%Y-%M-%d"
+            os.path.basename(basename)[:10], "%Y-%m-%d"
         ).date()
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
-            datetime.datetime.strptime(d, "%Y-%M-%d").date()
+            datetime.datetime.strptime(d, "%Y-%m-%d").date()
             for d in df['forecast_date']
         }
 
