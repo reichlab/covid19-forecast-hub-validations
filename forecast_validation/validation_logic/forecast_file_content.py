@@ -127,14 +127,11 @@ def filename_match_forecast_date_check(
                     f"column {forecast_date_column_name} contains dates "
                     "that are not in the YYYY-MM-DD format; specifically, "
                     "\n\t"
-                    + pde.args[0]
-                )
+                ) + pde.args[0]
                 logger.error("❌ " + error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error_list.append(
-                    error_message + pde.args[0]
-                )
+                errors[filepath] = error_list.append(error_message)
 
             try:
                 date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -142,14 +139,11 @@ def filename_match_forecast_date_check(
                 error_message = (
                     f"column {forecast_date_column_name} contains dates "
                     "that are not parseable; specifically, \n\t"
-                    + ve.args[0]
-                )
+                ) + ve.args[0]
                 logger.error(error_message)
                 success = False
                 error_list = errors.get(filepath, [])
-                errors[filepath] = error_list.append(
-                    error_message + ve.args[0]
-                )
+                errors[filepath] = error_list.append(error_message)
                 
             forecast_dates.add(date)
 
@@ -162,12 +156,11 @@ def filename_match_forecast_date_check(
             error_message = (
                 f"filename contains dates "
                 "that are not parseable; specifically, \n\t"
-                + ve.args[0]
-            )
+            ) + ve.args[0]
             logger.error("❌ " + error_message)
             success = False
             error_list = errors.get(filepath, [])
-            errors[filepath] = error.append(error_message + ve.args[0])
+            errors[filepath] = error_list.append(error_message)
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
