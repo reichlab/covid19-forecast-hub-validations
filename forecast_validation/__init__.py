@@ -47,7 +47,7 @@ class ParseDateError(BaseException):
 VALIDATIONS_VERSION: int = 4 # as of 10/16/2021
 METADATA_VERSION: int = 6 # as of 10/16/2021
 REPOSITORY_ROOT_ONDISK: pathlib.Path = (
-    pathlib.Path(__file__)/".."
+    pathlib.Path(__file__)/".."/".."
 ).resolve()
 HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
 HUB_MIRRORED_DIRECTORY_ROOT: pathlib.Path = (
