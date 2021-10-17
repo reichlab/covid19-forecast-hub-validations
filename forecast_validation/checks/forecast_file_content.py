@@ -75,7 +75,7 @@ def check_date_format(date_str: str) -> None:
         _, month, day = date_str.split("-")
     except ValueError as ve:
         error_message = (
-            "error while parsing date string %s: too many components "
+            f"error while parsing date string {date_str}: too many components "
             "(found 4 dashes in date string; should only have 3)"
         )
         logger.error(error_message, date_str)
@@ -83,14 +83,15 @@ def check_date_format(date_str: str) -> None:
     
     if len(month) != 2:
         error_message = (
-            "error while parsing date string %s: must have 2-digit month"
+            f"error while parsing date string {date_str}: must have 2-digit "
+            "month"
         )
         logger.error(error_message, date_str)
         raise ParseDateError(error_message)
 
     if len(day) != 2:
         error_message = (
-            "error while parsing date string %s: must have 2-digit day"
+            f"error while parsing date string {date_str}: must have 2-digit day"
         )
         logger.error(error_message, date_str)
         raise ParseDateError(error_message)

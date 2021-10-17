@@ -241,5 +241,5 @@ class ValidationRun:
             for path in errors:
                 error_comment += f"{path}:"
                 for error in errors[path]:
-                    error_comment += f"\t{error}\n"
+                    error_comment += f"{error}\n"
             pull_request.create_issue_comment(error_comment.rstrip())

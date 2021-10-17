@@ -126,7 +126,7 @@ def filename_match_forecast_date_check(
                 error_message = (
                     f"column {forecast_date_column_name} contains dates "
                     "that are not in the YYYY-MM-DD format; specifically, "
-                    f"\n\t{pde.args[0]}"
+                    f"{pde.args[0]}"
                 )
                 logger.error("❌ " + error_message)
                 success = False
@@ -139,7 +139,7 @@ def filename_match_forecast_date_check(
             except ValueError as ve:
                 error_message = (
                     f"column {forecast_date_column_name} contains dates "
-                    f"that are not parseable; specifically, \n\t{ve.args[0]}"
+                    f"that are not parseable; specifically, {ve.args[0]}"
                 )
                 logger.error(error_message)
                 success = False
@@ -157,7 +157,7 @@ def filename_match_forecast_date_check(
         except ValueError as ve:
             error_message = (
                 f"filename contains dates "
-                f"that are not parseable; specifically, \n\t{ve.args[0]}"
+                f"that are not parseable; specifically, {ve.args[0]}"
             )
             logger.error("❌ " + error_message)
             success = False
@@ -200,7 +200,7 @@ def filename_match_forecast_date_check(
                 error_list.append((
                     f"date in {basename} does not match date in "
                     f"`forecast_date` column: {file_forecast_date} vs "
-                    f"{forecast_date}.\n"
+                    f"{forecast_date}."
                 ))
                 errors[filepath] = error_list
         
