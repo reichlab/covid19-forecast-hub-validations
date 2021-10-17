@@ -25,7 +25,8 @@ from forecast_validation.validation import (
 )
 from forecast_validation.validation_logic.forecast_file_content import (
     get_all_forecast_filepaths,
-    filename_match_forecast_date_check
+    filename_match_forecast_date_check,
+    validate_forecast_files
 )
 from forecast_validation.validation_logic.forecast_file_type import (
     check_multiple_model_names,
@@ -76,7 +77,11 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
     # Extract filepaths for downloaded *.csv files
     steps.append(ValidationStep(get_all_forecast_filepaths))
 
+    # All forecast date checks
     steps.append(ValidationPerFileStep(filename_match_forecast_date_check))
+
+    # All forecast format and value sanity checks
+    steps.append(ValidationPerFileStep(validate_forecast_files))
 
     # make new validation run
     validation_run = ValidationRun(steps)
