@@ -11,6 +11,7 @@ from forecast_validation import (
     ParseDateError, RepositoryRelativeFilePath
 )
 from forecast_validation.checks.forecast_file_content import (
+    date_parser,
     validate_forecast_values
 )
 from forecast_validation.validation import ValidationStepResult
@@ -101,7 +102,12 @@ def filename_match_forecast_date_check(
 
         # read only the forecast date column to save space
         try:
-            df = pd.read_csv(filepath, usecols=[forecast_date_column_name])
+            df = pd.read_csv(
+                filepath,
+                usecols=[forecast_date_column_name],
+                parse_dates=[forecast_date_column_name],
+                date_parser=date_parser
+            )
         except ValueError:
             logger.error(
                 "Forecast file %s is missing the %s column",
@@ -132,7 +138,7 @@ def filename_match_forecast_date_check(
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
-            datetime.datetime.strptime(d, "%Y-%m-%d").date()
+            datetime.datetime.strptime(str(d), "%Y-%m-%d").date()
             for d in df['forecast_date']
         }
 

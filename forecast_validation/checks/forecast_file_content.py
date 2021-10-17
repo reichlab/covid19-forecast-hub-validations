@@ -70,6 +70,33 @@ def compare_forecasts(
                 result['retraction'] = True
     return result
 
+def date_parser(date_str: str) -> datetime.date:
+    try:
+        _, month, day = date_str.split("-")
+    except ValueError as ve:
+        error_message = (
+            "error while parsing date string %s: too many components "
+            "(found 4 dashes in date string; should only have 3)"
+        )
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+    
+    if len(month) != 2:
+        error_message = (
+            "error while parsing date string %s: must have 2-digit month"
+        ),
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+
+    if len(day) != 2:
+        error_message = (
+            "error while parsing date string %s: must have 2-digit day"
+        ),
+        logger.error(error_message, date_str)
+        raise ParseDateError(error_message)
+
+    return datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+
 def validate_forecast_values(
     forecast_file_path: os.PathLike,
     population_dataframe_path: os.PathLike
