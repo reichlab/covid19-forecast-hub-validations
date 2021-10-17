@@ -131,7 +131,7 @@ def filename_match_forecast_date_check(
             )
 
         # extract date from filename
-        file_forecast_date = os.path.basename(os.path.basename(filepath))[:10]
+        file_forecast_date = os.path.basename(basename)[:10]
         print(file_forecast_date)
         print(df)
 
