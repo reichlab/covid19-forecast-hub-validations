@@ -11,7 +11,6 @@ from forecast_validation import (
     ParseDateError, RepositoryRelativeFilePath
 )
 from forecast_validation.checks.forecast_file_content import (
-    date_parser,
     validate_forecast_values
 )
 from forecast_validation.validation import ValidationStepResult
@@ -102,11 +101,7 @@ def filename_match_forecast_date_check(
 
         # read only the forecast date column to save space
         try:
-            df = pd.read_csv(filepath,
-                usecols=[forecast_date_column_name],
-                parse_dates=[forecast_date_column_name],
-                date_parser=date_parser
-            )
+            df = pd.read_csv(filepath, usecols=[forecast_date_column_name])
         except ValueError:
             logger.error(
                 "Forecast file %s is missing the %s column",
@@ -131,12 +126,15 @@ def filename_match_forecast_date_check(
             )
 
         # extract date from filename
-        file_forecast_date = os.path.basename(basename)[:10]
-        print(file_forecast_date)
-        print(df)
+        file_forecast_date = datetime.datetime.strptime(
+            os.path.basename(basename)[:10], "%Y-%M-%d"
+        ).date()
 
         # filter all possible forecast dates into a set for unique check
-        forecast_dates = set(df['forecast_date'])
+        forecast_dates = {
+            datetime.datetime.strptime(d, "%Y-%M-%d")
+            for d in df['forecast_date']
+        }
 
         # forecast date must be unique in CSV
         if len(forecast_dates) > 1:
@@ -154,7 +152,9 @@ def filename_match_forecast_date_check(
         
         # forecast dates must match
         while len(forecast_dates) > 0:
-            forecast_date = forecast_dates.pop()
+            forecast_date = datetime.datetime.strptime(
+                str(forecast_dates.pop())
+            ).date()
             if (file_forecast_date != forecast_date):
                 logger.error(
                     "Forecast dates do not match: %s vs %s",
