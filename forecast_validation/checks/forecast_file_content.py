@@ -70,7 +70,7 @@ def compare_forecasts(
                 result['retraction'] = True
     return result
 
-def date_parser(date_str: str) -> datetime.date:
+def check_date_format(date_str: str) -> None:
     try:
         _, month, day = date_str.split("-")
     except ValueError as ve:
@@ -94,8 +94,6 @@ def date_parser(date_str: str) -> datetime.date:
         ),
         logger.error(error_message, date_str)
         raise ParseDateError(error_message)
-
-    return datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
 
 def validate_forecast_values(
     forecast_file_path: os.PathLike,

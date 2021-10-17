@@ -11,7 +11,7 @@ from forecast_validation import (
     ParseDateError, RepositoryRelativeFilePath
 )
 from forecast_validation.checks.forecast_file_content import (
-    date_parser,
+    check_date_format,
     validate_forecast_values
 )
 from forecast_validation.validation import ValidationStepResult
@@ -102,15 +102,10 @@ def filename_match_forecast_date_check(
 
         # read only the forecast date column to save space
         try:
-            df = pd.read_csv(
-                filepath,
-                usecols=[forecast_date_column_name],
-                parse_dates=[forecast_date_column_name],
-                date_parser=date_parser
-            )
+            df = pd.read_csv(filepath, usecols=[forecast_date_column_name])
         except ValueError:
             logger.error(
-                "Forecast file %s is missing the %s column",
+                "❌ Forecast file %s is missing the %s column",
                 basename, forecast_date_column_name
             )
             return ValidationStepResult(
@@ -121,20 +116,54 @@ def filename_match_forecast_date_check(
                     "date of the file."
                 )]}
             )
-        except ParseDateError as pde:
-            return ValidationStepResult(
-                success=False,
-                file_errors={filepath: [(
-                    f"column {forecast_date_column_name} contains dates that "
-                    "are not in the YYYY-MM-DD format; specifically, \n\t"
+        
+        forecast_dates: set(datetime.date) = set()
+        for date_object in df['forecast_date']:
+            date_str = str(date_object)
+            try:
+                check_date_format(date_str)
+            except ParseDateError as pde:
+                error_message = (
+                    f"column {forecast_date_column_name} contains dates "
+                    "that are not in the YYYY-MM-DD format; specifically, "
+                    "\n\t"
                     + pde.args[0]
-                )]}
-            )
+                )
+                logger.error("❌ " + error_message)
+                success = False
+                error_list = errors.get(filepath, [])
+                errors[filepath] = error.append(error_message + pde.args[0])
+
+            try:
+                date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError as ve:
+                error_message = (
+                    f"column {forecast_date_column_name} contains dates "
+                    "that are not parseable; specifically, \n\t"
+                    + ve.args[0]
+                )
+                logger.error(error_message)
+                success = False
+                error_list = errors.get(filepath, [])
+                errors[filepath] = error.append(error_message + ve.args[0])
+                
+            forecast_dates.add(date)
 
         # extract date from filename
-        file_forecast_date = datetime.datetime.strptime(
-            os.path.basename(basename)[:10], "%Y-%m-%d"
-        ).date()
+        try:
+            file_forecast_date = datetime.datetime.strptime(
+                os.path.basename(basename)[:10], "%Y-%m-%d"
+            ).date()
+        except ValueError as ve:
+            error_message = (
+                f"filename contains dates "
+                "that are not parseable; specifically, \n\t"
+                + ve.args[0]
+            )
+            logger.error("❌ " + error_message)
+            success = False
+            error_list = errors.get(filepath, [])
+            errors[filepath] = error.append(error_message + ve.args[0])
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
@@ -144,24 +173,24 @@ def filename_match_forecast_date_check(
 
         # forecast date must be unique in CSV
         if len(forecast_dates) > 1:
-            logger.info(
-                "Forecast date in the %s column is not unique",
+            logger.error(
+                "❌ Forecast date in the %s column is not unique",
                 forecast_date_column_name
             )
             success = False
-            error = errors.get(filepath, "")
-            errors[filepath] = [error + (
+            error = errors.get(filepath, [])
+            errors[filepath] = error.append((
                 f"{basename} has multiple forecast dates: "
                 f"{forecast_dates}. There must only be one unique "
                 "forecast date in one forecast file.\n"
-            )]
+            ))
         
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
             if (file_forecast_date != forecast_date):
                 logger.error(
-                    "Forecast dates do not match: %s vs %s",
+                    "❌ Forecast dates do not match: %s vs %s",
                     str(file_forecast_date),
                     str(forecast_date)
                 )
@@ -176,7 +205,6 @@ def filename_match_forecast_date_check(
             # forecast dates must be <1day within each other
             today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
             if abs(file_forecast_date - today) > datetime.timedelta(days=1):
-                success = False
                 comments.append((
                     f"⚠️ Warning: The forecast file {filepath} is not made "
                     f"today. date of the forecast - {file_forecast_date}, "
