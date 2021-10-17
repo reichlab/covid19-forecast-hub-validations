@@ -216,6 +216,10 @@ class ValidationRun:
                         errors[filepath].extend(
                             step.result.file_errors[filepath]
                         )
+                    else:
+                        errors[filepath] = (
+                            step.result.file_errors[filepath].copy()
+                        )
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
