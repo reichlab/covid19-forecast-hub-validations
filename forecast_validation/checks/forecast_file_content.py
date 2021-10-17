@@ -132,6 +132,8 @@ def validate_forecast_values(
     )
     invalid_predictions = merged['value'] >= merged['population']
     num_invalid_predictions = np.sum(invalid_predictions)
+    print(invalid_predictions)
+    print(num_invalid_predictions)
 
     if num_invalid_predictions > 0:
         return (

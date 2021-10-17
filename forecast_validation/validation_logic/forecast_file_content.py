@@ -87,6 +87,8 @@ def validate_forecast_files(
                 error_list = errors.get(file, [])
                 error_list.append(error_message)
                 errors[file] = error_list
+            else:
+                logger.info("    %s forecast value sanity-checked", file)
 
     return ValidationStepResult(
         success=success,
