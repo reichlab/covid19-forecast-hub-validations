@@ -109,20 +109,20 @@ def filename_match_forecast_date_check(
             )
             return ValidationStepResult(
                 success=False,
-                file_errors={filepath: (
+                file_errors={filepath: [(
                     f"{basename} must have a column named "
                     f"{forecast_date_column_name} that contains the forecast "
                     "date of the file."
-                )}
+                )]}
             )
         except ParseDateError as pde:
             return ValidationStepResult(
                 success=False,
-                file_errors={filepath: (
+                file_errors={filepath: [(
                     f"column {forecast_date_column_name} contains dates that "
                     "are not in the YYYY-MM-DD format; specifically, \n\t"
                     + pde.args[0]
-                )}
+                )]}
             )
 
         # extract date from filename
@@ -144,11 +144,11 @@ def filename_match_forecast_date_check(
             )
             success = False
             error = errors.get(filepath, "")
-            errors[filepath] = error + (
+            errors[filepath] = [error + (
                 f"{basename} has multiple forecast dates: "
                 f"{forecast_dates}. There must only be one unique "
                 "forecast date in one forecast file.\n"
-            )
+            )]
         
         # forecast dates must match
         while len(forecast_dates) > 0:
