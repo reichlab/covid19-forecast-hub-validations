@@ -171,10 +171,7 @@ def filename_match_forecast_date_check(
         
             # forecast dates must be <1day within each other
             today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
-            forecast_date = datetime.datetime.strptime(
-                file_forecast_date, "%Y-%m-%d"
-            ).date()
-            if abs(forecast_date - today) > datetime.timedelta(days=1):
+            if abs(file_forecast_date - today) > datetime.timedelta(days=1):
                 success = False
                 comments.append((
                     f"⚠️ Warning: The forecast file {filepath} is not made "
