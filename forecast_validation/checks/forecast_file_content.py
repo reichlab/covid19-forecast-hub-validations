@@ -139,4 +139,5 @@ def validate_forecast_values(
             "predictions in your file. Invalid predictions (predicted value "
             f"greater than population of locality): \n {invalid_predictions}"
         )
-    return None
+    else:
+        return None

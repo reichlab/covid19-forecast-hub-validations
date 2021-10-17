@@ -34,17 +34,20 @@ def validate_forecast_files(
     store: dict[str, Any],
     files: list[os.PathLike]
 ) -> ValidationStepResult:
-
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
     correctly_formatted_files: set[os.PathLike] = set()
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
+    logger.info("Checking forecast formats and values...")
+
     for file in files:
+        logger.info("  Checking forecast format for %s", file)
         file_result = zoltpy.covid19.validate_quantile_csv_file(
             file, silent=True
         )
         if file_result == "no errors":
+            logger.info("    %s format validated", file)
             correctly_formatted_files.add(file)
         else:
             file_result = [
@@ -56,28 +59,33 @@ def validate_forecast_files(
             error_list.extend(file_result)
             errors[file] = error_list
             for error in file_result:
-                logger.error(error)
+                logger.error("    " + error)
 
     for file in files:
+        logger.info("  Checking forecast values for %s", file)
         if file not in correctly_formatted_files:
-            success = False
-            error_list = errors.get(file, [])
-            error_list.append((
+            error_message = (
                 f"Error when validating forecast values for {file}: "
                 "skipped due to incorrect file format "
-            ))
+            )
+            logger.error("    " + error_message)
+            success = False
+            error_list = errors.get(file, [])
+            error_list.append(error_message)
             errors[file] = error_list
         else:
             file_result = validate_forecast_values(
                 file, population_dataframe_path
             )
             if file_result is not None:
-                success = False
-                error_list = errors.get(file, [])
-                error_list.append((
+                error_message = (
                     f"Error when validating forecast values for {file}: "
                     f"{file_result}"
-                ))
+                )
+                logger.error("    " + error_message)
+                success = False
+                error_list = errors.get(file, [])
+                error_list.append(error_message)
                 errors[file] = error_list
 
     return ValidationStepResult(
