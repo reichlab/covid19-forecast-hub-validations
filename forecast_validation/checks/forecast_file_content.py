@@ -125,7 +125,6 @@ def validate_forecast_values(
     population_dataframe = (
         pd.read_csv(population_dataframe_path, dtype={"location": str})
     )
-    print(population_dataframe)
 
     merged = model_dataframe.merge(
         population_dataframe[['location', 'population']],
@@ -136,8 +135,8 @@ def validate_forecast_values(
 
     if num_invalid_predictions > 0:
         return (
-            f"PREDICTION ERROR: You have {num_invalid_predictions} invalid "
-            f"predictions in your file, at rows "
+            f"Found {num_invalid_predictions} invalid "
+            f"predictions in your file, at row(s) "
             f"{list(merged[invalid_predictions].index)}"
         )
     else:
