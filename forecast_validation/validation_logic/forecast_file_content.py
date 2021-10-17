@@ -182,7 +182,7 @@ def filename_match_forecast_date_check(
             error_list.append((
                 f"{basename} has multiple forecast dates: "
                 f"{forecast_dates}. There must only be one unique "
-                "forecast date in one forecast file.\n"
+                "forecast date in one forecast file."
             ))
             errors[filepath] = error_list
         
