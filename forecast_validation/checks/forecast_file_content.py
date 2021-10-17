@@ -121,9 +121,9 @@ def validate_forecast_values(
         County population aggregated to state and state thereafter aggregated 
         to national. 
     '''
-    model_dataframe = pd.read_csv(forecast_file_path).astype({'location': str})
+    model_dataframe = pd.read_csv(forecast_file_path, dtype={'location': str})
     population_dataframe = (
-        pd.read_csv(population_dataframe_path).astype({"location": str})
+        pd.read_csv(population_dataframe_path, dtype={"location": str})
     )
     print(population_dataframe)
 
