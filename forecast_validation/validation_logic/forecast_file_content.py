@@ -92,13 +92,7 @@ def filename_match_forecast_date_check(
     for filepath in files:
         basename: str = os.path.basename(filepath)
         
-        logger.info(
-            (
-                "Checking if the date in %s's filename matches the date inside "
-                "said forecast file..."
-            ),
-            basename
-        )
+        logger.info("Checking dates in forecast file %s...", basename)
 
         # read only the forecast date column to save space
         try:
@@ -177,11 +171,15 @@ def filename_match_forecast_date_check(
                 "❌ Forecast date in the %s column is not unique",
                 forecast_date_column_name
             )
+            forecast_dates_str = ", ".join([
+                datetime.datetime.strftime(d, "%Y-%m-%d")
+                    for d in forecast_dates
+            ])
             success = False
             error_list = errors.get(filepath, [])
             error_list.append((
                 f"{basename} has multiple forecast dates: "
-                f"{forecast_dates}. There must only be one unique "
+                f"{forecast_dates_str}. There must only be one unique "
                 "forecast date in one forecast file."
             ))
             errors[filepath] = error_list
