@@ -132,7 +132,7 @@ def filename_match_forecast_date_check(
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = {
-            datetime.datetime.strptime(d, "%Y-%M-%d")
+            datetime.datetime.strptime(d, "%Y-%M-%d").date()
             for d in df['forecast_date']
         }
 
@@ -152,9 +152,7 @@ def filename_match_forecast_date_check(
         
         # forecast dates must match
         while len(forecast_dates) > 0:
-            forecast_date = datetime.datetime.strptime(
-                str(forecast_dates.pop())
-            ).date()
+            forecast_date = forecast_dates.pop()
             if (file_forecast_date != forecast_date):
                 logger.error(
                     "Forecast dates do not match: %s vs %s",
