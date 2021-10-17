@@ -72,7 +72,7 @@ def compare_forecasts(
 
 def date_parser(date_str: str) -> datetime.date:
     try:
-        year, month, day = date_str.split("-")
+        _, month, day = date_str.split("-")
     except ValueError as ve:
         error_message = (
             "error while parsing date string %s: too many components "

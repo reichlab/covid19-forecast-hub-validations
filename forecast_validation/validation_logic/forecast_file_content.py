@@ -92,11 +92,13 @@ def filename_match_forecast_date_check(
     for filepath in files:
         basename: str = os.path.basename(filepath)
         
-        logger.info((
-            "Checking if the date in %s's filename matches the date inside "
-            "said forecast file...",
+        logger.info(
+            (
+                "Checking if the date in %s's filename matches the date inside "
+                "said forecast file...",
+            ),
             basename
-        ))
+        )
 
         # read only the forecast date column to save space
         try:
@@ -130,6 +132,7 @@ def filename_match_forecast_date_check(
 
         # extract date from filename
         file_forecast_date = os.path.basename(os.path.basename(filepath))[:10]
+        print(file_forecast_date)
 
         # filter all possible forecast dates into a set for unique check
         forecast_dates = set(df['forecast_date'])
