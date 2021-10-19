@@ -339,12 +339,14 @@ def check_forecast_retraction(
     no_files_checked_log: bool = True
     for file in files:
         filepath = pathlib.Path(file)
+        logger.info(filepath)
         relative_path_str = str(
             filepath.relative_to(pull_request_directory_root)
         )
         existing_file_path = (
             hub_mirrored_directory_root/filepath
         ).resolve()
+        logger.info(existing_file_path)
         if existing_file_path.exists():
             no_files_checked_log: bool = False
             logger.info(
