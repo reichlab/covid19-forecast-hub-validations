@@ -2,24 +2,6 @@ def validate() -> None:
     """Entry point and main body of validations script.
     """
 
-        # Check whether the `model_abbr` directory is present in the
-        # `data-processed` folder.
-        # This is a test to check if this submission is a new submission or not
-
-        # extract model_abbr from the filename
-        model = '-'.join(file_path.stem.split('-')[-2:])  
-        if model not in models:
-            labels.append('new-team-submission')
-            if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
-                error_str = (
-                    "This seems to be a new submission and you have not "
-                    "included a metadata file."
-                )
-                if file_path.name in errors:
-                    errors[file_path.name].append(error_str)
-                else:
-                    errors[file_path.name] = [error_str]
-
         # Check for implicit and explicit retractions
         # `forecasts_master` is a directory with the older version of the
         # forecast (if present).
