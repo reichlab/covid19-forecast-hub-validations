@@ -207,7 +207,7 @@ class ValidationRun:
         errors: dict[os.PathLike, list[str]] = {}
         for step in self.executed_steps:
             if step.result.labels is not None:
-                labels.union(step.result.labels)
+                labels |= step.result.labels
             if step.result.comments is not None:
                 comments.extend(step.result.comments)
             if step.result.file_errors is not None:
@@ -223,7 +223,10 @@ class ValidationRun:
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
+            logger.info("Labels to be applied: %s", str(labels))
             pull_request.set_labels(*list(labels))
+        else:
+            print("no labels")
         pull_request.create_issue_comment(
             "\n\n".join(comments)
         )
