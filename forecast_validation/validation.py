@@ -206,7 +206,7 @@ class ValidationRun:
         # merge all labels, comments, and errors generated at each step
         labels: set[Label] = set()
         comments: list[str] = [(
-            f"### Validations v{VALIDATIONS_VERSION}\nComments: "
+            f"### Validations v{VALIDATIONS_VERSION}\n\nComments: "
         )]
         errors: dict[os.PathLike, list[str]] = {}
         for step in self.executed_steps:
@@ -241,7 +241,7 @@ class ValidationRun:
             )
         else:
             error_comment = (
-                f"Validations v{VALIDATIONS_VERSION}\n"
+                f"Validations v{VALIDATIONS_VERSION}\n\n"
                 "Errors: \n\n"
                 "❌ There are errors in this PR. \n\n"
             )

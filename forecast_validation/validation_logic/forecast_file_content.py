@@ -350,8 +350,8 @@ def check_forecast_retraction(
                 relative_path_str
             )
             compare_result: RetractionCheckResult = compare_forecasts(
-                old_forecast_file_path=file,
-                new_forecast_file_path=existing_file_path
+                old_forecast_file_path=existing_file_path,
+                new_forecast_file_path=file
             )
             if compare_result.is_all_duplicate:
                 success = False
@@ -372,8 +372,8 @@ def check_forecast_retraction(
                 error_list.append((
                     "Forecast file contains implicit retraction(s), which are "
                     "disallowed. Please review the retraction rules for a "
-                    "forecast in the wiki [here]."
-                    "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)"
+                    "forecast in the wiki [here]"
+                    "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)."
                 ))
                 errors[file] = error_list
             if compare_result.has_explicit_retraction:

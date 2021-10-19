@@ -61,7 +61,7 @@ def compare_forecasts(
             is_all_duplicate = True
             error = "Forecast is all duplicate."
     except KeyError as e:
-        # print(e)
+        error = f"implicit retractions: {e.args[0]}"
         # New forecast has some indices that are NOT in old forecast
         has_implicit_retraction = True
     else:   
