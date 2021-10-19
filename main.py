@@ -29,6 +29,7 @@ from forecast_validation.validation_logic.forecast_file_content import (
     check_new_model,
     get_all_forecast_filepaths,
     filename_match_forecast_date_check,
+    get_all_metadata_filepaths,
     validate_forecast_files
 )
 from forecast_validation.validation_logic.forecast_file_type import (
@@ -79,6 +80,9 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Extract filepaths for downloaded *.csv files
     steps.append(ValidationStep(get_all_forecast_filepaths))
+
+    # Extract filepaths for downloaded *.txt files
+    steps.append(ValidationStep(get_all_metadata_filepaths))
 
     # All forecast date checks
     steps.append(ValidationPerFileStep(filename_match_forecast_date_check))

@@ -2,47 +2,6 @@ def validate() -> None:
     """Entry point and main body of validations script.
     """
 
-        # Check for implicit and explicit retractions
-        # `forecasts_master` is a directory with the older version of the
-        # forecast (if present).
-        if os.path.isfile(f"forecasts_master/{file_path.name}"):
-            with open(f"forecasts_master/{file_path.name}", 'r') as f:
-                print("Checking old forecast for any retractions")
-                compare_result = compare_forecasts(
-                    old_forecast_file_path=f,
-                    new_forecast_file_path=open(file_path, 'r')
-                )
-                if compare_result['invalid']:
-                    error_msg = compare_result['error']
-                    # if there were no previous errors
-                    if len(file_error) == 0:
-                        errors[file_path.name] = [compare_result['error']]
-                    else:
-                        errors[file_path.name].append(compare_result['error'])
-                if compare_result['implicit-retraction']:
-                    labels.append('forecast-implicit-retractions')
-                    retract_error = (
-                        f"The forecast {file_path.name} has an invalid "
-                        "implicit retraction. Please review the retraction "
-                        "rules for a forecast in the wiki here - "
-                        "https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
-                    )
-                    # throw an error now with Zoltar 4
-                    if len(file_error) == 0:
-                        errors[file_path.name] = [retract_error]
-                    else:
-                        errors[file_path.name].append(retract_error)
-                # explicit retractions
-                if compare_result['retraction']:
-                    labels.append('retractions')
-
-        # Check for the forecast date column check is +-1 day from the current
-        # date the PR build is running
-        is_forecast_date_mismatch, err_message = \
-            check_filename_match_forecast_date(file_path)
-        if is_forecast_date_mismatch:
-            comments.append(err_message)
-
     # Check for metadata file validation
     FILEPATH_META = "forecasts/"
     is_meta_error, meta_err_output = check_for_metadata(filepath=FILEPATH_META)

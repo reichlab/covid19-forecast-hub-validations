@@ -1,21 +1,34 @@
+from 
 import dateutil
-import os
 import glob
+import os
+import pandas as pd
+import pykwalify.core
 import re
 import yaml
-import pandas as pd
-
-from pykwalify.core import Core
 
 SCHEMA_FILE = 'schema.yml'
 DESIGNATED_MODEL_CACHE_KEY = 'designated_model_cache'
+
+def get_all_metadata_filepaths(
+    store: dict[str, Any]
+) -> ValidationStepResult:
+    directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
+    return ValidationStepResult(
+        success=True,
+        forecast_files={
+            RepositoryRelativeFilePath(fp) for fp in directory.glob("**/*.txt")
+        }
+    )
 
 def validate_metadata_contents(metadata, filepath, cache):
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
 
-    core = Core(source_file=filepath, schema_files=["schema.yml"])
+    core = pykwalify.core.Core(
+        source_file=filepath, schema_files=["schema.yml"]
+    )
     core.validate(raise_exception=False, silent=True)
 
     if len(core.validation_errors)>0:
