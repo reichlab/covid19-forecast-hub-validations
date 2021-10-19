@@ -80,10 +80,7 @@ def get_existing_forecast_file(
     local_path: pathlib.Path = local_directory/pathlib.Path(file.filename)
 
     os.makedirs(local_directory, exist_ok=True)
-    print(f"{remote_data_directory}/{model}/{file.filename}")
-    existing_file: ContentFile = repository.get_contents(
-        f"{remote_data_directory}/{model}/{file.filename}"
-    )
+    existing_file: ContentFile = repository.get_contents(file.filename)
     assert isinstance(existing_file, ContentFile), existing_file
 
     return fetch_url(existing_file.download_url, local_path)
