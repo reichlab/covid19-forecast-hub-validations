@@ -2,6 +2,7 @@
 from typing import Any
 from github import Github
 from github.File import File
+from github.Label import Label
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 import itertools
@@ -122,14 +123,22 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
     validation engine to skip the rest of the validation steps.
     """
     pull_request: PullRequest = store["pull_request"]
+    all_labels: dict[str, Label] = store["possible_labels"]
 
     filtered_files: dict[PullRequestFileType, list(File)] = filter_files(
         pull_request.get_files(),
         store["FILENAME_PATTERNS"]
     )
+    labels: set[Label] = set()
 
     logger.info("Determining if PR is a forecast submission...")
     if not is_forecast_submission(filtered_files):
+        other_files = filtered_files[PullRequestFileType.OTHER_NONFS]
+        for file in other_files:
+            if file.filename.startswith("code"):
+                labels.add(all_labels["code"])
+            if os.path.basename(file.filename) == "package.json":
+                labels.add(all_labels["dependencies"])
         logger.info(
             "PR does not contain files that can be interpreted "
             "as part of a forecast submission; validations skipped."
@@ -139,6 +148,8 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
             skip_steps_after=True
         )
     else:
+        if PullRequestFileType.FORECAST in filtered_files:
+            labels.add(all_labels["data-submission"])
         logger.info(
             "PR can be interpreted as a forecast submission, "
             "proceeding with validations."

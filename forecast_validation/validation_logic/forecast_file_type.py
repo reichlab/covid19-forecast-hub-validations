@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any
 from github.File import File
 from github.Label import Label
 from github.Repository import Repository
