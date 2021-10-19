@@ -1,10 +1,14 @@
 from typing import Union
 import os
+import pathlib
 import urllib.request
 
 def fetch_url(url: str, to_path: Union[str, os.PathLike]) -> str:
     urllib.request.urlretrieve(url, to_path)
     return to_path
+
+def extract_model_name(filepath: os.PathLike) -> str:
+    return "-".join(pathlib.Path(filepath).stem.split("-")[-2:])
 
 def compile_output_errors(
     is_filename_error,

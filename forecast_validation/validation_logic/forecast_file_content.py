@@ -1,20 +1,23 @@
 from typing import Any
+from github.File import File
+from github.Label import Label
 import datetime
 import logging
 import os
-from numpy import true_divide
 import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
 
 from forecast_validation import (
-    ParseDateError, RepositoryRelativeFilePath
+    ParseDateError, PullRequestFileType, RepositoryRelativeFilePath
 )
 from forecast_validation.checks.forecast_file_content import (
     check_date_format,
     validate_forecast_values
 )
+from forecast_validation.utilities.github import get_existing_models
+from forecast_validation.utilities.misc import extract_model_name
 from forecast_validation.validation import ValidationStepResult
 
 logger = logging.getLogger("hub-validations")
@@ -121,7 +124,7 @@ def filename_match_forecast_date_check(
             return ValidationStepResult(
                 success=False,
                 file_errors={filepath: [(
-                    f"{basename} must have a column named "
+                    f"Forecast files must have a column named "
                     f"{forecast_date_column_name} that contains the forecast "
                     "date of the file."
                 )]}
@@ -194,7 +197,7 @@ def filename_match_forecast_date_check(
             success = False
             error_list = errors.get(filepath, [])
             error_list.append((
-                f"{basename} has multiple forecast dates: "
+                f"Forecast file contains multiple forecast dates: "
                 f"{forecast_dates_str}. There must only be one unique "
                 "forecast date in one forecast file."
             ))
@@ -212,7 +215,7 @@ def filename_match_forecast_date_check(
                 success = False
                 error_list = errors.get(filepath, [])
                 error_list.append((
-                    f"date in {basename} does not match date in "
+                    f"date in filename does not match date in "
                     f"`forecast_date` column: {file_forecast_date} vs "
                     f"{forecast_date}."
                 ))
@@ -237,5 +240,62 @@ def filename_match_forecast_date_check(
     return ValidationStepResult(
         success=success,
         comments=comments,
+        file_errors=errors
+    )
+
+def check_new_model(
+    store: dict[str, Any],
+    files: set[os.PathLike]
+) -> ValidationStepResult:
+    success: bool = True
+    labels: set[Label] = set()
+    errors: dict[os.PathLike, list[str]] = {}
+
+    all_labels: dict[str, Label] = store["possible_labels"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
+    metadata_files: list[File] = filtered_files.get(
+        PullRequestFileType.METADATA, []
+    )
+
+    models_in_pull_request = set()
+    model_to_file: dict[str, os.PathLike] = {}
+    for file in files:
+        filepath = pathlib.Path(file)
+        model = extract_model_name(filepath)
+        models_in_pull_request.add(model)
+        model_to_file[file] = model
+
+    models_with_metadata_in_pull_request = set()
+    for metadata_file in metadata_files:
+        metadata_file_path = RepositoryRelativeFilePath(metadata_file.filename)
+        model = extract_model_name(metadata_file_path)
+        models_with_metadata_in_pull_request.add(model)
+
+    existing_models = get_existing_models()
+    if not models_in_pull_request.issubset(existing_models):
+        labels.add(all_labels["new-team-submission"])
+        new_models = models_in_pull_request.difference(existing_models)
+        if not new_models.issubset(models_with_metadata_in_pull_request):
+            new_models_without_metadata = new_models.difference(
+                models_with_metadata_in_pull_request
+            )
+
+            success = False
+            for model in new_models_without_metadata:
+                logger.error(
+                    "❌ New model without metadata file detected: %s",
+                    model
+                )
+                errors[model_to_file[model]] = [(
+                    f"Looks like you are submitting a new model ({model}), but "
+                    "you have not submitted a new metadata file along with it. "
+                    "Please update your pull request to include a metadata "
+                    "file for the model."
+                )]
+
+    return ValidationStepResult(
+        success=success,
         file_errors=errors
     )

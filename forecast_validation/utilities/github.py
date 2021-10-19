@@ -9,7 +9,7 @@ from forecast_validation.utilities.misc import fetch_url
 
 logger = logging.getLogger("hub-validations")
 
-def get_models(
+def get_existing_models(
     repository: Repository,
     path: str = "data-processed"
 ) -> set[str]:

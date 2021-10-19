@@ -223,7 +223,7 @@ class ValidationRun:
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
-            pull_request.set_labels(list(labels))
+            pull_request.set_labels(*list(labels))
         pull_request.create_issue_comment(
             "\n\n".join(comments)
         )
