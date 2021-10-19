@@ -23,7 +23,7 @@ def match_file(
         if patterns[filetype].match(file.filename):
             matched.append(filetype)
     if len(matched) == 0:
-        matched.append[PullRequestFileType.OTHER_NONFS]
+        matched.append(PullRequestFileType.OTHER_NONFS)
 
     return matched
 

@@ -54,7 +54,7 @@ def validate_forecast_files(
             correctly_formatted_files.add(file)
         else:
             file_result = [
-                f"Error when validating format for {file}: " + e
+                f"Error when validating format: " + e
                 for e in file_result
             ]
             success = False
@@ -68,7 +68,7 @@ def validate_forecast_files(
         logger.info("  Checking forecast values for %s", file)
         if file not in correctly_formatted_files:
             error_message = (
-                f"Error when validating forecast values for {file}: "
+                f"Error when validating forecast values: "
                 "skipped due to incorrect file format "
             )
             logger.error("    " + error_message)
@@ -82,7 +82,7 @@ def validate_forecast_files(
             )
             if file_result is not None:
                 error_message = (
-                    f"Error when validating forecast values for {file}: "
+                    f"Error when validating forecast values: "
                     f"{file_result}"
                 )
                 logger.error("    " + error_message)
@@ -273,6 +273,7 @@ def check_new_model(
         metadata_file_path = RepositoryRelativeFilePath(metadata_file.filename)
         model = extract_model_name(metadata_file_path)
         models_with_metadata_in_pull_request.add(model)
+
 
     if not models_in_pull_request.issubset(existing_models):
         labels.add(all_labels["new-team-submission"])
