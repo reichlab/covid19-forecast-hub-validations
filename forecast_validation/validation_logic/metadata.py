@@ -35,7 +35,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     )
     core.validate(raise_exception=False, silent=True)
 
-    if len(core.validation_errors)>0:
+    if len(core.validation_errors) > 0:
         metadata_error_output.extend(['METADATA_ERROR: %s' % err for err in core.validation_errors])
         is_metadata_error = True
 
