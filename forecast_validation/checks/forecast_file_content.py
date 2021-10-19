@@ -35,13 +35,15 @@ def compare_forecasts(
         "type",
         "quantile"
     ]
-    old_df: pd.DataFrame = pd.read_csv(
-        old_forecast_file_path,
-        index_col=columns
+    old_noindex_df: pd.DataFrame = pd.read_csv(old_forecast_file_path)
+    old_df: pd.DataFrame = pd.DataFrame(
+        old_noindex_df,
+        index=old_noindex_df.columns
     )
-    new_df: pd.DataFrame = pd.read_csv(
-        new_forecast_file_path,
-        index_col=columns
+    new_noindex_df: pd.DataFrame = pd.read_csv(new_forecast_file_path)
+    new_df: pd.DataFrame = pd.DataFrame(
+        new_noindex_df,
+        index=new_noindex_df.columns
     )
 
     error: Optional[str] = None

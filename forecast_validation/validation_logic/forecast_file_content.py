@@ -401,3 +401,10 @@ def check_forecast_retraction(
 
     if no_files_checked_log:
         logger.info("No retractions detected.")
+
+    return ValidationStepResult(
+        success=success,
+        labels=labels,
+        comments=comments,
+        file_errors=errors
+    )
