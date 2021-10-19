@@ -347,7 +347,7 @@ def check_forecast_retraction(
             no_files_checked_log: bool = False
             logger.info(
                 "  Checking existing forecast %s for any retractions",
-                relative_path_str
+                str(existing_file_path)
             )
             compare_result: RetractionCheckResult = compare_forecasts(
                 old_forecast_file_path=existing_file_path,
