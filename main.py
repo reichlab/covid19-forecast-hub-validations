@@ -29,7 +29,6 @@ from forecast_validation.validation_logic.forecast_file_content import (
     check_new_model,
     get_all_forecast_filepaths,
     filename_match_forecast_date_check,
-    get_all_metadata_filepaths,
     validate_forecast_files
 )
 from forecast_validation.validation_logic.forecast_file_type import (
@@ -43,6 +42,9 @@ from forecast_validation.validation_logic.github_connection import (
     determine_pull_request_type,
     get_all_models_from_repository,
     download_all_forecast_and_metadata_files
+)
+from forecast_validation.validation_logic.metadata import (
+    get_all_metadata_filepaths
 )
 
 logging.config.fileConfig("logging.conf")
