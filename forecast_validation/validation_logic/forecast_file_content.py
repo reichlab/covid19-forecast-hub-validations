@@ -182,7 +182,7 @@ def filename_match_forecast_date_check(
             errors[filepath] = error_list
 
         # filter all possible forecast dates into a set for unique check
-        forecast_dates = {
+        forecast_dates: set[datetime.date] = {
             datetime.datetime.strptime(str(d), "%Y-%m-%d").date()
             for d in df['forecast_date']
         }
