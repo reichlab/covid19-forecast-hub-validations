@@ -47,9 +47,9 @@ def compare_forecasts(
     )
 
     error: Optional[str] = None
-    has_implicit_retraction: bool = False,
-    has_explicit_retraction: bool = False,
-    is_all_duplicate: bool = False,
+    has_implicit_retraction: bool = False
+    has_explicit_retraction: bool = False
+    is_all_duplicate: bool = False
     
     # First check if new dataframe has entries for ALL values of old dataframe
     try:
