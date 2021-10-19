@@ -148,7 +148,7 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
                 repository,
                 extract_model_name(forecast_file.filename),
                 forecast_file,
-                store["HUB_MIRRORED_REPOSITORY_ROOT"]
+                store["HUB_MIRRORED_DIRECTORY_ROOT"]
             )
             changed_forecasts = True
 

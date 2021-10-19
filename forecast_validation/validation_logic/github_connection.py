@@ -180,7 +180,7 @@ def get_all_models_from_repository(
 def download_all_forecast_and_metadata_files(
     store: dict[str, Any]
 ) -> ValidationStepResult:
-    root_directory: pathlib.Path = store["HUB_MIRRORED_DIRECTORY_ROOT"]
+    root_directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )

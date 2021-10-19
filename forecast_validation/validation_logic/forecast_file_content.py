@@ -253,6 +253,9 @@ def check_new_model(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: dict[str, Label] = store["possible_labels"]
+    pull_request_directory_root: pathlib.Path = (
+        store["PULL_REQUEST_DIRECTORY_ROOT"]
+    )
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )
@@ -271,9 +274,12 @@ def check_new_model(
 
     models_with_metadata_in_pull_request = set()
     for metadata_file in metadata_files:
-        metadata_file_path = RepositoryRelativeFilePath(metadata_file.filename)
-        model = extract_model_name(metadata_file_path)
-        models_with_metadata_in_pull_request.add(model)
+        metadata_file_path = RepositoryRelativeFilePath(
+            pull_request_directory_root/pathlib.Path(metadata_file.filename)
+        )
+        if metadata_file_path.exists():
+            model = extract_model_name(metadata_file.filename)
+            models_with_metadata_in_pull_request.add(model)
 
     # read all binary operators below as set operations
     if not models_in_pull_request <= existing_models:
