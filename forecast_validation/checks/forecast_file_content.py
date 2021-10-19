@@ -8,6 +8,7 @@ from pandas.io.stata import invalid_name_doc
 import zoltpy.covid19
 
 from forecast_validation import ParseDateError
+from forecast_validation.checks import RetractionCheckResult
 from forecast_validation.utilities.misc import compile_output_errors
 
 logger: logging.Logger = logging.getLogger("hub-validations")
@@ -15,7 +16,7 @@ logger: logging.Logger = logging.getLogger("hub-validations")
 def compare_forecasts(
     old_forecast_file_path: Union[str, os.PathLike],
     new_forecast_file_path: Union[str, os.PathLike]
-) -> bool:
+) -> RetractionCheckResult:
     """
     Compare the 2 forecasts and returns whether there are any implicit retractions or not
 
@@ -43,12 +44,11 @@ def compare_forecasts(
         index_col=columns
     )
 
-    result = {
-        'implicit-retraction': False,
-        'retraction': False,
-        'invalid': False,
-        'error': None
-    }
+    error: Optional[str] = None
+    has_implicit_retraction: bool = False,
+    has_explicit_retraction: bool = False,
+    is_all_duplicate: bool = False,
+    
     # First check if new dataframe has entries for ALL values of old dataframe
     try:
         # Access the indices of old forecast file in the new one
@@ -56,19 +56,24 @@ def compare_forecasts(
         new_vals = new_df.loc[old_df.index]
         comparison = (old_df == new_vals)
         if (comparison).all(axis=None):
-            result['invalid'] = True
-            result['error'] = "Forecast is all duplicate."
+            is_all_duplicate = True
+            error = "Forecast is all duplicate."
     except KeyError as e:
         # print(e)
         # New forecast has some indices that are NOT in old forecast
-        result['implicit-retraction'] = True
+        has_implicit_retraction = True
     else:   
         # check for explicit retractions
         # check if mismatches positions have NULLs
         if not (comparison).all(axis=None):
             if ((new_vals.notnull()) & (comparison)).any(axis=None):
-                result['retraction'] = True
-    return result
+                has_explicit_retraction = True
+    return RetractionCheckResult(
+        error=error,
+        has_implicit_retraction=has_implicit_retraction,
+        has_explicit_retraction=has_explicit_retraction,
+        is_all_duplicate=is_all_duplicate
+    )
 
 def check_date_format(date_str: str) -> None:
     try:

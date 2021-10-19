@@ -5,7 +5,7 @@ import urllib.request
 
 def fetch_url(url: str, to_path: Union[str, os.PathLike]) -> str:
     urllib.request.urlretrieve(url, to_path)
-    return to_path
+    return pathlib.Path(to_path)
 
 def extract_model_name(filepath: Union[str, os.PathLike]) -> str:
     return "-".join(pathlib.Path(filepath).stem.split("-")[-2:])

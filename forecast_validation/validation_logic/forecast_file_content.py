@@ -4,6 +4,7 @@ from github.Label import Label
 import datetime
 import logging
 import os
+import os.path
 import pandas as pd
 import pathlib
 import pytz
@@ -12,8 +13,10 @@ import zoltpy.covid19
 from forecast_validation import (
     ParseDateError, PullRequestFileType, RepositoryRelativeFilePath
 )
+from forecast_validation.checks import RetractionCheckResult
 from forecast_validation.checks.forecast_file_content import (
     check_date_format,
+    compare_forecasts,
     validate_forecast_values
 )
 from forecast_validation.utilities.github import get_existing_models
@@ -311,3 +314,72 @@ def check_new_model(
         labels=labels,
         file_errors=errors
     )
+
+def check_forecast_retraction(
+    store: dict[str, Any],
+    files: set[os.PathLike]
+) -> ValidationStepResult:
+    success: bool = True
+    labels: set[Label] = set()
+    comments: list[str] = []
+    errors: dict[os.PathLike, list[str]] = {}
+
+    all_labels: set[Label] = store["possible_labels"]
+    hub_mirrored_directory_root: pathlib.Path = (
+        store["HUB_MIRRORED_DIRECTORY_ROOT"]
+    )
+    repository_root: pathlib.Path = store["REPOSITORY_ROOT_ONDISK"]
+
+    logger.info("Checking potential forecast (impl./expl.) retractions...")
+
+    no_files_checked_log: bool = True
+    for file in files:
+        filepath = pathlib.Path(file)
+        basename = os.path.basename(filepath)
+        existing_file_path = (
+            hub_mirrored_directory_root/filepath
+        ).resolve()
+        if existing_file_path.exists():
+            no_files_checked_log: bool = False
+            logger.info(
+                "  Checking existing forecast for %s for any retractions",
+                basename
+            )
+            compare_result: RetractionCheckResult = compare_forecasts(
+                old_forecast_file_path=file,
+                new_forecast_file_path=existing_file_path
+            )
+            if compare_result.is_all_duplicate:
+                success = False
+                logger.error(
+                    "    %s contains all duplicate forecast value.",
+                    str(file)
+                )
+                labels.add(all_labels["duplicate_forecast"])
+                errors[file] = [compare_result["error"]]
+            if compare_result.has_implicit_retraction:
+                success = False
+                labels.add(all_labels["forecast-implicit-retractions"])
+                error_list = errors.get(file, [])
+                error_list.append((
+                    "Forecast file contains implicit retraction(s), which are "
+                    "disallowed. Please review the retraction rules for a "
+                    "forecast in the wiki [here]."
+                    "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)"
+                ))
+                errors[file] = error_list
+            if compare_result.has_explicit_retraction:
+                labels.add(all_labels["forecast_retractions"])
+            if compare_result.has_no_retraction_or_duplication:
+                logger.info("💡 PR contains updates to existing forecasts")
+                labels.add(all_labels["forecast-updated"])
+                comments.append(
+                    "💡 Your submission seem to have updated/deleted some "
+                    "existing forecasts. Could you provide a reason for the "
+                    "updation/deletion and confirm that any updated forecasts "
+                    "only used data that were available at the time the "
+                    "original forecasts were made?"
+                )
+
+    if no_files_checked_log:
+        logger.info("No retractions detected.")

@@ -9,7 +9,7 @@ class ValidationRetractionTest(unittest.TestCase):
             compare_forecasts(
                 "tests/testfiles/old_forecast.csv",
                 "tests/testfiles/new_forecast.csv"
-            )['implicit-retraction']
+            ).has_implicit_retraction
         )
 
     def test_updation_with_new_targets(self):
@@ -17,7 +17,7 @@ class ValidationRetractionTest(unittest.TestCase):
             compare_forecasts(
                 "tests/testfiles/old_forecast.csv",
                 "tests/testfiles/new_forecast_new_targets.csv"
-            )['implicit-retraction']
+            ).has_implicit_retraction
         )
 
     def test_updation_with_removed_targets(self):
@@ -25,7 +25,7 @@ class ValidationRetractionTest(unittest.TestCase):
             compare_forecasts(
                 "tests/testfiles/old_forecast.csv",
                 "tests/testfiles/new_forecast_removed_targets.csv"
-            )['implicit-retraction']
+            ).has_implicit_retraction
         )
 
     def test_updation_with_all_duplicates(self):
@@ -33,7 +33,7 @@ class ValidationRetractionTest(unittest.TestCase):
             compare_forecasts(
                 "tests/testfiles/old_forecast.csv",
                 "tests/testfiles/new_forecast_same_rows.csv"
-            )['invalid']
+            ).is_all_duplicate
         )
     
     def test_updation_with_explicit_retractions(self):
@@ -41,9 +41,8 @@ class ValidationRetractionTest(unittest.TestCase):
             compare_forecasts(
                 "tests/testfiles/old_forecast.csv",
                 "tests/testfiles/new_forecast_explicit_retractions.csv"
-            )['retraction']
+            ).has_explicit_retraction
         )
-
 
 if __name__ == '__main__':
     unittest.main()

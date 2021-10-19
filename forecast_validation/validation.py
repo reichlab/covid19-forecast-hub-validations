@@ -7,6 +7,8 @@ import os
 
 from github.PullRequest import PullRequest
 
+from forecast_validation import VALIDATIONS_VERSION
+
 logger = logging.getLogger("hub-validations")
 
 @dataclasses.dataclass(frozen=True)
@@ -19,7 +21,7 @@ class ValidationStepResult:
     for how data classes work.
 
     Fields:
-        success: True if the step does not contains validation errors, False if
+        success: True if the step does not contain validation errors, False if
             it does
         to_store: a dictionary containing artifacts that subsequent validation
             step(s) may use
@@ -203,7 +205,9 @@ class ValidationRun:
 
         # merge all labels, comments, and errors generated at each step
         labels: set[Label] = set()
-        comments: list[str] = ["Comments: "]
+        comments: list[str] = [(
+            f"### Validations v{VALIDATIONS_VERSION}\nComments: "
+        )]
         errors: dict[os.PathLike, list[str]] = {}
         for step in self.executed_steps:
             if step.result.labels is not None:
@@ -237,6 +241,7 @@ class ValidationRun:
             )
         else:
             error_comment = (
+                f"Validations v{VALIDATIONS_VERSION}\n"
                 "Errors: \n\n"
                 "❌ There are errors in this PR. \n\n"
             )

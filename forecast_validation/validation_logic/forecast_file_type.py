@@ -121,13 +121,15 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
+    labels: set[Label] = set()
+    comments: list[str] = []
+    downloaded_existing_files: set[os.PathLike] = set()
+    
     repository: Repository = store["repository"]
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )
     all_labels: dict[str, Label] = store["possible_labels"]
-    labels: set[Label] = set()
-    comments: list[str] = []
 
     logger.info("Checking if the PR contains updates to existing forecasts...")
 
@@ -143,30 +145,23 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
             forecast_file.status == "removed"
         ):
             # if file is modified, fetch the original one and
-            # save it to the forecasts_master directory
-            get_existing_forecast_file(
+            # save it to the hub (mirrored) directory
+            downloaded_existing_files.add(get_existing_forecast_file(
                 repository,
                 extract_model_name(forecast_file.filename),
                 forecast_file,
                 store["HUB_MIRRORED_DIRECTORY_ROOT"]
-            )
+            ))
             changed_forecasts = True
 
-    if changed_forecasts:
-        # Add the `forecast-updated` label when there are deletions in the forecast file
-        logger.info("💡 PR contains updates to existing forecasts")
-        labels.add(all_labels["forecast-updated"])
-        comments.append(
-            "💡 Your submission seem to have updated/deleted some existing "
-            "forecasts. Could you provide a reason for the updation/deletion "
-            "and confirm that any updated forecasts only used data that were "
-            "available at the time the original forecasts were made?"
-        )
-    else:
+    if not changed_forecasts:
         logger.info("✔️ PR does not contain updates to existing forecasts")
 
     return ValidationStepResult(
         success=True,
+        to_store={
+            "downloaded_existing_files": downloaded_existing_files
+        },
         labels=labels,
         comments=comments
     )

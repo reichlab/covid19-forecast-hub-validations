@@ -69,7 +69,7 @@ def get_existing_forecast_file(
     file: File,
     local_directory: pathlib.Path,
     remote_data_directory: str = "data_processed",
-) -> Optional[str]:
+) -> os.PathLike:
     """Retrieve the forecast from master branch of repo.
 
     Precondition: assumes that the file/model is already in the master
@@ -78,25 +78,12 @@ def get_existing_forecast_file(
     If not present, return None.
     """
     local_path: pathlib.Path = local_directory/pathlib.Path(file.filename)
-    try:
-        os.makedirs(local_directory, exist_ok=True)
-        existing_file: ContentFile = repository.get_contents(
-            f"{remote_data_directory}/{model}/{file.filename}"
-        )
-        assert isinstance(existing_file, ContentFile), existing_file
 
-        return fetch_url(existing_file.download_url, local_path)
-    except UnknownObjectException:
-        logger.warning(
-            (
-                "Could not retrieve existing forecast file %s: Forecast does "
-                "not exist currently...?"
-            ),
-            file.filename
-        )
-        return None
-    except OSError:
-        logger.warning(
-            "Could not create local path to download existing forecast file"
-        )
-        return None
+    os.makedirs(local_directory, exist_ok=True)
+    existing_file: ContentFile = repository.get_contents(
+        f"{remote_data_directory}/{model}/{file.filename}"
+    )
+    assert isinstance(existing_file, ContentFile), existing_file
+
+    return fetch_url(existing_file.download_url, local_path)
+
