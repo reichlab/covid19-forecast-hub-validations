@@ -128,7 +128,6 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         pull_request.get_files(),
         store["FILENAME_PATTERNS"]
     )
-    logger.info(filtered_files)
     labels: set[Label] = set()
 
     logger.info("Determining if PR is a forecast submission...")
