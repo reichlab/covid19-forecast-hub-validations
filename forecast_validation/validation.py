@@ -226,7 +226,7 @@ class ValidationRun:
             logger.info("Labels to be applied: %s", str(labels))
             pull_request.set_labels(*list(labels))
         else:
-            print("no labels")
+            logger.info("No labels to be applied")
         pull_request.create_issue_comment(
             "\n\n".join(comments)
         )
