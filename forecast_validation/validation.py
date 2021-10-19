@@ -236,6 +236,7 @@ class ValidationRun:
         )
         if self.success:
             pull_request.create_issue_comment(
+                f"Validations v{VALIDATIONS_VERSION}\n\n"
                 "Errors: \n\n"
                 "✔️ No validation errors in this PR."
             )
