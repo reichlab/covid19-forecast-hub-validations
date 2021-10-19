@@ -77,9 +77,11 @@ def get_existing_forecast_file(
     
     If not present, return None.
     """
-    local_path: pathlib.Path = local_directory/pathlib.Path(file.filename)
+    local_path: pathlib.Path = (
+        local_directory/pathlib.Path(file.filename)
+    ).resolve()
 
-    os.makedirs(local_directory, exist_ok=True)
+    os.makedirs(local_path.parent, exist_ok=True)
     existing_file: ContentFile = repository.get_contents(file.filename)
     assert isinstance(existing_file, ContentFile), existing_file
 
