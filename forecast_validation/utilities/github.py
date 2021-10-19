@@ -1,8 +1,11 @@
 from typing import Optional, Iterable
 from github.ContentFile import ContentFile
+from github.GithubException import UnknownObjectException
+from github.File import File
 from github.Repository import Repository
 import logging
 import os
+import pathlib
 import yaml
 
 from forecast_validation.utilities.misc import fetch_url
@@ -60,37 +63,40 @@ def get_metadata_for_model(
     except:
         return None
 
-def get_existing_model(
+def get_existing_forecast_file(
     repository: Repository,
-    filename: Optional[str] = None,
-    model_abbr: Optional[str] = None,
-    timezero: Optional[str] = None,
-    remote_directory: str = "data-processed",
-    local_directory: str = "forecasts_master"
+    model: str,
+    file: File,
+    local_directory: pathlib.Path,
+    remote_data_directory: str = "data_processed",
 ) -> Optional[str]:
     """Retrieve the forecast from master branch of repo.
+
+    Precondition: assumes that the file/model is already in the master
+    branch of the repository.
     
     If not present, return None.
     """
+    local_path: pathlib.Path = local_directory/pathlib.Path(file.filename)
     try:
         os.makedirs(local_directory, exist_ok=True)
-        if filename is None and (model_abbr is not None and timezero is not None):
-            filename = (
-                f"{remote_directory}/{model_abbr}/"
-                f"{timezero}-{model_abbr}.csv"
-            )
-        elif filename is None:
-            return None
-        return fetch_url(
-            (
-                "https://raw.githubusercontent.com/"
-                f"{repository.full_name}/master/{filename}"
-            ),
-            f"{local_directory}/{filename.split('/')[-1]}"
+        existing_file: ContentFile = repository.get_contents(
+            f"{remote_data_directory}/{model}/{file.filename}"
         )
-    except:
+        assert isinstance(existing_file, ContentFile), existing_file
+
+        return fetch_url(existing_file.download_url, local_path)
+    except UnknownObjectException:
         logger.warning(
-            "%s: Forecast does not exist currently?",
-            filename
+            (
+                "Could not retrieve existing forecast file %s: Forecast does "
+                "not exist currently...?"
+            ),
+            file.filename
+        )
+        return None
+    except OSError:
+        logger.warning(
+            "Could not create local path to download existing forecast file"
         )
         return None

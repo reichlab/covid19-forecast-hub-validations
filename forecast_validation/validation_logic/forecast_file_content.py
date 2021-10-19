@@ -25,7 +25,7 @@ logger = logging.getLogger("hub-validations")
 def get_all_forecast_filepaths(
     store: dict[str, Any]
 ) -> ValidationStepResult:
-    directory: pathlib.Path = store["HUB_MIRRORED_DIRECTORY_ROOT"]
+    directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
     return ValidationStepResult(
         success=True,
         forecast_files={
@@ -247,6 +247,7 @@ def check_new_model(
     store: dict[str, Any],
     files: set[os.PathLike]
 ) -> ValidationStepResult:
+
     success: bool = True
     labels: set[Label] = set()
     errors: dict[os.PathLike, list[str]] = {}

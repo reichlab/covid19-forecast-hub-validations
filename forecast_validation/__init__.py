@@ -53,6 +53,9 @@ HUB_REPOSITORY_NAME: str = "ydhuang28/covid19-forecast-hub"
 HUB_MIRRORED_DIRECTORY_ROOT: pathlib.Path = (
     (REPOSITORY_ROOT_ONDISK/"hub").resolve()
 )
+PULL_REQUEST_DIRECTORY_ROOT: pathlib.Path = (
+    (REPOSITORY_ROOT_ONDISK/"pull_request").resolve()
+)
 POPULATION_DATAFRAME_PATH: pathlib.Path = (
     (
         REPOSITORY_ROOT_ONDISK/"forecast_validation"/"static"/"locations.csv"

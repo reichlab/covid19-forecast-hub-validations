@@ -10,9 +10,10 @@ from forecast_validation import (
     PullRequestFileType,
     RepositoryRelativeFilePath
 )
+from forecast_validation.utilities.misc import extract_model_name
 from forecast_validation.validation import ValidationStepResult
 from forecast_validation.utilities.github import (
-    get_existing_model
+    get_existing_forecast_file
 )
 
 logger = logging.getLogger("hub-validations")
@@ -132,15 +133,23 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
 
     forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
     changed_forecasts: bool = False
-    for f in forecasts:
+    for forecast_file in forecasts:
         # GitHub PR file statuses: unofficial, nothing official yet as of 9-4-21
         # "added", "modified", "renamed", "removed"
         # https://stackoverflow.com/questions/10804476/what-are-the-status-types-for-files-in-the-github-api-v3
         # https://github.com/jitterbit/get-changed-files/commit/cfe8ad4269ed4d2edb7f4e39682a649f6675bf89#diff-4fab5baaca5c14d2de62d8d2fceef376ddddcc8e9509d86cfa5643f51b89ce3dR5
-        if f.status == "modified" or f.status == "removed":
+        if (
+            forecast_file.status == "modified" or
+            forecast_file.status == "removed"
+        ):
             # if file is modified, fetch the original one and
             # save it to the forecasts_master directory
-            get_existing_model(repository, filename=f.filename)
+            get_existing_forecast_file(
+                repository,
+                extract_model_name(forecast_file.filename),
+                forecast_file,
+                store["HUB_MIRRORED_REPOSITORY_ROOT"]
+            )
             changed_forecasts = True
 
     if changed_forecasts:
@@ -149,7 +158,7 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
         labels.add(all_labels["forecast-updated"])
         comments.append(
             "💡 Your submission seem to have updated/deleted some existing "
-            " forecasts. Could you provide a reason for the updation/deletion "
+            "forecasts. Could you provide a reason for the updation/deletion "
             "and confirm that any updated forecasts only used data that were "
             "available at the time the original forecasts were made?"
         )
