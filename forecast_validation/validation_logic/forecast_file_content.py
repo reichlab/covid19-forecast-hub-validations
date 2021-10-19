@@ -360,7 +360,7 @@ def check_forecast_retraction(
                     relative_path_str
                 )
                 labels.add(all_labels["duplicate-forecast"])
-                errors[file] = [compare_result["error"]]
+                errors[file] = [compare_result.error]
             if compare_result.has_implicit_retraction:
                 logger.error(
                     "    ❌ %s contains implicit retrations.",
