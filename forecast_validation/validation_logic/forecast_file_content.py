@@ -328,22 +328,26 @@ def check_forecast_retraction(
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
-    repository_root: pathlib.Path = store["REPOSITORY_ROOT_ONDISK"]
+    pull_request_directory_root: pathlib.Path = (
+        store["PULL_REQUEST_DIRECTORY_ROOT"]
+    )
 
     logger.info("Checking potential forecast (impl./expl.) retractions...")
 
     no_files_checked_log: bool = True
     for file in files:
         filepath = pathlib.Path(file)
-        basename = os.path.basename(filepath)
+        relative_path_str = str(
+            filepath.relative_to(pull_request_directory_root)
+        )
         existing_file_path = (
             hub_mirrored_directory_root/filepath
         ).resolve()
         if existing_file_path.exists():
             no_files_checked_log: bool = False
             logger.info(
-                "  Checking existing forecast for %s for any retractions",
-                basename
+                "  Checking existing forecast %s for any retractions",
+                relative_path_str
             )
             compare_result: RetractionCheckResult = compare_forecasts(
                 old_forecast_file_path=file,
@@ -352,12 +356,16 @@ def check_forecast_retraction(
             if compare_result.is_all_duplicate:
                 success = False
                 logger.error(
-                    "    %s contains all duplicate forecast value.",
-                    str(file)
+                    "    ❌ %s contains all duplicate forecast value.",
+                    relative_path_str
                 )
                 labels.add(all_labels["duplicate_forecast"])
                 errors[file] = [compare_result["error"]]
             if compare_result.has_implicit_retraction:
+                logger.error(
+                    "    ❌ %s contains implicit retrations.",
+                    relative_path_str
+                )
                 success = False
                 labels.add(all_labels["forecast-implicit-retractions"])
                 error_list = errors.get(file, [])
@@ -369,14 +377,24 @@ def check_forecast_retraction(
                 ))
                 errors[file] = error_list
             if compare_result.has_explicit_retraction:
-                labels.add(all_labels["forecast_retractions"])
+                logger.info(
+                    "    💡 %s contains explicit retractions.",
+                    relative_path_str
+                )
+                labels.add(all_labels["forecast-retractions"])
+                comments.append(
+                    "💡 Submission contains explicit retractions."
+                )
             if compare_result.has_no_retraction_or_duplication:
-                logger.info("💡 PR contains updates to existing forecasts")
+                logger.info(
+                    "    💡 %s contains updates to existing forecasts",
+                    relative_path_str
+                )
                 labels.add(all_labels["forecast-updated"])
                 comments.append(
-                    "💡 Your submission seem to have updated/deleted some "
+                    "💡 Your submission seem to have updated some "
                     "existing forecasts. Could you provide a reason for the "
-                    "updation/deletion and confirm that any updated forecasts "
+                    "update and confirm that any updated forecasts "
                     "only used data that were available at the time the "
                     "original forecasts were made?"
                 )
