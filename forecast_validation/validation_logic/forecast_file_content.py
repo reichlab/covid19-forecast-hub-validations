@@ -328,25 +328,21 @@ def check_forecast_retraction(
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
-    logger.info(hub_mirrored_directory_root)
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
-    logger.info(pull_request_directory_root)
 
     logger.info("Checking potential forecast (impl./expl.) retractions...")
 
     no_files_checked_log: bool = True
     for file in files:
         filepath = pathlib.Path(file)
-        logger.info(filepath)
         relative_path_str = str(
             filepath.relative_to(pull_request_directory_root)
         )
         existing_file_path = (
-            hub_mirrored_directory_root/filepath
+            hub_mirrored_directory_root/relative_path_str
         ).resolve()
-        logger.info(existing_file_path)
         if existing_file_path.exists():
             no_files_checked_log: bool = False
             logger.info(
