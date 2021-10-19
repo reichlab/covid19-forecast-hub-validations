@@ -301,5 +301,6 @@ def check_new_model(
 
     return ValidationStepResult(
         success=success,
+        labels=labels,
         file_errors=errors
     )
