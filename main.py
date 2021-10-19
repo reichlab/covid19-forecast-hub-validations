@@ -24,6 +24,7 @@ from forecast_validation.validation import (
     ValidationRun
 )
 from forecast_validation.validation_logic.forecast_file_content import (
+    check_new_model,
     get_all_forecast_filepaths,
     filename_match_forecast_date_check,
     validate_forecast_files
@@ -82,6 +83,9 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # All forecast format and value sanity checks
     steps.append(ValidationPerFileStep(validate_forecast_files))
+
+    # Check for new team submission
+    steps.append(ValidationPerFileStep(check_new_model))
 
     # make new validation run
     validation_run = ValidationRun(steps)

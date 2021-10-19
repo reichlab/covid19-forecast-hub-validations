@@ -274,27 +274,30 @@ def check_new_model(
         model = extract_model_name(metadata_file_path)
         models_with_metadata_in_pull_request.add(model)
 
-
-    if not models_in_pull_request.issubset(existing_models):
+    # read all binary operators below as set operations
+    if not models_in_pull_request <= existing_models:
         labels.add(all_labels["new-team-submission"])
-        new_models = models_in_pull_request.difference(existing_models)
-        if not new_models.issubset(models_with_metadata_in_pull_request):
-            new_models_without_metadata = new_models.difference(
-                models_with_metadata_in_pull_request
+        new_models = models_in_pull_request - existing_models
+        if not new_models <= models_with_metadata_in_pull_request:
+            new_models_without_metadata = (
+                new_models - models_with_metadata_in_pull_request
             )
 
             success = False
             for model in new_models_without_metadata:
                 logger.error(
-                    "❌ New model without metadata file detected: %s",
+                    "❌ New model without in-folder metadata file detected: %s",
                     model
                 )
                 errors[model_to_file[model]] = [(
                     f"Looks like you are submitting a new model ({model}), but "
-                    "you have not submitted a new metadata file along with it. "
-                    "Please update your pull request to include a metadata "
-                    "file for the model."
+                    "you have not submitted a new metadata file along with it "
+                    "in the same team-model folder. Please update your pull "
+                    "request to contain a metadata file for the model in the "
+                    "same team-model folder that also contains the forecast "
+                    "files."
                 )]
+
 
     return ValidationStepResult(
         success=success,
