@@ -22,7 +22,7 @@ from forecast_validation.checks.forecast_file_type import (
     is_forecast_submission
 )
 from forecast_validation.utilities.github import (
-    get_models
+    get_existing_models
 )
 from forecast_validation.validation import ValidationStepResult
 
@@ -155,7 +155,7 @@ def get_all_models_from_repository(
 
     logger.info("Retrieving all existing model names...")
 
-    model_names: set[str] = get_models(repository)
+    model_names: set[str] = get_existing_models(repository)
 
     logger.info("All model names successfully retrieved")
 

@@ -258,6 +258,7 @@ def check_new_model(
     metadata_files: list[File] = filtered_files.get(
         PullRequestFileType.METADATA, []
     )
+    existing_models: list[str] = store["model_names"]
 
     models_in_pull_request = set()
     model_to_file: dict[str, os.PathLike] = {}
@@ -273,7 +274,6 @@ def check_new_model(
         model = extract_model_name(metadata_file_path)
         models_with_metadata_in_pull_request.add(model)
 
-    existing_models = get_existing_models()
     if not models_in_pull_request.issubset(existing_models):
         labels.add(all_labels["new-team-submission"])
         new_models = models_in_pull_request.difference(existing_models)
