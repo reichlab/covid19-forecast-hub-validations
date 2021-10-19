@@ -65,10 +65,8 @@ def get_metadata_for_model(
 
 def get_existing_forecast_file(
     repository: Repository,
-    model: str,
     file: File,
     local_directory: pathlib.Path,
-    remote_data_directory: str = "data_processed",
 ) -> os.PathLike:
     """Retrieve the forecast from master branch of repo.
 

@@ -129,7 +129,6 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )
-    all_labels: dict[str, Label] = store["possible_labels"]
 
     logger.info("Checking if the PR contains updates to existing forecasts...")
 
@@ -148,13 +147,14 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
             # save it to the hub (mirrored) directory
             downloaded_existing_files.add(get_existing_forecast_file(
                 repository,
-                extract_model_name(forecast_file.filename),
                 forecast_file,
                 store["HUB_MIRRORED_DIRECTORY_ROOT"]
             ))
             changed_forecasts = True
 
-    if not changed_forecasts:
+    if changed_forecasts:
+        logger.info("💡 PR contains updates to existing forecasts")
+    else:
         logger.info("✔️ PR does not contain updates to existing forecasts")
 
     return ValidationStepResult(

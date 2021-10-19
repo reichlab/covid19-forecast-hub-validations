@@ -27,14 +27,6 @@ def compare_forecasts(
     Returns:
         Whether this update has a retraction or not
     """
-    columns: list[str] = [
-        "forecast_date",
-        "target",
-        "target_end_date",
-        "location",
-        "type",
-        "quantile"
-    ]
     old_noindex_df: pd.DataFrame = pd.read_csv(old_forecast_file_path)
     old_df: pd.DataFrame = pd.DataFrame(
         old_noindex_df,
