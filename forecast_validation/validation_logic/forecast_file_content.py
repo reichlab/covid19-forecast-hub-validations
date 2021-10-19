@@ -359,7 +359,7 @@ def check_forecast_retraction(
                     "    ❌ %s contains all duplicate forecast value.",
                     relative_path_str
                 )
-                labels.add(all_labels["duplicate_forecast"])
+                labels.add(all_labels["duplicate-forecast"])
                 errors[file] = [compare_result["error"]]
             if compare_result.has_implicit_retraction:
                 logger.error(
