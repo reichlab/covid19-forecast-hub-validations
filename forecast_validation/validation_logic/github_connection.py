@@ -15,8 +15,7 @@ import urllib.request
 
 # internal dependencies
 from forecast_validation import (
-    PullRequestFileType,
-    RepositoryRelativeFilePath
+    PullRequestFileType
 )
 from forecast_validation.checks.forecast_file_type import (
     filter_files,
@@ -185,7 +184,6 @@ def download_all_forecast_and_metadata_files(
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )
-    downloaded_file_paths: list[RepositoryRelativeFilePath] = []
 
     logger.info("Downloading forecast and metadata files...")
 
@@ -204,18 +202,16 @@ def download_all_forecast_and_metadata_files(
         if not parent_directory.exists():
             os.makedirs(parent_directory)
 
-        local_path = RepositoryRelativeFilePath(
-            (parent_directory/os.path.basename(file.filename)).resolve()
-        )
+        local_path = (
+            root_directory/pathlib.Path(file.filename)
+        ).resolve()
         urllib.request.urlretrieve(
             file.raw_url,
             local_path,
         )
-        downloaded_file_paths.append(local_path)
 
     logger.info("Download successful")
 
     return ValidationStepResult(
-        success=True,
-        to_store={"all_downloaded_files": downloaded_file_paths}
+        success=True
     )
