@@ -299,7 +299,7 @@ def check_new_model(
 
     models_with_metadata_in_pull_request = set()
     for metadata_file in metadata_files:
-        metadata_file_path = RepositoryRelativeFilePath(
+        metadata_file_path = (
             pull_request_directory_root/pathlib.Path(metadata_file.filename)
         )
         if metadata_file_path.exists():
