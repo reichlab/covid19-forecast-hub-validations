@@ -65,7 +65,6 @@ def validate_forecast_files(
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
     logger.info("Checking forecast formats and values...")
-    print(files)
 
     for file in files:
         logger.info("  Checking forecast format for %s", file)
@@ -209,6 +208,7 @@ def filename_match_forecast_date_check(
                 os.path.basename(basename)[:10], "%Y-%m-%d"
             ).date()
         except ValueError as ve:
+            cannot_parse_filename_date = True
             error_message = (
                 f"filename contains dates "
                 f"that are not parseable; specifically, {ve.args[0]}"
