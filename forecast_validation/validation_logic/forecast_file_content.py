@@ -36,7 +36,7 @@ def get_all_forecast_filepaths(
     forecast_files: list[File] = filtered_files.get(
         PullRequestFileType.FORECAST, []
     )
-    potential_misplaced_forecast_files: list[File] = list(filter(
+    potential_misplaced_forecast_files: list[File] = set(filter(
         lambda f: f.filename.endswith(".csv"),
         filtered_files.get(
             PullRequestFileType.OTHER_FS, []
@@ -312,6 +312,11 @@ def check_new_model(
     filtered_files: dict[PullRequestFileType, list[File]] = (
         store["filtered_files"]
     )
+    forecast_filenames: set[str] = {
+        os.path.basename(f.filename) for f in filtered_files.get(
+            PullRequestFileType.FORECAST, []
+        )
+    }
     metadata_files: list[File] = filtered_files.get(
         PullRequestFileType.METADATA, []
     )
@@ -320,10 +325,11 @@ def check_new_model(
     models_in_pull_request = set()
     model_to_file: dict[str, os.PathLike] = {}
     for file in files:
-        filepath = pathlib.Path(file)
-        model = extract_model_name(filepath)
-        models_in_pull_request.add(model)
-        model_to_file[file] = model
+        if os.path.basename(file) in forecast_filenames:
+            filepath = pathlib.Path(file)
+            model = extract_model_name(filepath)
+            models_in_pull_request.add(model)
+            model_to_file[file] = model
 
     models_with_metadata_in_pull_request = set()
     for metadata_file in metadata_files:
