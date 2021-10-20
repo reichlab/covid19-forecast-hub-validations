@@ -135,3 +135,10 @@ forecasts/
 # VSCode related:
 *.code-workspace
 .vscode
+
+# R related
+**/.Rhistory
+
+# macOS related
+.DS_Store
+**/.DS_Store

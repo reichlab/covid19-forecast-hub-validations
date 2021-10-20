@@ -1,4 +1,4 @@
-from test_formatting import validate_forecast_file
+from forecast_validation.validate_formatting import validate_forecast_file
 import sys
 import glob
 import os
