@@ -76,7 +76,11 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         PullRequestFileType.OTHER_NONFS in filtered_files or
         PullRequestFileType.OTHER_FS in filtered_files
     ):
-        logger.info("⚠️ PR is updating outside the data-processed/ folder")
+        logger.info((
+            "⚠️ PR contains file changes that are not part of a valid "
+            "forecast submission (misnamed/misplaced forecast CSV, "
+            "non CSV files, etc.)"
+        ))
         comments.append(
             "⚠️ PR contains file changes that are not part of a valid "
             "forecast submission (misnamed/misplaced forecast CSV, "
@@ -84,7 +88,11 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         )
         labels.add(all_labels["other-files-updated"])
     else:
-        logger.info("✔️ PR is not updating outside the data-processed/ folder")
+        logger.info((
+            "✔️ PR does not contain file changes that are not part of a "
+            "valid forecast submission (misnamed/misplaced forecast CSV, "
+            "non CSV files, etc.)"
+        ))
 
     logger.info("Checking if the PR contains misplaced CSVs...")
     if (PullRequestFileType.FORECAST not in filtered_files and
