@@ -44,7 +44,6 @@ def get_all_forecast_filepaths(
             PullRequestFileType.OTHER_NONFS, []
         )
     ))
-    print(forecast_files)
     return ValidationStepResult(
         success=True,
         forecast_files={

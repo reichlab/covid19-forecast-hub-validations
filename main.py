@@ -125,7 +125,7 @@ def validate_from_pull_request() -> bool:
     return validation_run.success
     
 if __name__ == '__main__':
-    print("---------- here ----------")
+
     if IS_GITHUB_ACTIONS:
         success = validate_from_pull_request()
         if success:

@@ -22,7 +22,6 @@ def get_all_metadata_filepaths(
     metadata_files: list[File] = store["filtered_files"].get(
         PullRequestFileType.METADATA, []
     )
-    print(metadata_files)
     return ValidationStepResult(
         success=True,
         to_store={"metadata_files": 
