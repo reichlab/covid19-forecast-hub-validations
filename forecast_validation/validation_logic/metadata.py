@@ -25,8 +25,8 @@ def get_all_metadata_filepaths(
     print(metadata_files)
     return ValidationStepResult(
         success=True,
-        forecast_files={
-            directory/pathlib.Path(f.filename) for f in metadata_files
+        to_store={"metadata_files": 
+            {directory/pathlib.Path(f.filename) for f in metadata_files}
         }
     )
 
