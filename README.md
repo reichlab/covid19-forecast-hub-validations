@@ -6,4 +6,4 @@ The main entry point for the code is `main.py`. This script is intended to run o
 
 Using this information, the scipt downloads the files modified into a temporary `forecasts` directory and runs model and, if applicable, metadata validations on these files. 
 
-The script also adds appropriate labels to the PR based on the files changed. The main validations code is present inside the `code` directory.
+The script also adds appropriate labels to the PR based on the files changed. The main validations code is present inside the `forecast_validation` directory.
