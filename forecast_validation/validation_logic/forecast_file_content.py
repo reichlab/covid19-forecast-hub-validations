@@ -32,6 +32,7 @@ def get_all_forecast_filepaths(
     forecast_files: list[File] = store["filtered_files"].get(
         PullRequestFileType.FORECAST, []
     )
+    print(forecast_files)
     return ValidationStepResult(
         success=True,
         forecast_files={

@@ -257,8 +257,6 @@ class ValidationRun:
             logger.info("PR %s can be automerged", pull_request.number)
             labels.add(all_labels['automerge'])
 
-        print(filtered_files)
-
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
             logger.info("Labels to be applied: %s", str(labels))
