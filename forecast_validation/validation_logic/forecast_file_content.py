@@ -116,8 +116,7 @@ def validate_forecast_files(
                 errors[file] = error_list
             else:
                 comments.append(
-                    f"✔️ {file} passed (non-filename) forecast value "
-                    "sanity checks."
+                    f"✔️ {file} passed forecast value sanity checks."
                 )
                 logger.info("    %s forecast value sanity-checked", file)
 
