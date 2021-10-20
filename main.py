@@ -1,225 +1,137 @@
-import json
-import re
+# external dep.'s
+import logging
+import logging.config
 import os
+import os.path
+import pathlib
+import re
 import sys
-import urllib.request
-import glob
-from github import Github
 
-from code.validation_functions.metadata import check_for_metadata, get_metadata_model, \
-    output_duplicate_models
-from code.validation_functions.forecast_filename import validate_forecast_file_name
-from code.validation_functions.forecast_date import filename_match_forecast_date
-from code.test_formatting import forecast_check, validate_forecast_file, print_output_errors
+# internal dep.'s
+from forecast_validation import (
+    PULL_REQUEST_DIRECTORY_ROOT,
+    VALIDATIONS_VERSION,
+    REPOSITORY_ROOT_ONDISK,
+    HUB_REPOSITORY_NAME,
+    HUB_MIRRORED_DIRECTORY_ROOT,
+    POPULATION_DATAFRAME_PATH,
+    FILENAME_PATTERNS,
+    IS_GITHUB_ACTIONS,
+    GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+)
+from forecast_validation.validation import (
+    ValidationStep,
+    ValidationPerFileStep,
+    ValidationRun
+)
+from forecast_validation.validation_logic.forecast_file_content import (
+    check_forecast_retraction,
+    check_new_model,
+    get_all_forecast_filepaths,
+    filename_match_forecast_date_check,
+    validate_forecast_files
+)
+from forecast_validation.validation_logic.forecast_file_type import (
+    check_multiple_model_names,
+    check_file_locations,
+    check_modified_forecasts
+)
+from forecast_validation.validation_logic.github_connection import (
+    establish_github_connection,
+    extract_pull_request,
+    determine_pull_request_type,
+    get_all_models_from_repository,
+    download_all_forecast_and_metadata_files
+)
+from forecast_validation.validation_logic.metadata import (
+    get_all_metadata_filepaths
+)
 
-from model_utils import *
+logging.config.fileConfig("logging.conf")
 
-validations_version = 3
+# --- configurations and constants end ---
 
-# Pattern that matches a forecast file add to the data-processed folder.
-# Test this regex usiing this link: https://regex101.com/r/f0bSR3/1 
-pat = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$")
-# pat_other = re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-(.+)\.csv$")
-pat_other = re.compile(r"^data-processed/(.+)\.csv$")
+def setup_validation_run_for_pull_request() -> ValidationRun:
+    
+    steps = []
 
-pat_meta = re.compile(r"^data-processed/(.+)/metadata-\1\.txt$")
+    # Connect to GitHub
+    steps.append(ValidationStep(establish_github_connection))
 
-local = os.environ.get('CI') != 'true'
-# local = True
-if local:
-    token = None
-    print("Running on LOCAL mode!!")
-else:
-    print("Added token")
-    token = os.environ.get('GH_TOKEN')
+    # Extract PR
+    steps.append(ValidationStep(extract_pull_request))
 
-if token is None:
-    g = Github()
-else:
-    g = Github(token)
-repo_name = os.environ.get('GITHUB_REPOSITORY')
-if repo_name is None:
-    repo_name = 'reichlab/covid19-forecast-hub'
-repo = g.get_repo(repo_name)
+    # Determine whether this PR is a forecast submission
+    steps.append(ValidationStep(determine_pull_request_type))
 
-print(f"Github repository: {repo_name}")
-print(f"Github event name: {os.environ.get('GITHUB_EVENT_NAME')}")
+    # Check if the PR tries to add to/update multiple models
+    steps.append(ValidationStep(check_multiple_model_names))
 
-if not local:
-    event = json.load(open(os.environ.get('GITHUB_EVENT_PATH')))
-else:
-    event = json.load(open("test/test_event.json"))
+    # Check the locations of some PR files to apply appropriate labels:
+    #   other-files-updated, metadata-change
+    steps.append(ValidationStep(check_file_locations))
 
-pr = None
-comment = ''
-files_changed = []
-labels = []
+    # Check if the PR has updated existing forecasts
+    steps.append(ValidationStep(check_modified_forecasts))
 
-if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target' or local:
-    # Fetch the  PR number from the event json
-    pr_num = event['pull_request']['number']
-    print(f"PR number: {pr_num}")
+    # Get all current models from hub repository
+    steps.append(ValidationStep(get_all_models_from_repository))
 
-    # Use the Github API to fetch the Pullrequest Object. Refer to details here: https://pygithub.readthedocs.io/en/latest/github_objects/PullRequest.html 
-    # pr is the Pullrequest object
-    pr = repo.get_pull(pr_num)
+    # Download all forecast and metadata files
+    steps.append(ValidationStep(download_all_forecast_and_metadata_files))
 
-    # fetch all files changed in this PR and add it to the files_changed list.
-    files_changed += [f for f in pr.get_files()]
+    # Extract filepaths for downloaded *.csv files
+    steps.append(ValidationStep(get_all_forecast_filepaths))
 
-# Split all files in `files_changed` list into valid forecasts and other files
-forecasts = [file for file in files_changed if pat.match(file.filename) is not None]
-forecasts_err = [file for file in files_changed if pat_other.match(file.filename) is not None]
-metadatas = [file for file in files_changed if pat_meta.match(file.filename) is not None]
-other_files = [file for file in files_changed if
-               pat.match(file.filename) is None and pat_meta.match(file.filename) is None]
+    # Extract filepaths for downloaded *.txt files
+    steps.append(ValidationStep(get_all_metadata_filepaths))
 
-changed_forecasts = False
+    # All forecast date checks
+    steps.append(ValidationPerFileStep(filename_match_forecast_date_check))
 
-if os.environ.get('GITHUB_EVENT_NAME') == 'pull_request_target':
-    # IF there are other fiels changed in the PR 
-    # TODO: If there are other files changed as well as forecast files added, then add a comment saying so.
-    if len(other_files) > 0 and len(forecasts) > 0:
-        print(f"PR has other files changed too.")
-        if pr is not None:
-            labels.append('other-files-updated')
-    # if there are no forecasts matched to the valid regex and the PR has added a CSV file to the data-processed drectory, most likely, it is an erroneous 
-    # forecast which should be caught.
-    # TODO: add more documentation for this logic
-    if len(forecasts) == 0 and len(forecasts_err) > 0:
-        comment += f"\n\nYou seem to have added a forecast in an incorrect format. Please refer to https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting to correct your error.\n\n "
+    # All forecast format and value sanity checks
+    steps.append(ValidationPerFileStep(validate_forecast_files))
 
-    if len(metadatas) > 0:
-        print(f"PR has metadata files changed.")
-        if pr is not None:
-            labels.append('metadata-change')
+    # Check for new team submission
+    steps.append(ValidationPerFileStep(check_new_model))
 
-# deleted_forecasts = False
-# `f` is an object of type: https://pygithub.readthedocs.io/en/latest/github_objects/File.html 
-# `forecasts` is a list of `File`s that are changed in the PR.
-for f in forecasts:
-    # Taken from https://github.com/KITmetricslab/covid19-forecast-hub-de-validations/blob/main/main.py#L113 
-    # if file status is not "added" it is probably "renamed" or "changed"
-    if f.status == "modified":
-        # If file is modified, fetch the original one and save it to the forecasts_master directory
-        get_model_master(repo, filename=f.filename)
-    changed_forecasts = changed_forecasts or (f.status != "added")
+    # Check updates/retractions
+    steps.append(ValidationPerFileStep(check_forecast_retraction))
 
-if changed_forecasts and not local:
-    # Add the `forecast-updated` label when there are deletions in the forecast file
-    labels.append('forecast-updated')
-    comment += "\n Your submission seem to have updated/deleted some forecasts. Could you provide a reason for the updation/deletion and confirm that any updated forecasts only used data that were available at the time the original forecasts were made?\n\n"
+    # make new validation run
+    validation_run = ValidationRun(steps)
 
-# fetch all model directories in the data folder. Used to validate if this is a new submission
-models = get_models(repo)
+    # add initial values to store
+    validation_run.store.update({
+        "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
+        "REPOSITORY_ROOT_ONDISK": REPOSITORY_ROOT_ONDISK,
+        "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
+        "HUB_MIRRORED_DIRECTORY_ROOT": HUB_MIRRORED_DIRECTORY_ROOT,
+        "PULL_REQUEST_DIRECTORY_ROOT": PULL_REQUEST_DIRECTORY_ROOT,
+        "POPULATION_DATAFRAME_PATH": POPULATION_DATAFRAME_PATH,
+        "FILENAME_PATTERNS": FILENAME_PATTERNS,
+        "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
+        "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \
+            GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+    })
 
-# Download all forecasts
-# create a forecasts directory
-os.makedirs('forecasts', exist_ok=True)
+    return validation_run
 
-# Download all forecasts changed in the PR into the forecasts folder
-for f in forecasts:
-    urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
+def validate_from_pull_request() -> bool:
+    validation_run: ValidationRun = setup_validation_run_for_pull_request()
+    
+    validation_run.run()
 
-# Download all metadata files changed in the PR into the forecasts folder
-for f in metadatas:
-    urllib.request.urlretrieve(f.raw_url, f"forecasts/{f.filename.split('/')[-1]}")
+    return validation_run.success
+    
+if __name__ == '__main__':
 
-# Run validations on each of these files
-errors = {}
-is_forecast_date_mismatch = False
-for file in glob.glob("forecasts/*.csv"):
-    error_file = forecast_check(file)
-
-    # extract just the filename and remove the path.
-    f_name = os.path.basename(file)
-    if len(error_file) > 0:
-        errors[os.path.basename(file)] = error_file
-
-    # Check whether the `model_abbr`  directory is present in the `data-processed` folder.
-    # This is a test to check if this submission is a new submission or not
-    model = '-'.join(f_name.split('.')[0].split('-')[-2:])  # extract model_abbr from the filename
-    if model not in models:
-        if not local:
-            labels.append('new-team-submission')
-        if not os.path.isfile(f"forecasts/metadata-{model}.txt"):
-            error_str = "This seems to be a new submission and you have not included a metadata file."
-            if len(error_file) > 0:
-                errors[f_name].append(error_str)
-            else:
-                errors[f_name] = [error_str]
-
-    # Check for implicit and explicit retractions
-    # `forecasts_master` is a directory with the older version of the forecast (if present).
-    if os.path.isfile(f"forecasts_master/{f_name}"):
-        with open(f"forecasts_master/{f_name}", 'r') as f:
-            print("Checking old forecast for any retractions")
-            compare_result = compare_forecasts(old=f, new=open(file, 'r'))
-            if compare_result['invalid'] and not local:
-                error_msg = compare_result['error']
-                # if there were no previous errors
-                if len(error_file) == 0:
-                    errors[os.path.basename(file)] = [compare_result['error']]
-                else:
-                    errors[os.path.basename(file)].append(compare_result['error'])
-            if compare_result['implicit-retraction'] and not local:
-                labels.append('forecast-implicit-retractions')
-                retract_error = f"The forecast {os.path.basename(file)} has an invalid implicit retraction. Please review the retraction rules for a forecast in the wiki here - https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks"
-                # throw an error now with Zoltar 4
-                if len(error_file) == 0:
-                    errors[os.path.basename(file)] = [retract_error]
-                else:
-                    errors[os.path.basename(file)].append(retract_error)
-            # explicit retractions
-            if compare_result['retraction'] and not local:
-                labels.append('retractions')
-
-    # Check for the forecast date column check is +-1 day from the current date the PR build is running
-    is_forecast_date_mismatch, err_message = filename_match_forecast_date(file)
-    if is_forecast_date_mismatch:
-        comment += err_message
-
-# Check for metadata file validation
-FILEPATH_META = "forecasts/"
-is_meta_error, meta_err_output = check_for_metadata(filepath=FILEPATH_META)
-
-if len(errors) > 0:
-    comment += "\n\n Your submission has some validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
-    print_output_errors(errors, prefix='data')
-
-if is_meta_error:
-    comment += "\n\n Your submission has some metadata validation errors. Please check the logs of the build under the \"Checks\" tab to get more details about the error. "
-    print_output_errors(meta_err_output, prefix="metadata")
-
-# add the consolidated comment to the PR
-if comment != '' and not local:
-    pr.create_issue_comment(comment)
-
-# Check if PR could be merged automatically
-# Logic - The PR is set to automatically merge if ALL the following conditions are TRUE: 
-#  - If there are no comments added to PR
-#  - If it is not run locally
-#  - If there are not metadata errors
-#  - If there were no validation errors
-#  - If there were any other files updated which includes: 
-#      - any errorneously named forecast file in data-processed folder
-#      - any changes/additions on a metadata file. 
-#  - There is ONLY 1 valid forecast file added that has passed the validations.
-#    That means, there was atleast one valid forecast file (that also passed the validations) added to the PR.
-
-if comment == '' and not local and not is_meta_error and len(errors) == 0 and (
-        len(metadatas) + len(other_files)) == 0 and len(forecasts_err) == len(forecasts) and len(
-        forecasts) == 1:
-    print(f"Auto merging PR {pr_num if pr_num else -1}")
-    labels.append('automerge')
-
-if pr is not None:
-    # set labels: labeler labels + validation labels
-    labels_to_set = labels + list(filter(lambda l: l.name in {'data-submission', 'viz', 'code'}, pr.labels))
-    if len(labels_to_set) > 0:
-        pr.set_labels(*labels_to_set)
-
-print(f"Using validations version {validations_version}")
-# fail validations build if any error occurs.
-if is_meta_error or len(errors) > 0 or is_forecast_date_mismatch:
-    sys.exit("\n ERRORS FOUND EXITING BUILD...")
+    if IS_GITHUB_ACTIONS:
+        success = validate_from_pull_request()
+        if success:
+            print("****************** success! ******************")
+        else:
+            sys.exit("\n Errors found during validation...")
+    else:
+        # TODO: add local version
+        pass
