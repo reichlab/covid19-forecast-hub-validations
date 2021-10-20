@@ -74,7 +74,10 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     logger.info(
         "Checking if the PR is updating outside the data-processed/ folder..."
     )
-    if PullRequestFileType.OTHER_NONFS in filtered_files:
+    if (
+        PullRequestFileType.OTHER_NONFS in filtered_files or
+        PullRequestFileType.OTHER_FS in filtered_files
+    ):
         logger.info("⚠️ PR is updating outside the data-processed/ folder")
         comments.append(
             "⚠️ PR contains file changes that are outside the "
