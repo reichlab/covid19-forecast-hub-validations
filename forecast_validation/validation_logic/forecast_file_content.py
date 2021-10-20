@@ -52,6 +52,7 @@ def validate_forecast_files(
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
 
     logger.info("Checking forecast formats and values...")
+    print(files)
 
     for file in files:
         logger.info("  Checking forecast format for %s", file)
