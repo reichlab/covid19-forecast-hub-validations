@@ -28,14 +28,29 @@ def get_all_forecast_filepaths(
     store: dict[str, Any]
 ) -> ValidationStepResult:
     directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
-    forecast_files: list[File] = store["filtered_files"].get(
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
+
+
+    forecast_files: list[File] = filtered_files.get(
         PullRequestFileType.FORECAST, []
+    )
+    potential_misplaced_forecast_files = filter(
+        lambda f: f.filename.endswith(".csv"),
+        filtered_files.get(
+            PullRequestFileType.OTHER_FS, []
+        ) + filtered_files.get(
+            PullRequestFileType.OTHER_NONFS, []
+        )
     )
     print(forecast_files)
     return ValidationStepResult(
         success=True,
         forecast_files={
-            directory/pathlib.Path(f.filename) for f in forecast_files
+            directory/pathlib.Path(f.filename) for f in (
+                forecast_files + potential_misplaced_forecast_files
+            )
         }
     )
 
@@ -44,6 +59,7 @@ def validate_forecast_files(
     files: list[os.PathLike]
 ) -> ValidationStepResult:
     success: bool = True
+    comments: list[str] = []
     errors: dict[os.PathLike, list[str]] = {}
     correctly_formatted_files: set[os.PathLike] = set()
     population_dataframe_path: pathlib.Path = store["POPULATION_DATAFRAME_PATH"]
@@ -58,6 +74,9 @@ def validate_forecast_files(
         )
         if file_result == "no errors":
             logger.info("    %s format validated", file)
+            comments.append(
+                f"✔️ {file} passed (non-filename) format checks."
+            )
             correctly_formatted_files.add(file)
         else:
             file_result = [
@@ -98,10 +117,15 @@ def validate_forecast_files(
                 error_list.append(error_message)
                 errors[file] = error_list
             else:
+                comments.append(
+                    f"✔️ {file} passed (non-filename) forecast value "
+                    "sanity checks."
+                )
                 logger.info("    %s forecast value sanity-checked", file)
 
     return ValidationStepResult(
         success=success,
+        comments=comments,
         file_errors=errors
     )
 
@@ -144,7 +168,8 @@ def filename_match_forecast_date_check(
                 )]}
             )
         
-        forecast_dates: set(datetime.date) = set()
+        cannot_parse_infile_date: bool = False
+        forecast_dates: set[datetime.date] = set()
         for date_object in df['forecast_date']:
             date_str = str(date_object)
             try:
@@ -164,6 +189,7 @@ def filename_match_forecast_date_check(
             try:
                 date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError as ve:
+                cannot_parse_infile_date = True
                 error_message = (
                     f"column {forecast_date_column_name} contains dates "
                     f"that are not parseable; specifically, {ve.args[0]}"
@@ -177,6 +203,7 @@ def filename_match_forecast_date_check(
             forecast_dates.add(date)
 
         # extract date from filename
+        cannot_parse_filename_date: bool = False
         try:
             file_forecast_date = datetime.datetime.strptime(
                 os.path.basename(basename)[:10], "%Y-%m-%d"
@@ -192,11 +219,12 @@ def filename_match_forecast_date_check(
             error_list.append(error_message)
             errors[filepath] = error_list
 
-        # filter all possible forecast dates into a set for unique check
-        forecast_dates: set[datetime.date] = {
-            datetime.datetime.strptime(str(d), "%Y-%m-%d").date()
-            for d in df['forecast_date']
-        }
+        if cannot_parse_filename_date or cannot_parse_infile_date:
+            logger.error("%s contains unparseable forecast dates.")
+            return ValidationStepResult(
+                success=False,
+                file_errors=errors
+            )
 
         # forecast date must be unique in CSV
         if len(forecast_dates) > 1:
@@ -259,7 +287,9 @@ def filename_match_forecast_date_check(
                 )
 
     if success:
-        logger.info("Forecast date validation successful.")
+        success_message = "✔️ Forecast date validation successful."
+        logger.info(success_message)
+        comments.append(success_message)
     
     return ValidationStepResult(
         success=success,
