@@ -1,12 +1,12 @@
-from forecast_validation.validate_formatting import validate_forecast_file
-import sys
 import glob
 import os
+import sys
+import zoltpy.covid19
 
 forecast_paths = glob.glob('data-processed/**/*.csv')
 if __name__ == "__main__":
     filename = None
-    if len(sys.argv) >1:
+    if len(sys.argv) > 1:
         filename = sys.argv[1]
     if filename is not None:
         if os.path.sep not in filename:
@@ -17,7 +17,9 @@ if __name__ == "__main__":
             filenames = [filename]
         for forecast in filenames:
             print(f"\nVALIDATING {forecast}")
-            is_error, errors = validate_forecast_file(forecast, silent=True)
+            is_error, errors = zoltpy.covid19.validate_quantile_csv_file(
+                forecast, silent=False
+            )
             if is_error:
                 print(f"✘ Error in {forecast}. Error(s):\n {errors}")
             else:
