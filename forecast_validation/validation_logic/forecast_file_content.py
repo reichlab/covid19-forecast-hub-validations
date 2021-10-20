@@ -11,7 +11,7 @@ import pytz
 import zoltpy.covid19
 
 from forecast_validation import (
-    ParseDateError, PullRequestFileType, RepositoryRelativeFilePath
+    ParseDateError, PullRequestFileType
 )
 from forecast_validation.checks import RetractionCheckResult
 from forecast_validation.checks.forecast_file_content import (
@@ -19,7 +19,6 @@ from forecast_validation.checks.forecast_file_content import (
     compare_forecasts,
     validate_forecast_values
 )
-from forecast_validation.utilities.github import get_existing_models
 from forecast_validation.utilities.misc import extract_model_name
 from forecast_validation.validation import ValidationStepResult
 
@@ -36,9 +35,7 @@ def get_all_forecast_filepaths(
     return ValidationStepResult(
         success=True,
         forecast_files={
-            RepositoryRelativeFilePath(
-                directory/pathlib.Path(f.filename)
-            ) for f in forecast_files
+            directory/pathlib.Path(f.filename) for f in forecast_files
         }
     )
 
