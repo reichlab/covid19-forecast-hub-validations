@@ -1,4 +1,5 @@
 from typing import Any, Iterable, Optional, Callable
+from github.File import File
 from github.Label import Label
 import dataclasses
 import inspect
@@ -7,7 +8,10 @@ import os
 
 from github.PullRequest import PullRequest
 
-from forecast_validation import VALIDATIONS_VERSION
+from forecast_validation import (
+    PullRequestFileType,
+    VALIDATIONS_VERSION
+)
 
 logger = logging.getLogger("hub-validations")
 
@@ -174,7 +178,7 @@ class ValidationRun:
         # apply labels, comments, and errors to pull request
         # if applicable
         if "pull_request" in self._store:   
-            self._upload_results_to_pull_request()
+            self._upload_results_to_pull_request_and_automerge_check()
 
     @property
     def store(self) -> dict[str, Any]:
@@ -200,8 +204,12 @@ class ValidationRun:
             [s.success for s in self.executed_steps]
         )
 
-    def _upload_results_to_pull_request(self):
+    def _upload_results_to_pull_request_and_automerge_check(self):
         pull_request: PullRequest = self._store["pull_request"]
+        filtered_files: dict[PullRequestFileType, list[File]] = (
+            self._store["filtered_files"]
+        )
+        all_labels: dict[str, Label] = self._store["possible_labels"]
 
         # merge all labels, comments, and errors generated at each step
         labels: set[Label] = set()
@@ -222,6 +230,28 @@ class ValidationRun:
                         errors[filepath] = (
                             step.result.file_errors[filepath].copy()
                         )
+
+        no_errors: bool = len(errors) == 0
+        has_non_csv_or_metadata: bool = (
+            len(filtered_files.get(PullRequestFileType.METADATA, [])) +
+            len(filtered_files.get(PullRequestFileType.OTHER_NONFS, []))
+        ) != 0
+        only_one_forecast_csv: bool = (
+            len(filtered_files.get(PullRequestFileType.FORECAST, [])) == 1
+        )
+        all_csvs_in_correct_location: bool = (
+            len(filtered_files.get(PullRequestFileType.OTHER_FS, [])) ==
+            len(filtered_files.get(PullRequestFileType.FORECAST, []))
+        )
+
+        if (all_labels["metadata-change"] not in labels and
+            no_errors and 
+            not has_non_csv_or_metadata and 
+            all_csvs_in_correct_location and
+            only_one_forecast_csv
+        ):
+            logger.info("PR %s can be automerged", pull_request.number)
+            labels.add(all_labels['automerge'])
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
@@ -252,3 +282,4 @@ class ValidationRun:
                     error_comment += f"{error}\n"
                 error_comment += "\n"
             pull_request.create_issue_comment(error_comment.rstrip())
+
