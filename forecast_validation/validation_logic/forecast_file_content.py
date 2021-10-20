@@ -36,7 +36,7 @@ def get_all_forecast_filepaths(
     forecast_files: list[File] = filtered_files.get(
         PullRequestFileType.FORECAST, []
     )
-    potential_misplaced_forecast_files: list[File] = set(filter(
+    potential_misplaced_forecast_files: list[File] = list(filter(
         lambda f: f.filename.endswith(".csv"),
         filtered_files.get(
             PullRequestFileType.OTHER_FS, []
