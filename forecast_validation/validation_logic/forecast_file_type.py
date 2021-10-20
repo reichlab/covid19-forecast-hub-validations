@@ -103,14 +103,15 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
             path = pathlib.Path(github_file.filename)
 
             errors[path] = [(
-                "You have placed forecast CSV(s)/text files in an "
-                "incorrect location. Currently, your PR contains CSV(s) "
-                "and/or text files that are directly in the "
-                "`data_processed/` folder and not in your team's "
-                "subfolder. Please move your files to the appropriate "
-                "location.\n We will still check the misplaced CSV(s) for "
+                "The forecast CSV or metadata file is located in an "
+                "incorrect location and/or is misnamed (see "
+                "[here](https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting) "
+                "for the correct format. Please correct the errors "
+                "accordingly.\n"
+                "We will still check any misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
-                "or correct any errors if not."
+                "or correct any actual file content validation errors if "
+                "not."
             )]
     else:
         logger.info("✔️ PR does not contain misplaced forecasts")
