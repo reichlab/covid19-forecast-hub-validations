@@ -58,7 +58,7 @@ def validate() -> None:
         all_csvs_in_correct_location and
         only_one_forecast_csv
     ):
-        logger.info("Auto merging PR %s", pull_request_number)
+        logger.info("PR %s can be automerged", pull_request_number)
         labels.append(all_labels['automerge'])
 
     # set labels: labeler labels + validation labels
