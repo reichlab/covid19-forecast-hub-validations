@@ -22,6 +22,12 @@ def match_file(
     for filetype in patterns:
         if patterns[filetype].match(file.filename):
             matched.append(filetype)
+
+            # the patterns dictionary is ordered as
+            # FORECAST -> METADATA -> OTHER_FS
+            # if a file is matched on one of them, we do not want
+            # it to match on other file types, hence the break statement
+            break
     if len(matched) == 0:
         matched.append(PullRequestFileType.OTHER_NONFS)
 
