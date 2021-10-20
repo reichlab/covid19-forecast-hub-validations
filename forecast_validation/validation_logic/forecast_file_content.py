@@ -111,6 +111,13 @@ def filename_match_forecast_date_check(
     errors: dict[os.PathLike, list[str]] = {}
     comments: list[str] = []
 
+    hub_mirrored_directory_root: pathlib.Path = (
+        store["HUB_MIRRORED_DIRECTORY_ROOT"]
+    )
+    pull_request_directory_root: pathlib.Path = (
+        store["PULL_REQUEST_DIRECTORY_ROOT"]
+    )
+
     for filepath in files:
         basename: str = os.path.basename(filepath)
         
@@ -127,7 +134,7 @@ def filename_match_forecast_date_check(
             return ValidationStepResult(
                 success=False,
                 file_errors={filepath: [(
-                    f"Forecast files must have a column named "
+                    "Forecast files must have a column named "
                     f"{forecast_date_column_name} that contains the forecast "
                     "date of the file."
                 )]}
@@ -225,8 +232,18 @@ def filename_match_forecast_date_check(
                 errors[filepath] = error_list
         
             # forecast dates must be <1day within each other
+            filepath = pathlib.Path(filepath)
+            relative_path_str = str(
+                filepath.relative_to(pull_request_directory_root)
+            )
+            existing_file_path = (
+                hub_mirrored_directory_root/relative_path_str
+            ).resolve()
             today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
-            if abs(file_forecast_date - today) > datetime.timedelta(days=1):
+            if (
+                abs(file_forecast_date - today) > datetime.timedelta(days=1) and
+                not existing_file_path.exists()
+            ):
                 comments.append((
                     f"⚠️ Warning: The forecast file {filepath} is not made "
                     f"today. date of the forecast - {file_forecast_date}, "

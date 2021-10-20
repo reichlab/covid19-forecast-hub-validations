@@ -205,9 +205,7 @@ class ValidationRun:
 
         # merge all labels, comments, and errors generated at each step
         labels: set[Label] = set()
-        comments: list[str] = [(
-            f"### Validations v{VALIDATIONS_VERSION}\n\nComments: "
-        )]
+        comments: list[str] = []
         errors: dict[os.PathLike, list[str]] = {}
         for step in self.executed_steps:
             if step.result.labels is not None:
@@ -231,9 +229,11 @@ class ValidationRun:
             pull_request.set_labels(*list(labels))
         else:
             logger.info("No labels to be applied")
-        pull_request.create_issue_comment(
-            "\n\n".join(comments)
-        )
+        if len(comments) > 0:
+            pull_request.create_issue_comment(
+                f"### Validations v{VALIDATIONS_VERSION}\n\nComments: " +
+                "\n\n".join(comments)
+            )
         if self.success:
             pull_request.create_issue_comment(
                 f"Validations v{VALIDATIONS_VERSION}\n\n"
