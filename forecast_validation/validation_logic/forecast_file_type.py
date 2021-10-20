@@ -78,8 +78,9 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     ):
         logger.info("⚠️ PR is updating outside the data-processed/ folder")
         comments.append(
-            "⚠️ PR contains file changes that are outside the "
-            "`data-processed/` folder."
+            "⚠️ PR contains file changes that are not part of a valid "
+            "forecast submission (misnamed/misplaced forecast CSV, "
+            "non CSV files, etc.)"
         )
         labels.add(all_labels["other-files-updated"])
     else:
