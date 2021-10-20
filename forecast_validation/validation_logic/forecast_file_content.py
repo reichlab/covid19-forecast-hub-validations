@@ -29,10 +29,15 @@ def get_all_forecast_filepaths(
     store: dict[str, Any]
 ) -> ValidationStepResult:
     directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
+    forecast_files: list[File] = store["filtered_files"].get(
+        PullRequestFileType.FORECAST, []
+    )
     return ValidationStepResult(
         success=True,
         forecast_files={
-            RepositoryRelativeFilePath(fp) for fp in directory.glob("**/*.csv")
+            RepositoryRelativeFilePath(
+                directory/pathlib.Path(f.filename)
+            ) for f in forecast_files
         }
     )
 
