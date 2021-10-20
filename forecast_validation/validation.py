@@ -244,8 +244,7 @@ class ValidationRun:
             len(filtered_files.get(PullRequestFileType.FORECAST, [])) == 1
         )
         all_csvs_in_correct_location: bool = (
-            len(filtered_files.get(PullRequestFileType.OTHER_FS, [])) ==
-            len(filtered_files.get(PullRequestFileType.FORECAST, []))
+            len(filtered_files.get(PullRequestFileType.OTHER_FS, [])) == 0
         )
 
         if (len(comments) == 0 and
@@ -289,4 +288,3 @@ class ValidationRun:
                     error_comment += f"{error}\n"
                 error_comment += "\n"
             pull_request.create_issue_comment(error_comment.rstrip())
-
