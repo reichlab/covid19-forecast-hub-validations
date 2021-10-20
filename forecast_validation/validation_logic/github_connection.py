@@ -133,6 +133,7 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
     if not is_forecast_submission(filtered_files):
         other_files = filtered_files[PullRequestFileType.OTHER_NONFS]
         for file in other_files:
+            labels.add(all_labels["other-files-updated"])
             if file.filename.startswith("code"):
                 labels.add(all_labels["code"])
             if os.path.basename(file.filename) == "package.json":
