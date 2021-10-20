@@ -1,4 +1,5 @@
 from typing import Any
+from github.File import File
 import dateutil
 import glob
 import os
@@ -8,7 +9,7 @@ import pykwalify.core
 import re
 import yaml
 
-from forecast_validation import RepositoryRelativeFilePath
+from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
 
 SCHEMA_FILE = 'schema.yml'
@@ -18,10 +19,14 @@ def get_all_metadata_filepaths(
     store: dict[str, Any]
 ) -> ValidationStepResult:
     directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
+    metadata_files: list[File] = store["filtered_files"].get(
+        PullRequestFileType.METADATA, []
+    )
+    print(metadata_files)
     return ValidationStepResult(
         success=True,
         forecast_files={
-            RepositoryRelativeFilePath(fp) for fp in directory.glob("**/*.txt")
+            directory/pathlib.Path(f.filename) for f in metadata_files
         }
     )
 
