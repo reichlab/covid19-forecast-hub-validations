@@ -265,8 +265,8 @@ class ValidationRun:
             logger.info("No labels to be applied")
         if len(comments) > 0:
             pull_request.create_issue_comment(
-                f"### Validations v{VALIDATIONS_VERSION}\n\nComments: " +
-                "\n\n".join(comments)
+                f"### Validations v{VALIDATIONS_VERSION}\n\nComments:\n\n"
+                + "\n\n".join(comments)
             )
         if self.success:
             pull_request.create_issue_comment(
