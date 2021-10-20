@@ -247,8 +247,8 @@ class ValidationRun:
             len(filtered_files.get(PullRequestFileType.OTHER_FS, [])) == 0
         )
 
-        if (len(comments) == 0 and
-            all_labels["metadata-change"] not in labels and
+        if (len(labels) == 1 and
+            all_labels["data-submission"] in labels and
             no_errors and 
             not has_non_csv_or_metadata and 
             all_csvs_in_correct_location and

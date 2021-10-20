@@ -144,14 +144,17 @@ def filename_match_forecast_date_check(
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
 
-    for filepath in files:
-        basename: str = os.path.basename(filepath)
+    for file in files:
+        filepath: pathlib.Path = pathlib.Path(file).relative_to(
+            pull_request_directory_root
+        )
+        basename: str = os.path.basename(file)
         
         logger.info("Checking dates in forecast file %s...", basename)
 
         # read only the forecast date column to save space
         try:
-            df = pd.read_csv(filepath, usecols=[forecast_date_column_name])
+            df = pd.read_csv(file, usecols=[forecast_date_column_name])
         except ValueError:
             logger.error(
                 "❌ Forecast file %s is missing the %s column",
@@ -263,20 +266,18 @@ def filename_match_forecast_date_check(
                 errors[filepath] = error_list
         
             # forecast dates must be <1day within each other
-            filepath = pathlib.Path(filepath)
-            relative_path_str = str(
-                filepath.relative_to(pull_request_directory_root)
-            )
             existing_file_path = (
-                hub_mirrored_directory_root/relative_path_str
+                hub_mirrored_directory_root/filepath
             ).resolve()
-            today = datetime.datetime.now(pytz.timezone('US/Eastern')).date()
+            today = datetime.datetime.now(
+                pytz.timezone('US/Eastern')
+            ).date()
             if (
                 abs(file_forecast_date - today) > datetime.timedelta(days=1) and
                 not existing_file_path.exists()
             ):
                 comments.append((
-                    f"⚠️ Warning: The forecast file {filepath} is not made "
+                    f"⚠️ Warning: The forecast file {file} is not made "
                     f"today. date of the forecast - {file_forecast_date}, "
                     f"today - {today}."
                 ))
@@ -326,7 +327,9 @@ def check_new_model(
     model_to_file: dict[str, os.PathLike] = {}
     for file in files:
         if os.path.basename(file) in forecast_filenames:
-            filepath = pathlib.Path(file)
+            filepath = pathlib.Path(file).relative_to(
+                pull_request_directory_root
+            )
             model = extract_model_name(filepath)
             models_in_pull_request.add(model)
             model_to_file[file] = model
