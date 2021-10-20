@@ -177,7 +177,11 @@ class ValidationRun:
 
         # apply labels, comments, and errors to pull request
         # if applicable
-        if "pull_request" in self._store:   
+        if (
+            "pull_request" in self._store and
+            "filtered_files" in self._store and
+            "possible_labels" in self._store
+        ):   
             self._upload_results_to_pull_request_and_automerge_check()
 
     @property
