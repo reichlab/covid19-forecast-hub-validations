@@ -37,7 +37,10 @@ def get_all_forecast_filepaths(
         PullRequestFileType.FORECAST, []
     )
     potential_misplaced_forecast_files: list[File] = list(filter(
-        lambda f: f.filename.endswith(".csv"),
+        lambda f: (
+            f.filename.endswith(".csv") and
+            "ensemble-metadata/" not in f.filename
+        ),
         filtered_files.get(
             PullRequestFileType.OTHER_FS, []
         ) + filtered_files.get(
