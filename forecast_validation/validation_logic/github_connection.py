@@ -188,7 +188,12 @@ def download_all_forecast_and_metadata_files(
 
     logger.info("Downloading forecast and metadata files...")
 
-    files = itertools.chain(filtered_files.values())
+    files = itertools.chain(
+        filtered_files.get(PullRequestFileType.FORECAST, []),
+        filtered_files.get(PullRequestFileType.METADATA, []),
+        filtered_files.get(PullRequestFileType.OTHER_FS, []),
+        filtered_files.get(PullRequestFileType.OTHER_NONFS, []),
+    )
 
     if not root_directory.exists():
         os.makedirs(root_directory, exist_ok=True)
