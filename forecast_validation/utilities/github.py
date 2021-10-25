@@ -80,8 +80,30 @@ def get_existing_forecast_file(
     ).resolve()
 
     os.makedirs(local_path.parent, exist_ok=True)
-    existing_file: ContentFile = repository.get_contents(file.filename)
-    assert isinstance(existing_file, ContentFile), existing_file
+    
+    # https://docs.github.com/en/repositories/working-with-files/using-files/getting-permanent-links-to-files
+    url: str = (
+        f"https://github.com/{repository.full_name}/"
+        f"blob/main/{file.filename}"
+    )
 
-    return fetch_url(existing_file.download_url, local_path)
+    return fetch_url(url, local_path)
 
+def get_blob_content(
+    repository: Repository,
+    branch: str,
+    path_name: str
+):
+    # first get the branch reference
+    ref = repository.get_git_ref(f'heads/{branch}')
+    # then get the tree
+    tree = repository.get_git_tree(
+        ref.object.sha, recursive='/' in path_name
+    ).tree
+    # look for path in tree
+    sha = [x.sha for x in tree if x.path == path_name]
+    if not sha:
+        # well, not found..
+        return None
+    # we have sha
+    return repository.get_git_blob(sha[0])
