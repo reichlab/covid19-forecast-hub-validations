@@ -3,6 +3,7 @@ from github.ContentFile import ContentFile
 from github.GithubException import UnknownObjectException
 from github.File import File
 from github.Repository import Repository
+import base64
 import logging
 import os
 import pathlib
@@ -81,13 +82,14 @@ def get_existing_forecast_file(
 
     os.makedirs(local_path.parent, exist_ok=True)
     
-    # https://docs.github.com/en/repositories/working-with-files/using-files/getting-permanent-links-to-files
-    url: str = (
-        f"https://github.com/{repository.full_name}/"
-        f"blob/main/{file.filename}"
-    )
+    # https://github.com/PyGithub/PyGithub/issues/661
+    blob = get_blob_content(repository, "master", file.filename)
+    assert blob.encoding == "base64"
 
-    return fetch_url(url, local_path)
+    with open(local_path, "wb") as output_file:
+        output_file.write(base64.b64decode(blob.content))
+
+    return local_path
 
 def get_blob_content(
     repository: Repository,
@@ -97,9 +99,7 @@ def get_blob_content(
     # first get the branch reference
     ref = repository.get_git_ref(f'heads/{branch}')
     # then get the tree
-    tree = repository.get_git_tree(
-        ref.object.sha, recursive='/' in path_name
-    ).tree
+    tree = repository.get_git_tree(ref.object.sha, recursive='/' in path_name).tree
     # look for path in tree
     sha = [x.sha for x in tree if x.path == path_name]
     if not sha:
