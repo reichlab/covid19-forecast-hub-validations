@@ -27,16 +27,14 @@ def compare_forecasts(
     Returns:
         Whether this update has a retraction or not
     """
-    old_noindex_df: pd.DataFrame = pd.read_csv(old_forecast_file_path)
-    old_df: pd.DataFrame = pd.DataFrame(
-        old_noindex_df,
-        index=old_noindex_df.columns
-    )
-    new_noindex_df: pd.DataFrame = pd.read_csv(new_forecast_file_path)
-    new_df: pd.DataFrame = pd.DataFrame(
-        new_noindex_df,
-        index=new_noindex_df.columns
-    )
+    old_df: pd.DataFrame = pd.read_csv(
+        old_forecast_file_path,
+        index_col=["forecast_date", "target", "target_end_date", "location",
+                   "type", "quantile"])
+    new_df: pd.DataFrame = pd.read_csv(
+        new_forecast_file_path,
+        index_col=["forecast_date", "target", "target_end_date", "location",
+                   "type", "quantile"])
 
     error: Optional[str] = None
     has_implicit_retraction: bool = False
