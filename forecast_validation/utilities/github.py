@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Iterable
 from github.ContentFile import ContentFile
 from github.GithubException import UnknownObjectException

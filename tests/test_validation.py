@@ -1,6 +1,8 @@
 import unittest
 import unittest.mock
-
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..')) 
 from forecast_validation.validation import *
 
 class TestValidationStepResult(unittest.TestCase):

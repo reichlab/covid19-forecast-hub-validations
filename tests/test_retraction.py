@@ -1,4 +1,7 @@
 import unittest
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..')) 
 from forecast_validation.checks.forecast_file_content import compare_forecasts
 
 # List of sample PRs that we want to check against

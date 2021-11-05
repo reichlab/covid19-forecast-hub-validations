@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Iterable, Optional, Callable
 from github.File import File
 from github.Label import Label
@@ -167,9 +168,11 @@ class ValidationRun:
                 result: ValidationStepResult = step.execute(self._store)
             
             if result.to_store is not None:
-                self._store |= result.to_store
+                #self._store |= result.to_store
+                self._store.update(result.to_store)
             elif result.forecast_files is not None:
-                self._forecast_files |= result.forecast_files
+                #self._forecast_files |= result.forecast_files
+                self._forecast_files.update(result.forecast_files)
 
             if result.skip_steps_after:
                 logger.info("Skipping the rest of validation steps")

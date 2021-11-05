@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from github.File import File
 from github.Label import Label
@@ -442,7 +443,7 @@ def check_forecast_retraction(
                     "    💡 %s contains explicit retractions.",
                     relative_path_str
                 )
-                labels.add(all_labels["forecast-retractions"])
+                labels.add(all_labels["forecast-retraction"])
                 comments.append(
                     "💡 Submission contains explicit retractions."
                 )

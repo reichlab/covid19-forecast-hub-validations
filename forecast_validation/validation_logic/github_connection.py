@@ -1,3 +1,4 @@
+from __future__ import annotations
 # external dependencies
 from typing import Any
 from github import Github
@@ -96,6 +97,41 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
             "possible_labels": possible_labels
         }
     )
+def establish_github_connection_local_run(store: dict[str, Any]) -> ValidationStepResult:
+    logger.info(
+        "LOCAL: Running validations version %s",
+        store.get(
+            "VALIDATIONS_VERSION",
+            "<missing validation version number>"
+        )
+    )
+    logger.info("LOCAL: Current working directory: %s", os.getcwd())
+    logger.info("LOCAL: GitHub Actions information:")
+    logger.info(
+        "LOCAL: GitHub Actions event name: %s",
+        os.environ.get("GITHUB_EVENT_NAME", "<missing GitHub event name>")
+    )
+
+    logger.info("LOCAL: Running validation locally...")
+    github: Github = Github()
+    repository_name = 'reichlab/covid19-forecast-hub'
+    repository: Repository = github.get_repo(repository_name)
+
+    # Get list of possible labels to apply to PR
+    possible_labels = {l.name: l for l in repository.get_labels()}
+    print(possible_labels)
+
+    logger.info("LOCAL: Repository successfully retrieved")
+    logger.info("LOCAL: Github repository: %s", repository.full_name)
+
+    return ValidationStepResult(
+        success=True,
+        to_store={
+            "github": github,
+            "repository": repository,
+            "possible_labels": possible_labels
+        }
+    )
 
 def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
     """Extracts the pull request that the validations will be run on.
@@ -112,6 +148,20 @@ def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
         success=True,
         to_store={"pull_request": pull_request}
     )
+
+def extract_pull_request_local_run(store: dict[str, Any]) -> ValidationStepResult:
+    repository: Repository = store["repository"]
+    event: dict = json.load(open("tests/test_event.json"))
+    pull_request_number: str = event['pull_request']['number']
+    pull_request: PullRequest = repository.get_pull(pull_request_number)
+
+    logger.info("LOCAL: Using PR number: %s", pull_request_number)
+
+    return ValidationStepResult(
+        success=True,
+        to_store={"pull_request": pull_request}
+    )
+
 
 def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
     """Determines whether the pull request is a forecast submission or not.

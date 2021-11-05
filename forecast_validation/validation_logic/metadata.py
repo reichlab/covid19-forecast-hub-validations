@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from github.File import File
 import dateutil
