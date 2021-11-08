@@ -442,7 +442,7 @@ def check_forecast_retraction(
                     "    💡 %s contains explicit retractions.",
                     relative_path_str
                 )
-                labels.add(all_labels["forecast-retractions"])
+                labels.add(all_labels["forecast-retraction"])
                 comments.append(
                     "💡 Submission contains explicit retractions."
                 )
