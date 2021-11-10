@@ -119,7 +119,6 @@ def establish_github_connection_local_run(store: dict[str, Any]) -> ValidationSt
 
     # Get list of possible labels to apply to PR
     possible_labels = {l.name: l for l in repository.get_labels()}
-    print(possible_labels)
 
     logger.info("LOCAL: Repository successfully retrieved")
     logger.info("LOCAL: Github repository: %s", repository.full_name)

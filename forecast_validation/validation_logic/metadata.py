@@ -9,12 +9,15 @@ import pathlib
 import pykwalify.core
 import re
 import yaml
+import logging
 
 from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
 
-SCHEMA_FILE = 'schema.yml'
+SCHEMA_FILE = 'forecast_validation/static/schema.yml'
 DESIGNATED_MODEL_CACHE_KEY = 'designated_model_cache'
+
+logger = logging.getLogger("hub-validations")
 
 def get_all_metadata_filepaths(
     store: dict[str, Any]
@@ -31,12 +34,13 @@ def get_all_metadata_filepaths(
     )
 
 def validate_metadata_contents(metadata, filepath, cache):
+
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
 
     core = pykwalify.core.Core(
-        source_file=filepath, schema_files=["schema.yml"]
+        source_file=filepath, schema_files=[SCHEMA_FILE]
     )
     core.validate(raise_exception=False, silent=True)
 
@@ -135,7 +139,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     #             (filepath, metadata[field])]
 
     # Validate licenses
-    license_df = pd.read_csv('./code/accepted-licenses.csv')
+    license_df = pd.read_csv('accepted-licenses.csv')
     accepted_licenses = list(license_df['license'])
     if 'license' in metadata.keys():
         if metadata['license'] not in accepted_licenses:
@@ -145,13 +149,49 @@ def validate_metadata_contents(metadata, filepath, cache):
                 (filepath, metadata['license'])]
     return is_metadata_error, metadata_error_output
 
+def validate_metadata_files(
+    store: dict[str, Any],
+) -> ValidationStepResult:
+    success: bool = True
+    comments: list[str] = []
+    errors: dict[os.PathLike, list[str]] = {}
+    correctly_formatted_files: set[os.PathLike] = set()
+
+    logger.info("Checking metadata content...")
+    is_metadata_error, metadata_error_output = False, "no errors"
+    for file in store["metadata_files"]:
+        logger.info("  Checking metadata content for %s", file)
+        is_metadata_error, metadata_error_output = check_metadata_file(file)
+        if is_metadata_error == False:
+            logger.info("    %s content validated", file)
+            comments.append(
+                f"✔️ {file} passed (non-filename) content checks."
+            )
+            correctly_formatted_files.add(file)
+        else:
+            file_result = [
+                f"Error when validating content: " + e
+                for e in metadata_error_output
+            ]
+            success = False
+            error_list = errors.get(file, [])
+            error_list.extend(file_result)
+            errors[file] = error_list
+            for error in file_result:
+                logger.error("    " + error)
+
+    return ValidationStepResult(
+        success=success,
+        comments=comments,
+        file_errors=errors
+    )
 
 def check_metadata_file(filepath, cache={}):
     with open(filepath, 'r') as stream:
         try:
             Loader = yaml.BaseLoader    # Define Loader to avoid true/false auto conversion
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath, cache)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache)
             if is_metadata_error:
                 return True, metadata_error_output
             else:
