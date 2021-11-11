@@ -8,12 +8,15 @@ import pathlib
 import pykwalify.core
 import re
 import yaml
+import logging
 
 from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
 
-SCHEMA_FILE = 'schema.yml'
+SCHEMA_FILE = 'forecast_validation/static/schema.yml'
 DESIGNATED_MODEL_CACHE_KEY = 'designated_model_cache'
+
+logger = logging.getLogger("hub-validations")
 
 def get_all_metadata_filepaths(
     store: dict[str, Any]
@@ -30,12 +33,13 @@ def get_all_metadata_filepaths(
     )
 
 def validate_metadata_contents(metadata, filepath, cache):
+
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
 
     core = pykwalify.core.Core(
-        source_file=filepath, schema_files=["schema.yml"]
+        source_file=filepath, schema_files=[SCHEMA_FILE]
     )
     core.validate(raise_exception=False, silent=True)
 
@@ -45,7 +49,7 @@ def validate_metadata_contents(metadata, filepath, cache):
 
     pat_model = re.compile(r"metadata-(.+)\.txt")
     model_name_file = re.findall(pat_model, os.path.basename(filepath))[0]
-    # print(f"model_name_file: {model_name_file} \t\t filepath: {filepath}")
+   
 
     # This is a critical error and hence do not run further checks.
     if 'model_abbr' not in metadata:
@@ -75,8 +79,8 @@ def validate_metadata_contents(metadata, filepath, cache):
     # if `this_model_is_an_emnsemble` is rpesent, show a warning.
     
     # Check for Required Fields
-    required_fields = ['team_name', 'team_abbr', 'model_name', 'model_contributors', 'model_abbr', 'website_url', \
-                         'license', 'team_model_designation', 'methods', 'ensemble_of_hub_models']
+    #required_fields = ['team_name', 'team_abbr', 'model_name', 'model_contributors', 'model_abbr', 'website_url', \
+    #                     'license', 'team_model_designation', 'methods', 'ensemble_of_hub_models']
     
     # for field in required_fields:
     #     if field not in metadata.keys():
@@ -134,7 +138,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     #             (filepath, metadata[field])]
 
     # Validate licenses
-    license_df = pd.read_csv('./code/accepted-licenses.csv')
+    license_df = pd.read_csv('forecast_validation/static/accepted-licenses.csv')
     accepted_licenses = list(license_df['license'])
     if 'license' in metadata.keys():
         if metadata['license'] not in accepted_licenses:
@@ -143,6 +147,43 @@ def validate_metadata_contents(metadata, filepath, cache):
                 "METADATA ERROR: %s 'license' field must be in `./code/accepted-licenses.csv` 'license' column '%s'" %
                 (filepath, metadata['license'])]
     return is_metadata_error, metadata_error_output
+
+def validate_metadata_files(
+    store: dict[str, Any],
+) -> ValidationStepResult:
+    success: bool = True
+    comments: list[str] = []
+    errors: dict[os.PathLike, list[str]] = {}
+    correctly_formatted_files: set[os.PathLike] = set()
+
+    logger.info("Checking metadata content...")
+    is_metadata_error, metadata_error_output = False, "no errors"
+    for file in store["metadata_files"]:
+        logger.info("  Checking metadata content for %s", file)
+        is_metadata_error, metadata_error_output = check_metadata_file(file)
+        if is_metadata_error == False:
+            logger.info("    %s content validated", file)
+            comments.append(
+                f"✔️ {file} passed (non-filename) content checks."
+            )
+            correctly_formatted_files.add(file)
+        else:
+            file_result = [
+                f"Error when validating metadata content: " + e
+                for e in metadata_error_output
+            ]
+            success = False
+            error_list = errors.get(file, [])
+            error_list.extend(file_result)
+            errors[file] = error_list
+            for error in file_result:
+                logger.error("    " + error)
+
+    return ValidationStepResult(
+        success=success,
+        comments=comments,
+        file_errors=errors
+    )
 
 
 def check_metadata_file(filepath, cache={}):
