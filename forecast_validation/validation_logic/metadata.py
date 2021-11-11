@@ -191,7 +191,7 @@ def check_metadata_file(filepath, cache={}):
         try:
             Loader = yaml.BaseLoader    # Define Loader to avoid true/false auto conversion
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath, cache)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache)
             if is_metadata_error:
                 return True, metadata_error_output
             else:
