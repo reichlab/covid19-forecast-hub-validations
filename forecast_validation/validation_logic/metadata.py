@@ -50,7 +50,7 @@ def validate_metadata_contents(metadata, filepath, cache):
 
     pat_model = re.compile(r"metadata-(.+)\.txt")
     model_name_file = re.findall(pat_model, os.path.basename(filepath))[0]
-    # print(f"model_name_file: {model_name_file} \t\t filepath: {filepath}")
+   
 
     # This is a critical error and hence do not run further checks.
     if 'model_abbr' not in metadata:
@@ -139,7 +139,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     #             (filepath, metadata[field])]
 
     # Validate licenses
-    license_df = pd.read_csv('accepted-licenses.csv')
+    license_df = pd.read_csv('forecast_validation/static/accepted-licenses.csv')
     accepted_licenses = list(license_df['license'])
     if 'license' in metadata.keys():
         if metadata['license'] not in accepted_licenses:
