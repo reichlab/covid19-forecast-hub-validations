@@ -63,7 +63,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
     # Check if every team has only one `team_model_designation` as `primary`
-    if 'team_abbr' in metadata.keys() & 'team_model_designation' in metadata.keys():
+    if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
         if DESIGNATED_MODEL_CACHE_KEY not in cache:
             cache[DESIGNATED_MODEL_CACHE_KEY] = []
