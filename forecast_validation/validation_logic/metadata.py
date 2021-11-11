@@ -41,7 +41,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     core = pykwalify.core.Core(
         source_file=filepath, schema_files=[SCHEMA_FILE]
     )
-    core.validate(raise_exception=True, silent=True)
+    core.validate(raise_exception=False, silent=True)
 
     if len(core.validation_errors) > 0:
         metadata_error_output.extend(['METADATA_ERROR: %s' % err for err in core.validation_errors])
@@ -63,7 +63,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
     # Check if every team has only one `team_model_designation` as `primary`
-    if 'team_abbr' in metadata.keys():
+    if 'team_abbr' in metadata.keys() & 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
         if DESIGNATED_MODEL_CACHE_KEY not in cache:
             cache[DESIGNATED_MODEL_CACHE_KEY] = []
