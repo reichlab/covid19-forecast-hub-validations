@@ -287,6 +287,14 @@ def filename_match_forecast_date_check(
                     "Forecast file %s is made more than 1 day ago.",
                     basename
                 )
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"⚠️ Warning: The forecast file {file} is not made "
+                    f"today. date of the forecast - {file_forecast_date}, "
+                    f"today - {today}."
+                ))
+                errors[filepath] = error_list
 
     if success:
         success_message = "✔️ Forecast date validation successful."
