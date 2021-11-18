@@ -287,7 +287,7 @@ def filename_match_forecast_date_check(
                     "Forecast file %s is made more than 1 day ago.",
                     basename
                 )
-                #success = False
+                success = False
                 error_list = errors.get(filepath, [])
                 error_list.append((
                     f"The forecast file {file} is not made "
