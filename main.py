@@ -44,7 +44,8 @@ from forecast_validation.validation_logic.github_connection import (
     download_all_forecast_and_metadata_files
 )
 from forecast_validation.validation_logic.metadata import (
-    get_all_metadata_filepaths
+    get_all_metadata_filepaths,
+    validate_metadata_files
 )
 
 logging.config.fileConfig("logging.conf")
@@ -91,6 +92,9 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # All forecast format and value sanity checks
     steps.append(ValidationPerFileStep(validate_forecast_files))
+
+    # All metadata format and value sanity checks
+    steps.append(ValidationStep(validate_metadata_files))
 
     # Check for new team submission
     steps.append(ValidationPerFileStep(check_new_model))

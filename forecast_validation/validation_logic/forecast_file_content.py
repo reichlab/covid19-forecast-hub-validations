@@ -278,15 +278,23 @@ def filename_match_forecast_date_check(
                 abs(file_forecast_date - today) > datetime.timedelta(days=1) and
                 not existing_file_path.exists()
             ):
-                comments.append((
-                    f"⚠️ Warning: The forecast file {file} is not made "
-                    f"today. date of the forecast - {file_forecast_date}, "
-                    f"today - {today}."
-                ))
+                # comments.append((
+                #     f"⚠️ Warning: The forecast file {file} is not made "
+                #     f"today. date of the forecast - {file_forecast_date}, "
+                #     f"today - {today}."
+                # ))
                 logger.warning(
                     "Forecast file %s is made more than 1 day ago.",
                     basename
                 )
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"The forecast file {file} is not made "
+                    f"today. date of the forecast - {file_forecast_date}, "
+                    f"today - {today}."
+                ))
+                errors[filepath] = error_list
 
     if success:
         success_message = "✔️ Forecast date validation successful."
@@ -442,7 +450,7 @@ def check_forecast_retraction(
                     "    💡 %s contains explicit retractions.",
                     relative_path_str
                 )
-                labels.add(all_labels["forecast-retractions"])
+                labels.add(all_labels["forecast-retraction"])
                 comments.append(
                     "💡 Submission contains explicit retractions."
                 )
