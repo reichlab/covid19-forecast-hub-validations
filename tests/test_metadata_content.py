@@ -27,14 +27,14 @@ class ValidationMetadataTest(unittest.TestCase):
         is_invalid, errors = check_metadata_file(Path("tests/testfiles/data-processed/teamA-modelA/metadata-teamA-modelC.txt"))
         #print(is_invalid, errors)
         self.assertTrue(is_invalid)
-        self.assertIn("METADATA ERROR: Metadata YAML Fromat Error", errors[0])
+        self.assertIn("METADATA ERROR: Metadata YAML Format Error", errors[0])
 
     #A metadata file is submitted with special characters and extra space in the end of the file
     def test_invalid_metadata_file_format(self):
         is_invalid, errors = check_metadata_file(Path("tests/testfiles/data-processed/teamA-modelA/metadata-teamA-modelB.txt"))
-        #print(is_invalid, errors)
+        print(is_invalid, errors)
         self.assertTrue(is_invalid)
-        self.assertIn("METADATA ERROR: Metadata YAML Fromat Error", errors[0])
+        self.assertIn("METADATA ERROR: Metadata YAML Format Error", errors[0])
 
     #A metadata file without 'model_abbr' is submitted
     def test_missing_model_abbr(self):
