@@ -4,7 +4,15 @@ import enum
 import os
 import pathlib
 import re
+from final import path
+import json
+ 
+# Opening JSON file
+f = open(path+'/covid-validation-config.json')
+config = json.load(f)
+f.close()
 
+print("Init")
 class PullRequestFileType(enum.Enum):
     """Represents different types of files in a PR.
     """
@@ -24,7 +32,7 @@ METADATA_VERSION: int = 6 # as of 10/16/2021
 REPOSITORY_ROOT_ONDISK: pathlib.Path = (
     pathlib.Path(__file__)/".."/".."
 ).resolve()
-HUB_REPOSITORY_NAME: str = "reichlab/covid19-forecast-hub"
+HUB_REPOSITORY_NAME: str = config["hub_repository_name"]
 HUB_MIRRORED_DIRECTORY_ROOT: pathlib.Path = (
     (REPOSITORY_ROOT_ONDISK/"hub").resolve()
 )
@@ -33,7 +41,7 @@ PULL_REQUEST_DIRECTORY_ROOT: pathlib.Path = (
 )
 POPULATION_DATAFRAME_PATH: pathlib.Path = (
     (
-        REPOSITORY_ROOT_ONDISK/"forecast_validation"/"static"/"locations.csv"
+        REPOSITORY_ROOT_ONDISK/"forecast_validation"/"static"/config["location_filepath"]
     ).resolve()
 )
 
@@ -43,13 +51,15 @@ GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME: str = "GH_TOKEN"
 # Filename regex patterns used in code below
 # Key name indicate the type of files whose filenames the corresponding rege
 # (value) matches on
+
+
 FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
     PullRequestFileType.FORECAST:
-        re.compile(r"^data-processed/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$"),
+        re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % (config["forecast_folder_name"])),
     PullRequestFileType.METADATA:
-        re.compile(r"^data-processed/(.+)/metadata-\1\.txt$"),
+        re.compile(r"^%s/(.+)/metadata-\1\.txt$"% (config["forecast_folder_name"])),
     PullRequestFileType.OTHER_FS:
-        re.compile(r"^data-processed/(.+)\.(csv|txt)$"),
+        re.compile(r"^%s/(.+)\.(csv|txt)$"% (config["forecast_folder_name"])),
 }
 
 # True/False indicating whether the script is run in a CI environment or not
