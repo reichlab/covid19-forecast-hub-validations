@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Iterable, Optional, Callable
 from github.File import File
 from github.Label import Label
@@ -214,6 +215,9 @@ class ValidationRun:
             self._store["filtered_files"]
         )
         all_labels: dict[str, Label] = self._store["possible_labels"]
+        
+        # if true, use automerge PR label; if false, use passed-validation PR label 
+        automerge: bool = self._store["AUTOMERGE"]
 
         # merge all labels, comments, and errors generated at each step
         labels: set[Label] = set()
@@ -254,8 +258,12 @@ class ValidationRun:
             all_csvs_in_correct_location and
             only_one_forecast_csv
         ):
-            logger.info("PR %s can be automerged", pull_request.number)
-            labels.add(all_labels['automerge'])
+            if automerge:
+                logger.info("PR %s can be automerged", pull_request.number)
+                labels.add(all_labels['automerge'])
+            else: 
+                logger.info("PR %s passed all validation successfully", pull_request.number)
+                labels.add(all_labels['passed-validation'])
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
