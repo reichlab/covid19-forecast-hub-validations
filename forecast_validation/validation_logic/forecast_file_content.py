@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from github.File import File
 from github.Label import Label
@@ -384,6 +385,7 @@ def check_new_model(
         file_errors=errors
     )
 
+
 def check_forecast_retraction(
     store: dict[str, Any],
     files: set[os.PathLike]
@@ -400,8 +402,15 @@ def check_forecast_retraction(
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
+    # if "updates_allowed": check for duplication, retractions and regular updates
+    # this function errors when there's duplication or implicit retractions
+    # if not "updates_allowed": check for duplication and regular updates
+    # this function errors when there's duplication or regular updates
 
-    logger.info("Checking potential forecast (impl./expl.) retractions...")
+    if store["UPDATES_ALLOWED"]:
+        logger.info("Checking potential forecast (impl./expl.) retractions...")
+    else:
+        logger.info("Checking potential forecast (impl./expl.) updates...")
 
     no_files_checked_log: bool = True
     for file in files:
@@ -414,10 +423,18 @@ def check_forecast_retraction(
         ).resolve()
         if existing_file_path.exists():
             no_files_checked_log: bool = False
-            logger.info(
-                "  Checking existing forecast %s for any retractions",
+
+            if store["UPDATES_ALLOWED"]:
+                logger.info(
+                    "  Checking existing forecast %s for any retractions",
+                    str(existing_file_path)
+                )
+            else:
+                logger.info(
+                "  Checking existing forecast %s for any updates",
                 str(existing_file_path)
-            )
+                )
+            # compare with forecast files already merged into hub repo
             compare_result: RetractionCheckResult = compare_forecasts(
                 old_forecast_file_path=existing_file_path,
                 new_forecast_file_path=file
@@ -430,46 +447,64 @@ def check_forecast_retraction(
                 )
                 labels.add(all_labels["duplicate-forecast"])
                 errors[file] = [compare_result.error]
-            if compare_result.has_implicit_retraction:
-                logger.error(
-                    "    ❌ %s contains implicit retrations.",
-                    relative_path_str
-                )
-                success = False
-                labels.add(all_labels["forecast-implicit-retractions"])
-                error_list = errors.get(file, [])
-                error_list.append((
-                    "Forecast file contains implicit retraction(s), which are "
-                    "disallowed. Please review the retraction rules for a "
-                    "forecast in the wiki [here]"
-                    "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)."
-                ))
-                errors[file] = error_list
-            if compare_result.has_explicit_retraction:
-                logger.info(
-                    "    💡 %s contains explicit retractions.",
-                    relative_path_str
-                )
-                labels.add(all_labels["forecast-retraction"])
-                comments.append(
-                    "💡 Submission contains explicit retractions."
-                )
+            
+            if store["UPDATES_ALLOWED"]: 
+                if compare_result.has_implicit_retraction:
+                    logger.error(
+                        "    ❌ %s contains implicit retrations.",
+                        relative_path_str
+                    )
+                    success = False
+                    labels.add(all_labels["forecast-implicit-retractions"])
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains implicit retraction(s), which are "
+                        "disallowed. Please review the retraction rules for a "
+                        "forecast in the wiki [here]"
+                        "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)."
+                    ))
+                    errors[file] = error_list
+                if compare_result.has_explicit_retraction:
+                    logger.info(
+                        "    💡 %s contains explicit retractions.",
+                        relative_path_str
+                    )
+                    labels.add(all_labels["forecast-retraction"])
+                    comments.append(
+                        "💡 Submission contains explicit retractions."
+                    )
             if compare_result.has_no_retraction_or_duplication:
-                logger.info(
+                labels.add(all_labels["forecast-updated"])
+                if not store["UPDATES_ALLOWED"]:
+                    success = False
+                    logger.error(
+                        "    ❌ %s contains updates to existing file.",
+                        relative_path_str
+                    )
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains updates to existing file, which are "
+                        "disallowed."
+                    ))
+
+                else:
+                    logger.info(
                     "    💡 %s contains updates to existing forecasts",
                     relative_path_str
-                )
-                labels.add(all_labels["forecast-updated"])
-                comments.append(
-                    "💡 Your submission seem to have updated some "
-                    "existing forecasts. Could you provide a reason for the "
-                    "update and confirm that any updated forecasts "
-                    "only used data that were available at the time the "
-                    "original forecasts were made?"
-                )
+                    )
+                    comments.append(
+                        "💡 Your submission seem to have updated some "
+                        "existing forecasts. Could you provide a reason for the "
+                        "update and confirm that any updated forecasts "
+                        "only used data that were available at the time the "
+                        "original forecasts were made?"
+                    )
 
     if no_files_checked_log:
-        logger.info("No retractions detected.")
+        if store["UPDATES_ALLOWED"]:
+            logger.info("No retractions detected.")
+        else:    
+            logger.info("No updates detected.")
 
     return ValidationStepResult(
         success=success,

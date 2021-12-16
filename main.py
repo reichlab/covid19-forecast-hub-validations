@@ -124,6 +124,7 @@ def setup_validation_run_for_pull_request(config: str) -> ValidationRun:
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS") == "true",
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": "GH_TOKEN",
+        "UPDATES_ALLOWED": config_dict['updates_allowed']
     })
 
     return validation_run
