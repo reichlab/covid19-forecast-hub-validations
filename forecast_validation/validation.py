@@ -216,7 +216,7 @@ class ValidationRun:
         )
         all_labels: dict[str, Label] = self._store["possible_labels"]
         
-        # if true, use automerge PR label; if false, use passed-validation PR label 
+        # if true, add additional automerge PR label
         automerge: bool = self._store["AUTOMERGE"]
 
         # merge all labels, comments, and errors generated at each step
@@ -258,12 +258,12 @@ class ValidationRun:
             all_csvs_in_correct_location and
             only_one_forecast_csv
         ):
+            logger.info("PR %s passed all validation successfully", pull_request.number)
+            labels.add(all_labels['passed-validation'])
+
             if automerge:
                 logger.info("PR %s can be automerged", pull_request.number)
                 labels.add(all_labels['automerge'])
-            else: 
-                logger.info("PR %s passed all validation successfully", pull_request.number)
-                labels.add(all_labels['passed-validation'])
 
         # apply labels, comments, and errors (if any) to pull request on GitHub
         if len(labels) > 0:
