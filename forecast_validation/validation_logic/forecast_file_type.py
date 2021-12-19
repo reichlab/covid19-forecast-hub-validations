@@ -19,7 +19,7 @@ logger = logging.getLogger("hub-validations")
 def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if the PR is updating multiple models.
     """
-
+    success: bool = True
     logger.info("Checking if the PR is adding to/updating multiple models...")
 
     comments = []
@@ -41,19 +41,27 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
             "⚠️ PR is adding to/updating multiple models: %s",
             updated_models
         )
-        comments.append(
+        if(store[UPDATES_ALLOWED]):
+            comments.append(
             "⚠️ You are adding/updating multiple models' files. Could you "
             "provide a reason for this? If this is unintentional, please check "
             "to make sure to put your files are in the appropriate folder, "
             "and update the PR when you have done that. If you do mean to "
             "update multiple models, we will review the PR manually.\n"
             f"Models that are being updated: {updated_models}"
-        )
+            )
+
+        else:
+            comments.append(
+            "⚠️ PR is adding to/updating multiple models: %s",
+            updated_models
+            )
+            success = False
     else:
         logger.info("✔️ PR is not adding to/updating multiple models")
 
     return ValidationStepResult(
-        success=True,
+        success=success,
         comments=comments
     )
 
