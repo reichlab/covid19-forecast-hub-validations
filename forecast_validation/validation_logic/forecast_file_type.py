@@ -19,7 +19,7 @@ logger = logging.getLogger("hub-validations")
 def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if the PR is updating multiple models.
     """
-    success: bool = True
+
     logger.info("Checking if the PR is adding to/updating multiple models...")
 
     comments = []
@@ -41,27 +41,19 @@ def check_multiple_model_names(store: dict[str, Any]) -> ValidationStepResult:
             "⚠️ PR is adding to/updating multiple models: %s",
             updated_models
         )
-        if(store[UPDATES_ALLOWED]):
-            comments.append(
+        comments.append(
             "⚠️ You are adding/updating multiple models' files. Could you "
             "provide a reason for this? If this is unintentional, please check "
             "to make sure to put your files are in the appropriate folder, "
             "and update the PR when you have done that. If you do mean to "
             "update multiple models, we will review the PR manually.\n"
             f"Models that are being updated: {updated_models}"
-            )
-
-        else:
-            comments.append(
-            "⚠️ PR is adding to/updating multiple models: %s",
-            updated_models
-            )
-            success = False
+        )
     else:
         logger.info("✔️ PR is not adding to/updating multiple models")
 
     return ValidationStepResult(
-        success=success,
+        success=True,
         comments=comments
     )
 
@@ -140,6 +132,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
+    success: bool = True
     labels: set[Label] = set()
     comments: list[str] = []
     downloaded_existing_files: set[os.PathLike] = set()
@@ -173,11 +166,16 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
 
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
+        if(store[UPDATES_ALLOWED] == False):
+            comments.append(
+            "💡 PR contains updates to existing forecasts",
+            )
+            success = False
     else:
         logger.info("✔️ PR does not contain updates to existing forecasts")
 
     return ValidationStepResult(
-        success=True,
+        success=success,
         to_store={
             "downloaded_existing_files": downloaded_existing_files
         },
