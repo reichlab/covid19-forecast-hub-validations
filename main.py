@@ -19,6 +19,8 @@ from forecast_validation.validation import (
     ValidationPerFileStep,
     ValidationRun
 )
+
+"""
 from forecast_validation.validation_logic.forecast_file_content import (
     check_forecast_retraction,
     check_new_model,
@@ -42,6 +44,7 @@ from forecast_validation.validation_logic.metadata import (
     get_all_metadata_filepaths,
     validate_metadata_files
 )
+"""
 
 logging.config.fileConfig("logging.conf")
 
@@ -145,11 +148,13 @@ if __name__ == '__main__':
     main_args.add_argument('--config_filepath', help='configuration file (default: validation-config.json)')
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        success = validate_from_pull_request(args.config_filepath)
-        if success:
-            print("****************** success! ******************")
-        else:
-            sys.exit("\n Errors found during validation...")
+        print("running on github action")
+        validation_run =  setup_validation_run_for_pull_request(args.config_filepath)
+        print(validation_run.store)
+        #if success:
+        #    print("****************** success! ******************")
+        #else:
+        #    sys.exit("\n Errors found during validation...")
     else:
         # TODO: add local version
         validation_run =  setup_validation_run_for_pull_request(args.config_filepath)
