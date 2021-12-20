@@ -54,16 +54,10 @@ logging.config.fileConfig("logging.conf")
 def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
     # load config file
     config = os.path.join(project_dir, "project-config.json")
-    print(config)
     f = open(config)
     config_dict = json.load(f)
     f.close()
-
-
-    location = os.path.join(project_dir, config_dict['location_filepath'])
-    print(location)
-    print(pd.read_csv(location))
-
+    
     steps = []
     """
     # Connect to GitHub
