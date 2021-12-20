@@ -8,7 +8,6 @@ import re
 import sys
 import argparse
 import json
-import pandas as pd
 
 # internal dep.'s
 from forecast_validation import (
@@ -21,7 +20,6 @@ from forecast_validation.validation import (
     ValidationRun
 )
 
-"""
 from forecast_validation.validation_logic.forecast_file_content import (
     check_forecast_retraction,
     check_new_model,
@@ -45,7 +43,6 @@ from forecast_validation.validation_logic.metadata import (
     get_all_metadata_filepaths,
     validate_metadata_files
 )
-"""
 
 logging.config.fileConfig("logging.conf")
 
