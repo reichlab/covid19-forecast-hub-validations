@@ -8,6 +8,7 @@ import re
 import sys
 import argparse
 import json
+import pandas as pd
 
 # internal dep.'s
 from forecast_validation import (
@@ -50,11 +51,18 @@ logging.config.fileConfig("logging.conf")
 
 # --- configurations and constants end ---
 
-def setup_validation_run_for_pull_request(config: str) -> ValidationRun:
+def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
     # load config file
+
+    config = os.path.join(project_dir, "project-config.json")
     f = open(config)
     config_dict = json.load(f)
     f.close()
+
+
+    location = os.path.join(project_dir, config_dict['location_filepath'])
+    print(location)
+    print(pd.load_csv(location))
 
     steps = []
     """
@@ -123,7 +131,7 @@ def setup_validation_run_for_pull_request(config: str) -> ValidationRun:
         "HUB_REPOSITORY_NAME": config_dict['hub_repository_name'],
         "HUB_MIRRORED_DIRECTORY_ROOT": (REPOSITORY_ROOT_ONDISK/"hub").resolve(),
         "PULL_REQUEST_DIRECTORY_ROOT":  (REPOSITORY_ROOT_ONDISK/"pull_request").resolve(),
-        "POPULATION_DATAFRAME_PATH": config_dict['location_filepath'],
+        "POPULATION_DATAFRAME_PATH": os.path.join(project_dir, config_dict['location_filepath']),
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS") == "true",
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": "GH_TOKEN",
@@ -133,8 +141,8 @@ def setup_validation_run_for_pull_request(config: str) -> ValidationRun:
 
     return validation_run
 
-def validate_from_pull_request(config: str) -> bool:
-    validation_run: ValidationRun = setup_validation_run_for_pull_request(config)
+def validate_from_pull_request(project_dir: str) -> bool:
+    validation_run: ValidationRun = setup_validation_run_for_pull_request(project_dir)
     
     validation_run.run()
 
@@ -145,11 +153,11 @@ if __name__ == '__main__':
         description='Validate Pull Request (named arguments refer to config file)'
     )
     main_args = parser.add_argument_group("main arguments")
-    main_args.add_argument('--config_filepath', help='configuration file (default: validation-config.json)')
+    main_args.add_argument('--project_dir', help='directory that contains config file at root and location_filepath key in your config file(default: validation-config.json)')
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") == "true":
         print("running on github action")
-        validation_run =  setup_validation_run_for_pull_request(args.config_filepath)
+        validation_run =  setup_validation_run_for_pull_request(args.project_dir)
         print(validation_run.store)
         #if success:
         #    print("****************** success! ******************")
@@ -157,6 +165,6 @@ if __name__ == '__main__':
         #    sys.exit("\n Errors found during validation...")
     else:
         # TODO: add local version
-        validation_run =  setup_validation_run_for_pull_request(args.config_filepath)
+        validation_run =  setup_validation_run_for_pull_request(args.project_dir)
         print(validation_run.store)
         pass
