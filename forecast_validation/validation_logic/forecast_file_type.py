@@ -132,7 +132,6 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
-    success: bool = True
     labels: set[Label] = set()
     comments: list[str] = []
     downloaded_existing_files: set[os.PathLike] = set()
@@ -167,15 +166,11 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
         if(store[UPDATES_ALLOWED] == False):
-            comments.append(
-            "💡 PR contains updates to existing forecasts",
-            )
-            success = False
     else:
         logger.info("✔️ PR does not contain updates to existing forecasts")
 
     return ValidationStepResult(
-        success=success,
+        success=True,
         to_store={
             "downloaded_existing_files": downloaded_existing_files
         },
