@@ -62,7 +62,7 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
     location = os.path.join(project_dir, config_dict['location_filepath'])
     print(location)
-    print(pd.load_csv(location))
+    print(pd.read_csv(location))
 
     steps = []
     """
