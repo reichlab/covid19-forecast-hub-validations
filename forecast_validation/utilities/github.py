@@ -15,7 +15,7 @@ logger = logging.getLogger("hub-validations")
 
 def get_existing_models(
     repository: Repository,
-    path: str = "data-processed"
+    path: str
 ) -> set[str]:
     """Get all currently existing model names in repository.
 
@@ -23,7 +23,7 @@ def get_existing_models(
         repository: A PyGithub Repository object representing the repository
           to query
         path: A string representing the subfolder in which the models are
-          stored
+          stored. eg: "data-processed" and "data-forecasts"
 
     Returns:
         A set of model names.
@@ -43,7 +43,7 @@ def get_existing_models(
 def get_metadata_for_model(
     repo: Repository,
     model_abbr: str,
-    directory: str = "data-processed"
+    directory: str
 ) -> Optional[dict]:
     """Retrieves contents of the metadata file as a python dictionary.
 

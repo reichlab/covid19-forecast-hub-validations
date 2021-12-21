@@ -128,7 +128,8 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
         "CONFIG_FILE": config_dict,
         "FORECAST_DATES": config_dict['forecast_dates'],
         "UPDATES_ALLOWED": config_dict['updates_allowed'],
-        "AUTOMERGE": config_dict['automerge_on_passed_validation']
+        "AUTOMERGE": config_dict['automerge_on_passed_validation'],
+        "FORECAST_FOLDER_NAME": config_dict['forecast_folder_name']
     })
 
     return validation_run
