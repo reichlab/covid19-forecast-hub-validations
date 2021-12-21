@@ -253,22 +253,6 @@ def filename_match_forecast_date_check(
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
             if (file_forecast_date != forecast_date):
-
-                if(check_allowed_dates):
-                    logger.error(
-                    "❌ Forecast dates do not match with accepted forecast date list: %s , %s",
-                    str(file_forecast_date),
-                    str(forecast_date)
-                    )
-                    success = False
-                    error_list = errors.get(filepath, [])
-                    error_list.append((
-                        f"dates in filename or "
-                        f"`forecast_date` column does not match with the list of accepted forecast dates: {file_forecast_date} or "
-                        f"{forecast_date}."
-                    ))
-                    errors[filepath] = error_list
-            
                 logger.error(
                     "❌ Forecast dates do not match: %s vs %s",
                     str(file_forecast_date),
@@ -282,7 +266,17 @@ def filename_match_forecast_date_check(
                     f"{forecast_date}."
                 ))
                 errors[filepath] = error_list
-        
+            else:
+                if(check_allowed_dates):
+                    date = forecast_date.split("-")
+                    if datetime(date[0], date[1], date[2]).weekday() != 0:
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            "❌ Forecast date is not a Moday"
+                        ))
+                        errors[filepath] = error_list
+
             # forecast dates must be <1day within each other
             existing_file_path = (
                 hub_mirrored_directory_root/filepath
