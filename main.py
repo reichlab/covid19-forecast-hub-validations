@@ -6,18 +6,13 @@ import os.path
 import pathlib
 import re
 import sys
+import argparse
+import json
 
 # internal dep.'s
 from forecast_validation import (
-    PULL_REQUEST_DIRECTORY_ROOT,
-    VALIDATIONS_VERSION,
-    REPOSITORY_ROOT_ONDISK,
-    HUB_REPOSITORY_NAME,
-    HUB_MIRRORED_DIRECTORY_ROOT,
-    POPULATION_DATAFRAME_PATH,
-    FILENAME_PATTERNS,
-    IS_GITHUB_ACTIONS,
-    GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+    PullRequestFileType,
+    VALIDATIONS_VERSION
 )
 from forecast_validation.validation import (
     ValidationStep,
@@ -52,10 +47,14 @@ logging.config.fileConfig("logging.conf")
 
 # --- configurations and constants end ---
 
-def setup_validation_run_for_pull_request() -> ValidationRun:
-    
-    steps = []
+def setup_validation_run_for_pull_request(config: str) -> ValidationRun:
+    # load config file
+    f = open(config)
+    config_dict = json.load(f)
+    f.close()
 
+    steps = []
+    """
     # Connect to GitHub
     steps.append(ValidationStep(establish_github_connection))
 
@@ -101,41 +100,58 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
 
     # Check updates/retractions
     steps.append(ValidationPerFileStep(check_forecast_retraction))
-
+    """ 
     # make new validation run
     validation_run = ValidationRun(steps)
 
+    REPOSITORY_ROOT_ONDISK = (pathlib.Path(__file__)/".."/"..").resolve()
+    FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
+    PullRequestFileType.FORECAST:
+        re.compile(r"^(%s)/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
+    PullRequestFileType.METADATA:
+        re.compile(r"^(%s)/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+    PullRequestFileType.OTHER_FS:
+        re.compile(r"^(%s)/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
+}
     # add initial values to store
     validation_run.store.update({
         "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
         "REPOSITORY_ROOT_ONDISK": REPOSITORY_ROOT_ONDISK,
-        "HUB_REPOSITORY_NAME": HUB_REPOSITORY_NAME,
-        "HUB_MIRRORED_DIRECTORY_ROOT": HUB_MIRRORED_DIRECTORY_ROOT,
-        "PULL_REQUEST_DIRECTORY_ROOT": PULL_REQUEST_DIRECTORY_ROOT,
-        "POPULATION_DATAFRAME_PATH": POPULATION_DATAFRAME_PATH,
+        "HUB_REPOSITORY_NAME": config_dict['hub_repository_name'],
+        "HUB_MIRRORED_DIRECTORY_ROOT": (REPOSITORY_ROOT_ONDISK/"hub").resolve(),
+        "PULL_REQUEST_DIRECTORY_ROOT":  (REPOSITORY_ROOT_ONDISK/"pull_request").resolve(),
+        "POPULATION_DATAFRAME_PATH": config_dict['location_filepath'],
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
-        "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
-        "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \
-            GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+        "IS_GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS") == "true",
+        "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": "GH_TOKEN",
+        "CONFIG_FILE":config_dict,
+        "FORECAST_DATE":config_dict['forecast_dates']
     })
 
     return validation_run
 
-def validate_from_pull_request() -> bool:
-    validation_run: ValidationRun = setup_validation_run_for_pull_request()
+def validate_from_pull_request(config: str) -> bool:
+    validation_run: ValidationRun = setup_validation_run_for_pull_request(config)
     
     validation_run.run()
 
     return validation_run.success
     
 if __name__ == '__main__':
-
-    if IS_GITHUB_ACTIONS:
-        success = validate_from_pull_request()
+    parser = argparse.ArgumentParser(
+        description='Validate Pull Request (named arguments refer to config file)'
+    )
+    main_args = parser.add_argument_group("main arguments")
+    main_args.add_argument('--config_filepath', help='configuration file (default: validation-config.json)')
+    args = parser.parse_args()
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        success = validate_from_pull_request(args.config_filepath)
         if success:
             print("****************** success! ******************")
         else:
             sys.exit("\n Errors found during validation...")
     else:
         # TODO: add local version
+        validation_run =  setup_validation_run_for_pull_request(args.config_filepath)
+        print(validation_run.store)
         pass

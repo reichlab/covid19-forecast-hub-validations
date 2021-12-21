@@ -9,7 +9,6 @@ import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
-
 from forecast_validation import (
     ParseDateError, PullRequestFileType
 )
@@ -71,7 +70,7 @@ def validate_forecast_files(
     for file in files:
         logger.info("  Checking forecast format for %s", file)
         file_result = zoltpy.covid19.validate_quantile_csv_file(
-            file, silent=True
+            file, store["CONFIG_FILE"],silent=True
         )
         if file_result == "no errors":
             logger.info("    %s format validated", file)
@@ -133,7 +132,7 @@ def filename_match_forecast_date_check(
     store: dict[str, Any],
     files: set[os.PathLike]
 ) -> ValidationStepResult:
-
+    allowed_dates:list[str] = store["FORECAST_DATE"]
     forecast_date_column_name: str = "forecast_date"
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
@@ -249,10 +248,27 @@ def filename_match_forecast_date_check(
             ))
             errors[filepath] = error_list
         
+        check_allowed_dates = len(allowed_dates) > 0
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
             if (file_forecast_date != forecast_date):
+
+                if(check_allowed_dates):
+                    logger.error(
+                    "❌ Forecast dates do not match with accepted forecast date list: %s , %s",
+                    str(file_forecast_date),
+                    str(forecast_date)
+                    )
+                    success = False
+                    error_list = errors.get(filepath, [])
+                    error_list.append((
+                        f"dates in filename or "
+                        f"`forecast_date` column does not match with the list of accepted forecast dates: {file_forecast_date} or "
+                        f"{forecast_date}."
+                    ))
+                    errors[filepath] = error_list
+            
                 logger.error(
                     "❌ Forecast dates do not match: %s vs %s",
                     str(file_forecast_date),
