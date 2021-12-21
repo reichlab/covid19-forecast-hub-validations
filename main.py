@@ -108,11 +108,11 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
     REPOSITORY_ROOT_ONDISK = (pathlib.Path(__file__)/".."/"..").resolve()
     FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
     PullRequestFileType.FORECAST:
-        re.compile(r"^(%s)/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
+        re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
     PullRequestFileType.METADATA:
-        re.compile(r"^(%s)/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+        re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
     PullRequestFileType.OTHER_FS:
-        re.compile(r"^(%s)/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
+        re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
 }
     # add initial values to store
     validation_run.store.update({
