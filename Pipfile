@@ -19,12 +19,11 @@ numpy = "*"
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
 
 [packages.zoltpy]
 editable = true
-git = "https://github.com/reichlab/zoltpy"
-ref = "issue_57"
+git = "https://github.com/Serena-Wang/zoltpy"
 
 [packages.pykwalify]
 file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"
