@@ -268,8 +268,7 @@ def filename_match_forecast_date_check(
                 errors[filepath] = error_list
             else:
                 if(check_allowed_dates):
-                    date = forecast_date.split("-")
-                    if datetime(date[0], date[1], date[2]).weekday() != 0:
+                    if forecast_date not in allowed_dates or file_forecast_date not in allowed_dates:
                         success = False
                         error_list = errors.get(filepath, [])
                         error_list.append((
