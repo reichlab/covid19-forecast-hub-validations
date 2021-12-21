@@ -297,17 +297,6 @@ def filename_match_forecast_date_check(
                 ))
                 errors[filepath] = error_list
 
-            if(store[HUB_REPOSITORY_NAME] == "cdcepi/Flusight-forecast-data"):
-                if date.today().weekday() == 0:
-                    logger.warning(
-                    "Forecast file is not submitted on Moday",
-                    )
-                    success = False
-                    error_list = errors.get(filepath, [])
-                    error_list.append((
-                    "The forecast file is not submitted on Monday."
-                    ))
-                errors[filepath] = error_list
     if success:
         success_message = "✔️ Forecast date validation successful."
         logger.info(success_message)
