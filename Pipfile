@@ -23,7 +23,7 @@ python_version = "3.8"
 
 [packages.zoltpy]
 editable = true
-git = "https://github.com/reichlab/zoltpy"
+git = "https://github.com/reichlab/zoltpy.git"
 ref = "issue_57"
 
 [packages.pykwalify]
