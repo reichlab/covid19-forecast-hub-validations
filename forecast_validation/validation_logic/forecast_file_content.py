@@ -272,7 +272,7 @@ def filename_match_forecast_date_check(
                         success = False
                         error_list = errors.get(filepath, [])
                         error_list.append((
-                            "❌ Forecast date is not a Moday"
+                            "❌ Forecast date is not a Monday"
                         ))
                         errors[filepath] = error_list
 
