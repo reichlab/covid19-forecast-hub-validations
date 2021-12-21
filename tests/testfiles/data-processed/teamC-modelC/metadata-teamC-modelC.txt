@@ -1,0 +1,10 @@
+team_name: TeamC
+model_name: ModelC
+model_abbr: teamC-modelC
+model_contributors: A, B
+website_url: https://covid19forecasthub.org/
+license: lmn
+team_model_designation: primary
+ensemble_of_hub_models: false
+methods: This model is a predictive model.
+methods_long: abcedefg

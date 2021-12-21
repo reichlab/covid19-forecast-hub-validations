@@ -10,7 +10,6 @@ import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
-
 from forecast_validation import (
     ParseDateError, PullRequestFileType
 )
@@ -72,7 +71,7 @@ def validate_forecast_files(
     for file in files:
         logger.info("  Checking forecast format for %s", file)
         file_result = zoltpy.covid19.validate_quantile_csv_file(
-            file, silent=True
+            file, store["CONFIG_FILE"],silent=True
         )
         if file_result == "no errors":
             logger.info("    %s format validated", file)
@@ -134,7 +133,7 @@ def filename_match_forecast_date_check(
     store: dict[str, Any],
     files: set[os.PathLike]
 ) -> ValidationStepResult:
-
+    allowed_dates:list[str] = store["FORECAST_DATE"]
     forecast_date_column_name: str = "forecast_date"
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
@@ -250,6 +249,7 @@ def filename_match_forecast_date_check(
             ))
             errors[filepath] = error_list
         
+        check_allowed_dates = len(allowed_dates) > 0
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
@@ -267,7 +267,16 @@ def filename_match_forecast_date_check(
                     f"{forecast_date}."
                 ))
                 errors[filepath] = error_list
-        
+            else:
+                if(check_allowed_dates):
+                    if forecast_date not in allowed_dates or file_forecast_date not in allowed_dates:
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            "❌ Forecast date is not a Monday"
+                        ))
+                        errors[filepath] = error_list
+
             # forecast dates must be <1day within each other
             existing_file_path = (
                 hub_mirrored_directory_root/filepath

@@ -198,7 +198,7 @@ def check_metadata_file(filepath, cache={}):
                 return False, "no errors"
         except yaml.YAMLError as exc:
             return True, [
-                "METADATA ERROR: Metadata YAML Fromat Error for %s file. \
+                "METADATA ERROR: Metadata YAML Format Error for %s file. \
                     \nCommon fixes (if parse error message is unclear):\
                     \n* Try converting all tabs to spaces \
                     \n* Try copying the example metadata file and follow formatting closely \
