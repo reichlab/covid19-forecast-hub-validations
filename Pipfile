@@ -23,7 +23,7 @@ python_version = "3.9"
 
 [packages.zoltpy]
 editable = true
-git = "https://github.com/reichlab/zoltpy"
+git = "https://github.com/reichlab/zoltpy/issue_57"
 
 [packages.pykwalify]
 file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"

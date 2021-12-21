@@ -19,7 +19,6 @@ from forecast_validation.validation import (
     ValidationPerFileStep,
     ValidationRun
 )
-
 from forecast_validation.validation_logic.forecast_file_content import (
     check_forecast_retraction,
     check_new_model,
@@ -56,7 +55,7 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
     f.close()
     
     steps = []
-    """
+   
     # Connect to GitHub
     steps.append(ValidationStep(establish_github_connection))
 
@@ -102,7 +101,7 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
     # Check updates/retractions
     steps.append(ValidationPerFileStep(check_forecast_retraction))
-    """ 
+  
     # make new validation run
     validation_run = ValidationRun(steps)
 
@@ -126,8 +125,8 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS") == "true",
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": "GH_TOKEN",
-        "CONFIG_FILE":config_dict,
-        "FORECAST_DATE":config_dict['forecast_dates']
+        "CONFIG_FILE": config_dict,
+        "FORECAST_DATE": config_dict['forecast_dates']
         "UPDATES_ALLOWED": config_dict['updates_allowed'],
         "AUTOMERGE": config_dict['automerge_on_passed_validation']
     })
@@ -149,15 +148,11 @@ if __name__ == '__main__':
     main_args.add_argument('--project_dir', help='directory that contains config file at root and location_filepath key in your config file(default: validation-config.json)')
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        print("running on github action")
-        validation_run =  setup_validation_run_for_pull_request(args.project_dir)
-        print(validation_run.store)
-        #if success:
-        #    print("****************** success! ******************")
-        #else:
-        #    sys.exit("\n Errors found during validation...")
+        success =  validate_from_pull_request(args.project_dir)
+        if success:
+            print("****************** success! ******************")
+        else:
+            sys.exit("\n Errors found during validation...")
     else:
         # TODO: add local version
-        validation_run =  setup_validation_run_for_pull_request(args.project_dir)
-        print(validation_run.store)
         pass
