@@ -253,15 +253,14 @@ def filename_match_forecast_date_check(
         check_allowed_forecast_dates = len(allowed_forecast_dates) > 0
         # check if date in file name is an allowed forecast date
         if(check_allowed_forecast_dates):
-            if datetime.datetime.strptime(
-               file_forecast_date, "%Y-%m-%d") not in allowed_forecast_dates:
-                        success = False
-                        error_list = errors.get(filepath, [])
-                        error_list.append((
-                            f"❌ date {file_forecast_date} in filename is not "
-                            f"allowed based on project configuration."
-                        ))
-                        errors[filepath] = error_list
+            if file_forecast_date.strftime("%Y-%m-%d") not in allowed_forecast_dates:
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"❌ date {file_forecast_date} in filename is not "
+                    f"allowed based on project configuration."
+                ))
+                errors[filepath] = error_list
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
@@ -281,8 +280,7 @@ def filename_match_forecast_date_check(
                 errors[filepath] = error_list
             
             if(check_allowed_forecast_dates):
-                if datetime.datetime.strptime(
-                    forecast_date, "%Y-%m-%d")not in allowed_forecast_dates:
+                if forecast_date.strftime("%Y-%m-%d")not in allowed_forecast_dates:
                     success = False
                     error_list = errors.get(filepath, [])
                     error_list.append((
