@@ -56,9 +56,9 @@ def compare_forecasts(
         has_implicit_retraction = True
     else:   
         # check for explicit retractions
-        # check if mismatches positions have NULLs
+        # check if mismatched positions have NULLs
         if not (comparison).all(axis=None):
-            if ((new_vals.notnull()) & (comparison)).any(axis=None):
+            if ((new_vals.isnull()) & (~ comparison)).any(axis=None):
                 has_explicit_retraction = True
     return RetractionCheckResult(
         error=error,
