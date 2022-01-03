@@ -154,14 +154,17 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
             forecast_file.status == "modified" or
             forecast_file.status == "removed"
         ):
-            # if file is modified, fetch the original one and
-            # save it to the hub (mirrored) directory
-            downloaded_existing_files.add(get_existing_forecast_file(
-                repository,
-                forecast_file,
-                store["HUB_MIRRORED_DIRECTORY_ROOT"]
-            ))
+            if store["UPDATES_ALLOWED"]:  
+                # if file is modified, fetch the original one and
+                # save it to the hub (mirrored) directory
+                downloaded_existing_files.add(get_existing_forecast_file(
+                    repository,
+                    forecast_file,
+                    store["HUB_MIRRORED_DIRECTORY_ROOT"]
+                ))
+
             changed_forecasts = True
+            
 
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
