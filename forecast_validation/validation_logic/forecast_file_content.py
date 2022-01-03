@@ -443,7 +443,7 @@ def check_forecast_retraction(
             hub_mirrored_directory_root/relative_path_str
         ).resolve()
         if existing_file_path.exists():
-            no_files_checked_log: bool = False
+            no_files_checked_log = False
 
             if store["UPDATES_ALLOWED"]:
                 logger.info(
@@ -520,6 +520,7 @@ def check_forecast_retraction(
                         "Forecast file contains updates to existing file, which are "
                         "disallowed."
                     ))
+                    errors[file] = error_list
 
 
     if no_files_checked_log:
