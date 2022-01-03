@@ -494,21 +494,10 @@ def check_forecast_retraction(
                     comments.append(
                         "💡 Submission contains explicit retractions."
                     )
+
             if compare_result.has_no_retraction_or_duplication:
                 labels.add(all_labels["forecast-updated"])
-                if not store["UPDATES_ALLOWED"]:
-                    success = False
-                    logger.error(
-                        "    ❌ %s contains updates to existing file.",
-                        relative_path_str
-                    )
-                    error_list = errors.get(file, [])
-                    error_list.append((
-                        "Forecast file contains updates to existing file, which are "
-                        "disallowed."
-                    ))
-
-                else:
+                if store["UPDATES_ALLOWED"]:
                     logger.info(
                     "    💡 %s contains updates to existing forecasts",
                     relative_path_str
@@ -520,6 +509,18 @@ def check_forecast_retraction(
                         "only used data that were available at the time the "
                         "original forecasts were made?"
                     )
+                else:
+                    success = False
+                    logger.error(
+                        "    ❌ %s contains updates to existing file.",
+                        relative_path_str
+                    )
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains updates to existing file, which are "
+                        "disallowed."
+                    ))
+
 
     if no_files_checked_log:
         if store["UPDATES_ALLOWED"]:
