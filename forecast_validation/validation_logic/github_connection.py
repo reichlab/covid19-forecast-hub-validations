@@ -167,7 +167,7 @@ def get_all_models_from_repository(
 
     logger.info("Retrieving all existing model names...")
 
-    model_names: set[str] = get_existing_models(repository)
+    model_names: set[str] = get_existing_models(repository, store["FORECAST_FOLDER_NAME"])
 
     logger.info("All model names successfully retrieved")
 

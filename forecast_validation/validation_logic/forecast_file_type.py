@@ -161,7 +161,9 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
                 forecast_file,
                 store["HUB_MIRRORED_DIRECTORY_ROOT"]
             ))
+
             changed_forecasts = True
+            
 
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
