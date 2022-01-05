@@ -262,17 +262,6 @@ class ValidationRun:
                 logger.info("PR %s can be automerged", pull_request.number)
                 labels.add(all_labels['automerge'])
 
-        # apply labels, comments, and errors (if any) to pull request on GitHub
-        if len(labels) > 0:
-            logger.info("Labels to be applied: %s", str(labels))
-            pull_request.set_labels(*list(labels))
-        else:
-            logger.info("No labels to be applied")
-        if len(comments) > 0:
-            pull_request.create_issue_comment(
-                f"### Validations v{VALIDATIONS_VERSION}\n\nComments:\n\n"
-                + "\n\n".join(comments)
-            )
         if self.success:
             # note: covid hub will also have this tag when a PR passed validation
             labels.add(all_labels['passed-validation'])
@@ -293,3 +282,15 @@ class ValidationRun:
                     error_comment += f"{error}\n"
                 error_comment += "\n"
             pull_request.create_issue_comment(error_comment.rstrip())
+        
+        # apply labels, comments, and errors (if any) to pull request on GitHub
+        if len(labels) > 0:
+            logger.info("Labels to be applied: %s", str(labels))
+            pull_request.set_labels(*list(labels))
+        else:
+            logger.info("No labels to be applied")
+        if len(comments) > 0:
+            pull_request.create_issue_comment(
+                f"### Validations v{VALIDATIONS_VERSION}\n\nComments:\n\n"
+                + "\n\n".join(comments)
+            )
