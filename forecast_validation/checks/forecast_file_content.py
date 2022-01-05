@@ -47,7 +47,7 @@ def compare_forecasts(
         # TODO: There is definitely a more elegant way to do this!
         new_vals = new_df.loc[old_df.index]
         comparison = (old_df == new_vals)
-        if (comparison).all(axis=None):
+        if ((comparison).all(axis=None)) & (len(old_df) == len(new_df)):
             is_all_duplicate = True
             error = "Forecast is all duplicate."
     except KeyError as e:
