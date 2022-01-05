@@ -258,9 +258,6 @@ class ValidationRun:
             all_csvs_in_correct_location and
             only_one_forecast_csv
         ):
-            logger.info("PR %s passed all validation successfully", pull_request.number)
-            labels.add(all_labels['passed-validation'])
-
             if automerge:
                 logger.info("PR %s can be automerged", pull_request.number)
                 labels.add(all_labels['automerge'])
@@ -277,6 +274,8 @@ class ValidationRun:
                 + "\n\n".join(comments)
             )
         if self.success:
+            # note: covid hub will also have this tag when a PR passed validation
+            labels.add(all_labels['passed-validation'])
             pull_request.create_issue_comment(
                 f"Validations v{VALIDATIONS_VERSION}\n\n"
                 "Errors: \n\n"
