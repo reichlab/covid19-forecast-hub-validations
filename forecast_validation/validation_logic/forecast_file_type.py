@@ -69,8 +69,9 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     comments: list[str] = []
     errors: dict[os.PathLike, list[str]] = {}
 
+    forecast_folder_name = store["FORECAST_FOLDER_NAME"]
     logger.info(
-        "Checking if the PR is updating outside the data-processed/ folder..."
+        f"Checking if the PR is updating outside the {forecast_folder_name}/ folder..."
     )
     if (
         PullRequestFileType.OTHER_NONFS in filtered_files or
@@ -95,18 +96,19 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         ))
 
     logger.info("Checking if the PR contains misplaced CSVs...")
+    submission_formatting_instruction = store["SUBMISSION_FORMATTING_INSTRUCTION"]
+
     if (PullRequestFileType.FORECAST not in filtered_files and
         PullRequestFileType.OTHER_FS in filtered_files):
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
         for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
             path = pathlib.Path(github_file.filename)
-
             errors[path] = [(
                 "The forecast CSV or metadata file is located in an "
                 "incorrect location and/or is misnamed (see "
-                "[here](https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting) "
-                "for the correct format. Please correct the errors "
+                f"[here]({submission_formatting_instruction})"
+                " for submission instructions. Please correct the errors "
                 "accordingly.\n"
                 "We will still check any misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
