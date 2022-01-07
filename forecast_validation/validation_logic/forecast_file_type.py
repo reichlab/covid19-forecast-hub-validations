@@ -108,7 +108,7 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
                 "The forecast CSV or metadata file is located in an "
                 "incorrect location and/or is misnamed (see "
                 f"[here]({submission_formatting_instruction})"
-                "for submission instructions. Please correct the errors "
+                " for submission instructions. Please correct the errors "
                 "accordingly.\n"
                 "We will still check any misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
