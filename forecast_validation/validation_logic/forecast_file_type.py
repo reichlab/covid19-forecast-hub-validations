@@ -96,19 +96,19 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         ))
 
     logger.info("Checking if the PR contains misplaced CSVs...")
+    submission_formatting_instruction = store["SUBMISSION_FORMATTING_INSTRUCTION"]
+
     if (PullRequestFileType.FORECAST not in filtered_files and
         PullRequestFileType.OTHER_FS in filtered_files):
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
         for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
             path = pathlib.Path(github_file.filename)
-            forecast_format_wiki = store["FORECAST_FORMAT_WIKI"]
-            metadata_format_wiki = store["METADATA_FORMAT_WIKI"]
             errors[path] = [(
                 "The forecast CSV or metadata file is located in an "
                 "incorrect location and/or is misnamed (see "
-                f"[here]({forecast_format_wiki}) and [here]({metadata_format_wiki})"
-                "for the correct format. Please correct the errors "
+                f"[here]({submission_formatting_instruction})"
+                "for submission instructions. Please correct the errors "
                 "accordingly.\n"
                 "We will still check any misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
