@@ -134,8 +134,8 @@ def validate_forecast_values(
         return (
             f"Found {num_invalid_predictions} predictions with forecasted "
             "value larger than population size of locality in your file, "
-            "at row(s) "
-            f"{list(merged[invalid_predictions].index)}"
+            "at these row(s) "
+            f"{merged.loc[invalid_predictions, ['forecast_date', 'target','target_end_date', 'location', 'type', 'quantile','value']].values.tolist()}"
         )
     else:
         return None
