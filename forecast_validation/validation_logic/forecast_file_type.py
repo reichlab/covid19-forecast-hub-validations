@@ -167,7 +167,6 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
 
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
-        if(store[UPDATES_ALLOWED] == False):
     else:
         logger.info("✔️ PR does not contain updates to existing forecasts")
 
