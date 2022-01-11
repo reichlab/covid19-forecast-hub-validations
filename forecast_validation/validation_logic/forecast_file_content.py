@@ -80,8 +80,9 @@ def validate_forecast_files(
             )
             correctly_formatted_files.add(file)
         else:
+            logger.info("INVALID: %s ", file_result)
             file_result = [
-                f"Error when validating format: " + e
+                f"Error when validating format: " + repr(e)
                 for e in file_result
             ]
             success = False
