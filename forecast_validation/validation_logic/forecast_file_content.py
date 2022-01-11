@@ -82,7 +82,7 @@ def validate_forecast_files(
         else:
             logger.info("INVALID: %s ", file_result)
             file_result = [
-                f"Error when validating format: " + repr(e) + ". " + e
+                f"Error when validating format: " + e
                 for e in file_result
             ]
             success = False
