@@ -227,5 +227,5 @@ def check_removed_files(store: dict[str, Any]) -> ValidationStepResult:
     return ValidationStepResult(
         success=success,
         labels=labels,
-        errors = errors
+        file_errors = errors
     )
