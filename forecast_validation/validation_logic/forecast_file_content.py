@@ -394,7 +394,7 @@ def check_forecast_retraction(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: set[Label] = store["possible_labels"]
-    deleted_file_paths: set[os.PathLike] = store["deleted_existing_file_paths"]
+    deleted_file_paths: set[os.PathLike] = store["deleted_existing_files_paths"]
 
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
