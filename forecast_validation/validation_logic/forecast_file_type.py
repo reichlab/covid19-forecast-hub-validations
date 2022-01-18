@@ -1,3 +1,4 @@
+from pickle import TRUE
 from typing import Any
 from github.File import File
 from github.Label import Label
@@ -146,14 +147,7 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
     changed_forecasts: bool = False
     for forecast_file in forecasts:
-        # GitHub PR file statuses: unofficial, nothing official yet as of 9-4-21
-        # "added", "modified", "renamed", "removed"
-        # https://stackoverflow.com/questions/10804476/what-are-the-status-types-for-files-in-the-github-api-v3
-        # https://github.com/jitterbit/get-changed-files/commit/cfe8ad4269ed4d2edb7f4e39682a649f6675bf89#diff-4fab5baaca5c14d2de62d8d2fceef376ddddcc8e9509d86cfa5643f51b89ce3dR5
-        if (
-            forecast_file.status == "modified" or
-            forecast_file.status == "removed"
-        ):
+        if forecast_file.status == "modified":
             # if file is modified, fetch the original one and
             # save it to the hub (mirrored) directory
             downloaded_existing_files.add(get_existing_forecast_file(
@@ -175,4 +169,63 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
         },
         labels=labels,
         comments=comments
+    )
+
+def check_removed_files(store: dict[str, Any]) -> ValidationStepResult:
+    """Checks if a PR contains updates to existing forecasts.
+    """
+    labels: set[Label] = set()
+    all_labels: dict[str, Label] = store["possible_labels"]
+    errors: dict[os.PathLike, list[str]] = {}
+    
+    repository: Repository = store["repository"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
+
+    logger.info("Checking if the PR contains updates to existing forecasts/metadata...")
+
+    forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
+    metadatas = filtered_files.get(PullRequestFileType.METADATA, [])
+    removed_files: bool = False
+    success: bool = True
+
+    for forecast_file in forecasts:
+        if forecast_file.status == "removed":
+            if get_existing_forecast_file(
+                repository,
+                forecast_file,
+                store["HUB_MIRRORED_DIRECTORY_ROOT"]
+            ) is not None:
+                removed_files = True
+                path = pathlib.Path(forecast_file.filename)
+                errors[path] = [(
+                "The forecast CSV or metadata file is deleted."
+                "Please put the file back as we do not allow file deletion at the moment.")]
+
+    for metadata_file in metadatas:
+        if metadata_file.status == "removed":
+            if get_existing_forecast_file(
+                repository,
+                metadata_file,
+                store["HUB_MIRRORED_DIRECTORY_ROOT"]
+            ) is not None:
+                removed_files = True
+                path = pathlib.Path(metadata_file.filename)
+                errors[path] = [(
+                "The forecast CSV or metadata file is deleted."
+                "Please put the file back as we do not allow file deletion at the moment.")]
+
+    if removed_files:
+        success = False
+        logger.info("❌ PR deleted existing forecast/metadata file.")
+        labels.add(all_labels["file-deletion"])
+
+    else:
+        logger.info("✔️ PR does not include file deletion.")
+
+    return ValidationStepResult(
+        success=success,
+        labels=labels,
+        errors = errors
     )
