@@ -46,6 +46,12 @@ class ValidationFileLocationTest(unittest.TestCase):
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
 
+    def invalid_metadata_location(self, actual, forecast_file):
+        self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
+        self.assertTrue(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+
 class TestWithSetupForCovid(ValidationFileLocationTest):
     def setUp(self):
         # load config file
@@ -53,7 +59,8 @@ class TestWithSetupForCovid(ValidationFileLocationTest):
         f = open(config)
         config_dict = json.load(f)
         f.close()
-        # setup for context A
+        
+        # setup FILENAME_PATTERNS to access forecast_folder_name from the config file
         self.FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
         PullRequestFileType.FORECAST:
             re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
@@ -99,6 +106,11 @@ class TestWithSetupForCovid(ValidationFileLocationTest):
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
         self.invalid_metadata_file(actual, forecast_file)
 
+    # A file identified as a forecast is submitted but it updates files outside the data-processed folder
+    def test_invalid_metadata_location(self):
+        forecast_file = MagicMock(filename =  "metadata-teamA-modelA.txt")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.invalid_metadata_location(actual, forecast_file)
 
 class TestWithSetupForFlu(ValidationFileLocationTest):
     def setUp(self):
@@ -107,7 +119,7 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         f = open(config)
         config_dict = json.load(f)
         f.close()
-        # setup for context A
+        # setup FILENAME_PATTERNS to access forecast_folder_name from the config file
         self.FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
         PullRequestFileType.FORECAST:
             re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
@@ -136,7 +148,7 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         self.valid_file_name(actual, forecast_file)
 
     #A file with Incorrect File Name submitted in the correct model folder
-    def test_valid_infile_name(self):
+    def test_invalid_file_name(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/ABC-2021-11-08-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
         self.invalid_file_name(actual, forecast_file)
@@ -152,6 +164,12 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         forecast_file = MagicMock(filename =  "data-forecasts/teamB-modelB/metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
         self.invalid_metadata_file(actual, forecast_file)
+
+    # A file identified as a forecast is submitted but it updates files outside the data-processed folder
+    def test_invalid_metadata_location(self):
+        forecast_file = MagicMock(filename =  "metadata-teamA-modelA.txt")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.invalid_metadata_location(actual, forecast_file)
 
 if __name__ == '__main__':
     unittest.main()
