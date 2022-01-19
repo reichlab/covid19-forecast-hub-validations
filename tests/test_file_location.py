@@ -10,37 +10,37 @@ import re
 import json
 
 class ValidationFileLocationTest(unittest.TestCase):
-    def method_one(self, actual, forecast_file):
+    def valid_forecast_location(self, actual, forecast_file):
         self.assertTrue(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
     
-    def method_two(self, actual, forecast_file):
+    def invalid_forecast_location(self, actual, forecast_file):
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
 
-    def method_three(self, actual, forecast_file): 
+    def valid_file_name(self, actual, forecast_file): 
         self.assertTrue(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
 
-    def method_four(self, actual, forecast_file): 
+    def invalid_file_name(self, actual, forecast_file): 
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
     
-    def method_five(self, actual, forecast_file): 
+    def valid_metadata_file(self, actual, forecast_file): 
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.METADATA), forecast_file)
 
-    def method_six(self, actual, forecast_file): 
+    def invalid_metadata_file(self, actual, forecast_file): 
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
@@ -64,40 +64,40 @@ class TestWithSetupForCovid(ValidationFileLocationTest):
         }
 
     #A file identified as a forecast is submitted in the correct model folder.
-    def test_method_one(self):
+    def test_valid_forecast_location(self):
         forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/2021-11-29-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_one(actual, forecast_file)
+        self.valid_forecast_location(actual, forecast_file)
 
     # A file identified as a forecast is submitted but it updates files outside the data-processed folder
-    def test_method_two(self):
+    def test_invalid_forecast_location(self):
         forecast_file = MagicMock(filename =  "2021-11-08-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_two(actual, forecast_file)
+        self.invalid_forecast_location(actual, forecast_file)
 
     #A file with Correct File Name submitted in the correct model folder
-    def test_method_three(self):
+    def test_valid_file_name(self):
         forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/2021-11-08-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_three(actual, forecast_file)
+        self.valid_file_name(actual, forecast_file)
 
     #A file with Incorrect File Name submitted in the correct model folder
-    def test_method_four(self):
+    def test_invalid_file_name(self):
         forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/ABC-2021-11-08-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_four(actual, forecast_file)
+        self.invalid_file_name(actual, forecast_file)
 
     #A file identified as metadata file submitted in the correct model folder
-    def test_method_five(self):
+    def test_valid_metadata_file(self):
         forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_five(actual, forecast_file)
+        self.valid_metadata_file(actual, forecast_file)
 
     #A file identified as metadata file submitted in incorrect model folder
-    def test_method_six(self):
+    def test_invalid_metadata_file(self):
         forecast_file = MagicMock(filename =  "data-processed/teamB-modelB/metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_six(actual, forecast_file)
+        self.invalid_metadata_file(actual, forecast_file)
 
 
 class TestWithSetupForFlu(ValidationFileLocationTest):
@@ -118,40 +118,40 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         }
 
     #A file identified as a forecast is submitted in the correct model folder.
-    def test_method_one(self):
+    def test_valid_forecast_location(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/2021-11-29-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_one(actual, forecast_file)
+        self.valid_forecast_location(actual, forecast_file)
 
     # A file identified as a forecast is submitted but it updates files outside the data-forecasts folder
-    def test_method_two(self):
+    def test_invalid_forecast_location(self):
         forecast_file = MagicMock(filename =  "2021-11-08-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_two(actual, forecast_file)
+        self.invalid_forecast_location(actual, forecast_file)
 
     #A file with Correct File Name submitted in the correct model folder
-    def test_method_three(self):
+    def test_valid_file_name(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/2021-11-08-teamA-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_three(actual, forecast_file)
+        self.valid_file_name(actual, forecast_file)
 
     #A file with Incorrect File Name submitted in the correct model folder
-    def test_method_four(self):
+    def test_valid_infile_name(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/ABC-2021-11-08-modelA.csv")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_four(actual, forecast_file)
+        self.invalid_file_name(actual, forecast_file)
 
     #A file identified as metadata file submitted in the correct model folder
-    def test_method_five(self):
+    def test_valid_metadata_file(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_five(actual, forecast_file)
+        self.valid_metadata_file(actual, forecast_file)
 
     #A file identified as metadata file submitted in incorrect model folder
-    def test_method_six(self):
+    def test_invalid_metadata_file(self):
         forecast_file = MagicMock(filename =  "data-forecasts/teamB-modelB/metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
-        self.method_six(actual, forecast_file)
+        self.invalid_metadata_file(actual, forecast_file)
 
 if __name__ == '__main__':
     unittest.main()
