@@ -218,7 +218,7 @@ def check_removed_files(store: dict[str, Any]) -> ValidationStepResult:
                 deleted_files_in_hub_mirrored_dir.add(existing_forecast_file)
                 path = pathlib.Path(metadata_file.filename)
                 errors[path] = [(
-                "The forecast CSV or metadata file is deleted."
+                "The forecast CSV or metadata file is deleted. "
                 "Please put the file back as we do not allow file deletion at the moment.")]
 
     if removed_files:
