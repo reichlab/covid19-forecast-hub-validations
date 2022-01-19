@@ -1,4 +1,3 @@
-from pickle import TRUE
 from typing import Any
 from github.File import File
 from github.Label import Label
