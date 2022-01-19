@@ -94,6 +94,7 @@ class ValidationRetractionTest(unittest.TestCase):
                 "tests/testfiles/data-processed/teamA-modelA/forecast_content-duplicate.csv"
             ).is_all_duplicate
         )
+
         self.assertFalse(
             compare_forecasts(
                 "tests/testfiles/data-processed/teamA-modelA/forecast_content-original_forecast.csv",
@@ -138,6 +139,7 @@ class ValidationRetractionTest(unittest.TestCase):
                 "tests/testfiles/data-processed/teamA-modelA/forecast_content-explicit_retractions.csv"
             ).has_no_retraction_or_duplication
         )
+
 
 
 if __name__ == '__main__':
