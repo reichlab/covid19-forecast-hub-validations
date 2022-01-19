@@ -147,6 +147,10 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
     changed_forecasts: bool = False
     for forecast_file in forecasts:
+        # GitHub PR file statuses: unofficial, nothing official yet as of 9-4-21
+        # "added", "modified", "renamed", "removed"
+        # https://stackoverflow.com/questions/10804476/what-are-the-status-types-for-files-in-the-github-api-v3
+        # https://github.com/jitterbit/get-changed-files/commit/cfe8ad4269ed4d2edb7f4e39682a649f6675bf89#diff-4fab5baaca5c14d2de62d8d2fceef376ddddcc8e9509d86cfa5643f51b89ce3dR5
         if forecast_file.status == "modified":
             # if file is modified, fetch the original one and
             # save it to the hub (mirrored) directory
