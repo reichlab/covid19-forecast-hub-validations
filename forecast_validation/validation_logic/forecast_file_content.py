@@ -430,6 +430,8 @@ def check_forecast_retraction(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: set[Label] = store["possible_labels"]
+    deleted_file_paths: set[os.PathLike] = store["deleted_existing_files_paths"]
+
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
@@ -473,7 +475,7 @@ def check_forecast_retraction(
                 old_forecast_file_path=existing_file_path,
                 new_forecast_file_path=file
             )
-            if compare_result.is_all_duplicate:
+            if compare_result.is_all_duplicate & (existing_file_path not in deleted_file_paths):
                 success = False
                 logger.error(
                     "    ❌ %s contains all duplicate forecast value.",
