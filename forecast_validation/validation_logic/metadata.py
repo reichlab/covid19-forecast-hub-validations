@@ -144,7 +144,7 @@ def validate_metadata_contents(metadata, filepath, cache):
         if metadata['license'] not in accepted_licenses:
             is_metadata_error = True
             metadata_error_output += [
-                "METADATA ERROR: %s 'license' field must be in `./code/accepted-licenses.csv` 'license' column '%s'" %
+                "METADATA ERROR: %s 'license' field must be in `accepted-licenses.csv` 'license' column '%s'" %
                 (filepath, metadata['license'])]
     return is_metadata_error, metadata_error_output
 

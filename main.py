@@ -29,7 +29,8 @@ from forecast_validation.validation_logic.forecast_file_content import (
 from forecast_validation.validation_logic.forecast_file_type import (
     check_multiple_model_names,
     check_file_locations,
-    check_modified_forecasts
+    check_modified_forecasts,
+    check_removed_files
 )
 from forecast_validation.validation_logic.github_connection import (
     establish_github_connection,
@@ -74,6 +75,9 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
     # Check if the PR has updated existing forecasts
     steps.append(ValidationStep(check_modified_forecasts))
+
+    # Check if the PR has removed existing forecasts/metadata
+    steps.append(ValidationStep(check_removed_files))
 
     # Get all current models from hub repository
     steps.append(ValidationStep(get_all_models_from_repository))
@@ -133,7 +137,8 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
         "FORECAST_DATES": config_dict['forecast_dates'],
         "UPDATES_ALLOWED": config_dict['updates_allowed'],
         "AUTOMERGE": config_dict['automerge_on_passed_validation'],
-        "FORECAST_FOLDER_NAME": config_dict['forecast_folder_name']
+        "FORECAST_FOLDER_NAME": config_dict['forecast_folder_name'],
+        "SUBMISSION_FORMATTING_INSTRUCTION": config_dict["submission_formatting_instruction"]
     })
 
     return validation_run

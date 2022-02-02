@@ -258,7 +258,7 @@ def filename_match_forecast_date_check(
                 error_list = errors.get(filepath, [])
                 error_list.append((
                     f"❌ date {file_forecast_date} in filename is not "
-                    f"allowed based on project configuration."
+                    f"an allowable forecast_date based on the project configuration file."
                 ))
                 errors[filepath] = error_list
         # forecast dates must match
@@ -285,7 +285,7 @@ def filename_match_forecast_date_check(
                     error_list = errors.get(filepath, [])
                     error_list.append((
                         f"❌ date {forecast_date} in forecast file is not "
-                        f"allowed based on project configuration."
+                        f"an allowable forecast_date based on the project configuration file."
                     ))
                     errors[filepath] = error_list
 
@@ -296,27 +296,39 @@ def filename_match_forecast_date_check(
             today = datetime.datetime.now(
                 pytz.timezone('US/Eastern')
             ).date()
-            if (
-                abs(file_forecast_date - today) > datetime.timedelta(days=1) and
-                not existing_file_path.exists()
-            ):
-                # comments.append((
-                #     f"⚠️ Warning: The forecast file {file} is not made "
-                #     f"today. date of the forecast - {file_forecast_date}, "
-                #     f"today - {today}."
-                # ))
-                logger.warning(
-                    "Forecast file %s is made more than 1 day ago.",
-                    basename
-                )
-                success = False
-                error_list = errors.get(filepath, [])
-                error_list.append((
-                    f"The forecast file {file} is not made "
-                    f"today. date of the forecast - {file_forecast_date}, "
-                    f"today - {today}."
-                ))
-                errors[filepath] = error_list
+
+            # compare validation run date and forecast date if submitting new forecast file
+            if not existing_file_path.exists():
+                if (store["HUB_REPOSITORY_NAME"] == "cdcepi/Flusight-forecast-data"):
+                    if today - file_forecast_date > datetime.timedelta(days=1):
+                        logger.warning(
+                            "Forecast file %s is made more than 1 day ago.",
+                            basename
+                        )
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            f"The forecast file {file} is not associated with a forecast " 
+                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
+                            f"today - {today}."
+                        ))
+                        errors[filepath] = error_list
+
+                else:
+                    # covid hub
+                    if abs(file_forecast_date - today) > datetime.timedelta(days=1):
+                        logger.warning(
+                            "Forecast file %s is made more than 1 day ago.",
+                            basename
+                        )
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            f"The forecast file {file} is not associated with a forecast " 
+                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
+                            f"today - {today}."
+                        ))
+                        errors[filepath] = error_list
 
     if success:
         success_message = "✔️ Forecast date validation successful."
@@ -417,6 +429,8 @@ def check_forecast_retraction(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: set[Label] = store["possible_labels"]
+    deleted_file_paths: set[os.PathLike] = store["deleted_existing_files_paths"]
+
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
@@ -460,7 +474,7 @@ def check_forecast_retraction(
                 old_forecast_file_path=existing_file_path,
                 new_forecast_file_path=file
             )
-            if compare_result.is_all_duplicate:
+            if compare_result.is_all_duplicate & (existing_file_path not in deleted_file_paths):
                 success = False
                 logger.error(
                     "    ❌ %s contains all duplicate forecast value.",

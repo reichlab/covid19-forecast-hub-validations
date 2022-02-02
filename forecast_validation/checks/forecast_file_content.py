@@ -47,7 +47,7 @@ def compare_forecasts(
         # TODO: There is definitely a more elegant way to do this!
         new_vals = new_df.loc[old_df.index]
         comparison = (old_df == new_vals)
-        if (comparison).all(axis=None):
+        if ((comparison).all(axis=None)) & (len(old_df) == len(new_df)):
             is_all_duplicate = True
             error = "Forecast is all duplicate."
     except KeyError as e:
@@ -134,8 +134,8 @@ def validate_forecast_values(
         return (
             f"Found {num_invalid_predictions} predictions with forecasted "
             "value larger than population size of locality in your file, "
-            "at row(s) "
-            f"{list(merged[invalid_predictions].index)}"
+            "at these row(s) "
+            f"{merged.loc[invalid_predictions, ['forecast_date', 'target','target_end_date', 'location', 'type', 'quantile','value']].values.tolist()}"
         )
     else:
         return None
