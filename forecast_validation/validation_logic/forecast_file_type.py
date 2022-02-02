@@ -93,11 +93,11 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     ):
         success = False
         logger.info((
-            "⚠️ PR contains files submitted in the model folder that are not part of a valid "
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
             "forecast submission"
         ))
         comments.append(
-            "⚠️ PR contains files submitted in the model folder that are not part of a valid "
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
             "forecast submission"
         )
   
