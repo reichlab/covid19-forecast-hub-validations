@@ -15,24 +15,48 @@ class ValidationFileLocationTest(unittest.TestCase):
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.LICENSE), forecast_file)
     
     def invalid_forecast_location(self, actual, forecast_file):
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.LICENSE), forecast_file)
 
     def other_forecast(self, actual, forecast_file): 
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.LICENSE), forecast_file)
     
     def valid_metadata_file(self, actual, forecast_file): 
         self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
         self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
         self.assertTrue(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.LICENSE), forecast_file)
+
+    def invalid_model_file(self, actual, forecast_file): 
+        self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
+        self.assertTrue(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.LICENSE), forecast_file)
+
+    def valid_license(self, actual, forecast_file): 
+        self.assertFalse(actual.get(PullRequestFileType.FORECAST), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.OTHER_NONFS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.MODEL_OTHER_FS), forecast_file)
+        self.assertFalse(actual.get(PullRequestFileType.METADATA), forecast_file)
+        self.assertTrue(actual.get(PullRequestFileType.LICENSE), forecast_file)
 
 class TestWithSetupForCovid(ValidationFileLocationTest):
     def setUp(self):
@@ -44,12 +68,16 @@ class TestWithSetupForCovid(ValidationFileLocationTest):
         
         # setup FILENAME_PATTERNS to access forecast_folder_name from the config file
         self.FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
-        PullRequestFileType.FORECAST:
-            re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
-        PullRequestFileType.METADATA:
-            re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
-        PullRequestFileType.OTHER_FS:
-            re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.FORECAST:
+                re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.METADATA:
+                re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.LICENSE:
+                re.compile(r"^%s/(.+)/LICENSE|license\.*\.txt$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.MODEL_OTHER_FS:
+                re.compile(r"^%s/(.+)/.*(?<!(csv|txt))$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.OTHER_FS:
+                re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
         }
 
     #A file identified as a forecast is submitted in the correct model folder with correct file name.
@@ -88,6 +116,18 @@ class TestWithSetupForCovid(ValidationFileLocationTest):
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
         self.invalid_forecast_location(actual, forecast_file)
 
+    #A non forecast file is submitted in the correct model folder
+    def test_invalid_file(self):
+        forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/.gitignore")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.invalid_model_file(actual, forecast_file)
+
+    # A valid license file is submitted in the correct model folder
+    def test_valid_license(self):
+        forecast_file = MagicMock(filename =  "data-processed/teamA-modelA/LICENSE.txt")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.valid_license(actual, forecast_file)
+
 class TestWithSetupForFlu(ValidationFileLocationTest):
     def setUp(self):
        # load config file
@@ -97,12 +137,16 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         f.close()
         # setup FILENAME_PATTERNS to access forecast_folder_name from the config file
         self.FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
-        PullRequestFileType.FORECAST:
-            re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
-        PullRequestFileType.METADATA:
-            re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
-        PullRequestFileType.OTHER_FS:
-            re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.FORECAST:
+                re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.METADATA:
+                re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.LICENSE:
+                re.compile(r"^%s/(.+)/LICENSE|license\.*\.txt$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.MODEL_OTHER_FS:
+                re.compile(r"^%s/(.+)/.*(?<!(csv|txt))$" % config_dict['forecast_folder_name']),
+            PullRequestFileType.OTHER_FS:
+                re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
         }
 
     #A file identified as a forecast is submitted in the correct model folder with correct file name.
@@ -140,6 +184,19 @@ class TestWithSetupForFlu(ValidationFileLocationTest):
         forecast_file = MagicMock(filename =  "metadata-teamA-modelA.txt")
         actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
         self.invalid_forecast_location(actual, forecast_file)
+
+    #A non forecast file is submitted in the correct model folder
+    def test_invalid_file(self):
+        forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/.gitignore")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.invalid_model_file(actual, forecast_file)
+
+    # A valid license file is submitted in the correct model folder
+    def test_valid_license(self):
+        forecast_file = MagicMock(filename =  "data-forecasts/teamA-modelA/LICENSE.txt")
+        actual = filter_files([forecast_file], self.FILENAME_PATTERNS)
+        self.valid_license(actual, forecast_file)
+
 
 if __name__ == '__main__':
     unittest.main()
