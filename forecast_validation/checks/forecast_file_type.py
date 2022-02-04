@@ -87,4 +87,5 @@ def is_forecast_submission(
 
     return (PullRequestFileType.FORECAST in filtered_files or
             PullRequestFileType.METADATA in filtered_files or
+            PullRequestFileType.LICENSE in filtered_files or
             PullRequestFileType.OTHER_FS in filtered_files)

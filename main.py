@@ -115,6 +115,10 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
         re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
     PullRequestFileType.METADATA:
         re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+    PullRequestFileType.LICENSE:
+        re.compile(r"^%s/(.+)/LICENSE|license\.*\.txt$" % config_dict['forecast_folder_name']),
+    PullRequestFileType.MODEL_OTHER_FS:
+        re.compile(r"^%s/(.+)/.*(?<!(csv|txt))$" % config_dict['forecast_folder_name']),
     PullRequestFileType.OTHER_FS:
         re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
 }
