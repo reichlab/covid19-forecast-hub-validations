@@ -145,6 +145,7 @@ def filename_match_forecast_date_check(
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
+    submission_date_window: store["SUBMISSION_DATE_WINDOW"]
 
     for file in files:
         filepath: pathlib.Path = pathlib.Path(file).relative_to(
@@ -297,7 +298,8 @@ def filename_match_forecast_date_check(
                 pytz.timezone('US/Eastern')
             ).date()
             if (
-                abs(file_forecast_date - today) > datetime.timedelta(days=1) and
+                not (today >= file_forecast_date - datetime.timedelta(days=int(submission_date_window["lower"])) and 
+                today <= file_forecast_date + datetime.timedelta(days=int(submission_date_window["upper"])) ) and
                 not existing_file_path.exists()
             ):
                 # comments.append((
@@ -305,15 +307,16 @@ def filename_match_forecast_date_check(
                 #     f"today. date of the forecast - {file_forecast_date}, "
                 #     f"today - {today}."
                 # ))
+                delay = abs(today - file_forecast_date)
                 logger.warning(
-                    "Forecast file %s is made more than 1 day ago.",
-                    basename
+                    "Forecast file %s is made more than %d day(s) ago.",
+                    (basename, delay)
                 )
                 success = False
                 error_list = errors.get(filepath, [])
                 error_list.append((
-                    f"The forecast file {file} is not made "
-                    f"today. date of the forecast - {file_forecast_date}, "
+                    f"The forecast file {file} is submitted outside the submission window."
+                    f"date of the forecast - {file_forecast_date}, "
                     f"today - {today}."
                 ))
                 errors[filepath] = error_list
