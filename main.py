@@ -8,6 +8,7 @@ import re
 import sys
 import argparse
 import json
+import numbers
 
 # internal dep.'s
 from forecast_validation import (
@@ -167,6 +168,39 @@ def validate_from_pull_request(project_dir: str) -> bool:
 
     if type(config_dict['updates_allowed']) != bool or type(config_dict['automerge_on_passed_validation']) != bool:
         return False
+
+    if not isinstance(config_dict, dict):
+        raise RuntimeError(f"validation_config was not a dict: {config_dict}, type={type(config_dict)}")
+    elif 'target_groups' not in config_dict:
+        raise RuntimeError(f"validation_config did not contain 'target_groups' key: {config_dict}")
+    elif not isinstance(config_dict['target_groups'], list):
+        raise RuntimeError(f"'target_groups' was not a list: {config_dict['target_groups']}")
+
+    # validate each target_group
+    for target_group in config_dict['target_groups']:
+        expected_keys = ['outcome_variable', 'targets', 'locations', 'quantiles']
+        actual_keys = list(target_group.keys())
+        if actual_keys != expected_keys:
+            raise RuntimeError(f"one or more target group keys was missing. expected keys={expected_keys}, "
+                               f"actual keys={actual_keys}")
+        elif (not isinstance(target_group['targets'], list)) \
+                or (not isinstance(target_group['locations'], list)) \
+                or (not isinstance(target_group['quantiles'], list)):
+            raise RuntimeError(f"one of these fields was not a list: 'targets', 'locations', or 'quantiles'. "
+                               f"target_group={target_group}")
+        elif not isinstance(target_group['outcome_variable'], str):
+            raise RuntimeError(f"'outcome_variable' field was not a string: {target_group['outcome_variable']!r}")
+        elif (not all([isinstance(target, str) for target in target_group['targets']])) or \
+                (not all([isinstance(target, str) for target in target_group['locations']])):
+            raise RuntimeError(f"one of these fields contained non-strings: 'targets' or 'locations'"
+                               f"target_group={target_group}")
+        elif not all([isinstance(quantile, numbers.Number) for quantile in target_group['quantiles']]):
+            raise RuntimeError(f"'quantiles' field contained non-numbers. target_group={target_group}")
+        
+        for quantile in target_group['quantiles']:
+            if quantile < 0 or quantile > 1:
+                raise RuntimeError(f"'quantiles' field should be a vslue between 0 and 1. target_group={target_group}")
+
 
     
     validation_run.run()
