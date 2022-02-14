@@ -145,6 +145,29 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
 def validate_from_pull_request(project_dir: str) -> bool:
     validation_run: ValidationRun = setup_validation_run_for_pull_request(project_dir)
+
+    config = os.path.join(project_dir, "project-config.json")
+    f = open(config)
+    config_dict = json.load(f)
+    f.close()
+
+    if not config_dict['location_filepath'] or not config_dict['hub_repository_name'] or not config_dict['forecast_folder_name'] or not config_dict['target_groups'] or not config_dict['updates_allowed'] or not config_dict['automerge_on_passed_validation']:
+        return False
+
+    if config_dict['forecast_dates']:
+        for date in config_dict['forecast_dates']:
+            if type(date) != str:
+                return False
+            matched = bool(re.match("^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date))
+            if not matched:
+                return False
+        
+    if type(config_dict['location_filepath']) != str or type(config_dict['hub_repository_name']) != str or type(config_dict['forecast_folder_name']) != str:
+        return False
+
+    if type(config_dict['updates_allowed']) != bool or type(config_dict['automerge_on_passed_validation']) != bool:
+        return False
+
     
     validation_run.run()
 
