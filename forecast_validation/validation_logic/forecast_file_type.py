@@ -88,6 +88,20 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
             "non CSV files, etc.)"
         )
         labels.add(all_labels["other-files-updated"])
+
+    if (
+        PullRequestFileType.MODEL_OTHER_FS in filtered_files 
+    ):
+        success = False
+        logger.info((
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
+            "forecast submission"
+        ))
+        comments.append(
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
+            "forecast submission"
+        )
+  
     else:
         logger.info((
             "✔️ PR does not contain file changes that are not part of a "
