@@ -80,7 +80,6 @@ def validate_forecast_files(
             )
             correctly_formatted_files.add(file)
         else:
-            logger.info("INVALID: %s ", file_result)
             file_result = [
                 f"Error when validating format: " + e
                 for e in file_result
@@ -457,7 +456,6 @@ def check_forecast_retraction(
         existing_file_path = (
             hub_mirrored_directory_root/relative_path_str
         ).resolve()
-        
         if existing_file_path.exists():
             no_files_checked_log = False
 
