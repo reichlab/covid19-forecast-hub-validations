@@ -176,16 +176,6 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
             ))
 
             changed_forecasts = True
-
-        if forecast_file.status == "added":
-            existing_forecast_file = get_existing_forecast_file(
-                repository,
-                forecast_file,
-                store["HUB_MIRRORED_DIRECTORY_ROOT"]
-            )
-            if existing_forecast_file is not None:
-                changed_forecasts = True
-                downloaded_existing_files.add(existing_forecast_file)
             
 
     if changed_forecasts:
