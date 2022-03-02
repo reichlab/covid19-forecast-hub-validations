@@ -146,6 +146,7 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
 def validate_from_pull_request(project_dir: str) -> bool:
     validation_run: ValidationRun = setup_validation_run_for_pull_request(project_dir)
+    
     validation_run.run()
 
     return validation_run.success
