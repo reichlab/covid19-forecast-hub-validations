@@ -52,20 +52,33 @@ class TestWithSetupForCovid(ValidationFileContentTest):
 
                 self.HUB_REPOSITORY_NAME = config_dict['hub_repository_name']
 
+                self.today = str(datetime.datetime.now(
+                        pytz.timezone('US/Eastern')
+                ).date())
+
+                self.late =  str(datetime.datetime.today() + datetime.timedelta(days=2))
+
+                self.early =  str(datetime.datetime.today() - datetime.timedelta(days=2))
+
+                self.valid_early =  str(datetime.datetime.today() - datetime.timedelta(days=1))
+
+                self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=1))
+                
+
         def test_a_late_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/2022-03-06-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.late+"-teamA-modelA.csv")
                 self.a_late_submission(success)
  
         def test_an_early_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/2022-02-25-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.early+"-teamA-modelA.csv")
                 self.a_late_submission(success)
 
         def test_not_a_late_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/2022-03-01-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.today+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
 
         def test_valid_early_submission(self):      
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/2022-02-28-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.valid_early+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
     
 class TestWithSetupForFlu(ValidationFileContentTest):
@@ -77,17 +90,29 @@ class TestWithSetupForFlu(ValidationFileContentTest):
                 f.close()
 
                 self.HUB_REPOSITORY_NAME = config_dict['hub_repository_name']
+
+                self.today = str(datetime.datetime.now(
+                        pytz.timezone('US/Eastern')
+                ).date())
+
+                self.late =  str(datetime.datetime.today() + datetime.timedelta(days=2))
+
+                self.early =  str(datetime.datetime.today() - datetime.timedelta(days=2))
+
+                self.valid_early =  str(datetime.datetime.today() - datetime.timedelta(days=1))
+
+                self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=1))
         
         def test_a_late_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/2022-02-28-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.late+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
 
         def test_not_a_late_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/2022-03-01-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.valid_early+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/2022-03-03-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.valid_late+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/2022-03-02-teamA-modelA.csv")
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.today+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
                 
 
