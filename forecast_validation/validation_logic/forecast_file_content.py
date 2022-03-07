@@ -254,14 +254,14 @@ def filename_match_forecast_date_check(
         check_allowed_forecast_dates = len(allowed_forecast_dates) > 0
         # check if date in file name is an allowed forecast date
         if(check_allowed_forecast_dates):
-            if file_forecast_date not in allowed_forecast_dates:
-                        success = False
-                        error_list = errors.get(filepath, [])
-                        error_list.append((
-                            f"❌ date {file_forecast_date} in filename is not "
-                            f"allowed based on project configuration."
-                        ))
-                        errors[filepath] = error_list
+            if file_forecast_date.strftime("%Y-%m-%d") not in allowed_forecast_dates:
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"❌ date {file_forecast_date} in filename is not "
+                    f"an allowable forecast_date based on the project configuration file."
+                ))
+                errors[filepath] = error_list
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
@@ -281,12 +281,12 @@ def filename_match_forecast_date_check(
                 errors[filepath] = error_list
             
             if(check_allowed_forecast_dates):
-                if forecast_date not in allowed_forecast_dates:
+                if forecast_date.strftime("%Y-%m-%d")not in allowed_forecast_dates:
                     success = False
                     error_list = errors.get(filepath, [])
                     error_list.append((
                         f"❌ date {forecast_date} in forecast file is not "
-                        f"allowed based on project configuration."
+                        f"an allowable forecast_date based on the project configuration file."
                     ))
                     errors[filepath] = error_list
 
@@ -420,6 +420,8 @@ def check_forecast_retraction(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: set[Label] = store["possible_labels"]
+    deleted_file_paths: set[os.PathLike] = store["deleted_existing_files_paths"]
+
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
@@ -446,7 +448,7 @@ def check_forecast_retraction(
             hub_mirrored_directory_root/relative_path_str
         ).resolve()
         if existing_file_path.exists():
-            no_files_checked_log: bool = False
+            no_files_checked_log = False
 
             if store["UPDATES_ALLOWED"]:
                 logger.info(
@@ -463,7 +465,7 @@ def check_forecast_retraction(
                 old_forecast_file_path=existing_file_path,
                 new_forecast_file_path=file
             )
-            if compare_result.is_all_duplicate:
+            if compare_result.is_all_duplicate & (existing_file_path not in deleted_file_paths):
                 success = False
                 logger.error(
                     "    ❌ %s contains all duplicate forecast value.",
@@ -497,21 +499,10 @@ def check_forecast_retraction(
                     comments.append(
                         "💡 Submission contains explicit retractions."
                     )
+
             if compare_result.has_no_retraction_or_duplication:
                 labels.add(all_labels["forecast-updated"])
-                if not store["UPDATES_ALLOWED"]:
-                    success = False
-                    logger.error(
-                        "    ❌ %s contains updates to existing file.",
-                        relative_path_str
-                    )
-                    error_list = errors.get(file, [])
-                    error_list.append((
-                        "Forecast file contains updates to existing file, which are "
-                        "disallowed."
-                    ))
-
-                else:
+                if store["UPDATES_ALLOWED"]:
                     logger.info(
                     "    💡 %s contains updates to existing forecasts",
                     relative_path_str
@@ -523,6 +514,19 @@ def check_forecast_retraction(
                         "only used data that were available at the time the "
                         "original forecasts were made?"
                     )
+                else:
+                    success = False
+                    logger.error(
+                        "    ❌ %s contains updates to existing file.",
+                        relative_path_str
+                    )
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains updates to existing file, which are "
+                        "disallowed."
+                    ))
+                    errors[file] = error_list
+
 
     if no_files_checked_log:
         if store["UPDATES_ALLOWED"]:

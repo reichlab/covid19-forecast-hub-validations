@@ -10,6 +10,8 @@ class PullRequestFileType(enum.Enum):
     """
     FORECAST = enum.auto()
     METADATA = enum.auto()
+    LICENSE = enum.auto()
+    MODEL_OTHER_FS = enum.auto()
     OTHER_FS = enum.auto()
     OTHER_NONFS = enum.auto()
 
