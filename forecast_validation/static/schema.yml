@@ -18,6 +18,7 @@ mapping:
   'model_contributors':
     required: True
     type: str
+    pattern: ([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)
   'website_url':
     required: True
     type: str
