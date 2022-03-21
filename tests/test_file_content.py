@@ -63,27 +63,28 @@ class TestWithSetupForCovid(ValidationFileContentTest):
                 self.valid_early =  str(datetime.datetime.today() - datetime.timedelta(days=1))
 
                 self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=1))
-                
-
-        def test_a_late_submission(self):
-                #when a file identified as a forecast is submitted 2 days after the forecast date
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.late+"-teamA-modelA.csv")
-                self.a_late_submission(success)
- 
-        #when a file identified as a forecast is submitted 2 days before the forecast date
-        def test_an_early_submission(self):
-                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.early+"-teamA-modelA.csv")
-                self.a_late_submission(success)
-
-        #when a file identified as a forecast is submitted at the forecast date
-        def test_not_a_late_submission(self):
+        
+        def test_valid_submissions(self):
+                # on time submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.today+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
 
-        #when a file identified as a forecast is submitted 1 days before the forecast date
-        def test_valid_early_submission(self):      
+                # 1-day late submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.valid_early+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
+                
+                # 1-day early submission
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.valid_late+"-teamA-modelA.csv")
+                self.not_a_late_submission(success)
+
+        def test_invalid_submission(self):
+                # 2-day early submission
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.late+"-teamA-modelA.csv")
+                self.a_late_submission(success)
+
+                # 2-day late submission
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-processed/teamA-modelA/"+self.early+"-teamA-modelA.csv")
+                self.a_late_submission(success)
     
 class TestWithSetupForFlu(ValidationFileContentTest):
         def setUp(self):
@@ -107,21 +108,28 @@ class TestWithSetupForFlu(ValidationFileContentTest):
 
                 self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=1))
         
-        #when a file identified as a forecast is submitted 2 after before the forecast date
-        def test_a_late_submission(self):
+
+        def test_valid_submission(self):
+                # 2-day early submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.late+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
 
-        def test_not_a_late_submission(self):
-                #when a file identified as a forecast is submitted 1 day before the forecast date
+                # 1-day late submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.valid_early+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
-                #when a file identified as a forecast is submitted 1 day after the forecast date
+               
+                # 1-day early submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.valid_late+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
-                #when a file identified as a forecast is submitted at the forecast date
+                
+                # on time submission
                 success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.today+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
+                
+        def test_invaid_submission(self):
+                # 2-day late submission
+                success = self.late_submission(self.HUB_REPOSITORY_NAME, "data-forecasts/teamA-modelA/"+self.early+"-teamA-modelA.csv")
+                self.a_late_submission(success)
                 
 
 if __name__ == '__main__':
