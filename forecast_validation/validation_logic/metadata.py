@@ -9,6 +9,8 @@ import pykwalify.core
 import re
 import yaml
 import logging
+import zoltpy
+from zoltpy.connection import ZoltarConnection
 
 from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
@@ -63,6 +65,16 @@ def validate_metadata_contents(metadata, filepath, cache):
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
     # Check if every team has only one `team_model_designation` as `primary`
+    if metadata['team_model_designation'] == 'primary':
+        conn = zoltpy.connection.ZoltarConnection()
+        conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
+        project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
+        team_names = set(model.team_name for model in project.models)
+        print(team_names)
+        if metadata['team_name'] in team_names:
+            metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
+            is_metadata_error = True
+
     if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
         if DESIGNATED_MODEL_CACHE_KEY not in cache:
