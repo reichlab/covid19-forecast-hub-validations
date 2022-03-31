@@ -70,7 +70,7 @@ def validate_metadata_contents(metadata, filepath, cache):
         conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
         team_names = set(model.team_name for model in project.models)
-        print(team_names)
+        #print(team_names)
         if metadata['team_name'] in team_names:
             metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
             is_metadata_error = True
