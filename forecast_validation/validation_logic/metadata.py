@@ -34,7 +34,7 @@ def get_all_metadata_filepaths(
         }
     )
 
-def validate_metadata_contents(metadata, filepath, cache):
+def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],):
 
     # Initialize output
     is_metadata_error = False
@@ -65,7 +65,7 @@ def validate_metadata_contents(metadata, filepath, cache):
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
     # Check if every team has only one `team_model_designation` as `primary`
-    if metadata['team_model_designation'] == 'primary':
+    if metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
         conn = zoltpy.connection.ZoltarConnection()
         conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
