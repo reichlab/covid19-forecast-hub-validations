@@ -3660,6 +3660,7 @@
     }
   ],
   "forecast_dates": [],
+  "submission_date_window": {"lower": 1, "upper": 2},
   "updates_allowed": true,
   "automerge_on_passed_validation": true
 }
