@@ -53,7 +53,7 @@ class TestWithSetupForCovid(ValidationFileContentTest):
 
                 self.late =  str(datetime.datetime.today() + datetime.timedelta(days=2))
 
-                self.early =  str(datetime.datetime.today() - datetime.timedelta(days=2))
+                self.early =  str(datetime.datetime.today() - datetime.timedelta(days=3))
 
                 self.valid_early =  str(datetime.datetime.today() - datetime.timedelta(days=1))
 
@@ -73,11 +73,11 @@ class TestWithSetupForCovid(ValidationFileContentTest):
                 self.not_a_late_submission(success)
 
         def test_invalid_submission(self):
-                # 2-day early submission
+               # 2-day late submission
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-processed/teamA-modelA/"+self.late+"-teamA-modelA.csv")
                 self.a_late_submission(success)
 
-                # 2-day late submission
+                 # 2-day early submission
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-processed/teamA-modelA/"+self.early+"-teamA-modelA.csv")
                 self.a_late_submission(success)
     
@@ -95,21 +95,18 @@ class TestWithSetupForFlu(ValidationFileContentTest):
                         pytz.timezone('US/Eastern')
                 ).date())
 
-                self.late =  str(datetime.datetime.today() + datetime.timedelta(days=2))
+                self.late =  str(datetime.datetime.today() + datetime.timedelta(days=7))
 
                 self.early =  str(datetime.datetime.today() - datetime.timedelta(days=2))
 
                 self.valid_early =  str(datetime.datetime.today() - datetime.timedelta(days=1))
 
-                self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=1))
+                self.valid_late =  str(datetime.datetime.today() + datetime.timedelta(days=6))
         
 
         def test_valid_submission(self):
-                # 2-day early submission
-                success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-forecasts/teamA-modelA/"+self.late+"-teamA-modelA.csv")
-                self.not_a_late_submission(success)
 
-                # 1-day late submission
+                # 6-day early submission
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-forecasts/teamA-modelA/"+self.valid_early+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
                
@@ -124,6 +121,10 @@ class TestWithSetupForFlu(ValidationFileContentTest):
         def test_invaid_submission(self):
                 # 2-day late submission
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-forecasts/teamA-modelA/"+self.early+"-teamA-modelA.csv")
+                self.a_late_submission(success)
+
+                # 7-day late submission
+                success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-forecasts/teamA-modelA/"+self.late+"-teamA-modelA.csv")
                 self.a_late_submission(success)
                 
 
