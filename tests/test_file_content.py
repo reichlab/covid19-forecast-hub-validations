@@ -61,6 +61,7 @@ class TestWithSetupForCovid(ValidationFileContentTest):
         
         def test_valid_submissions(self):
                 # on time submission
+
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-processed/teamA-modelA/"+self.today+"-teamA-modelA.csv")
                 self.not_a_late_submission(success)
 
@@ -116,6 +117,7 @@ class TestWithSetupForFlu(ValidationFileContentTest):
                 
                 # on time submission
                 success = self.late_submission(self.SUBMISSION_DATE_WINDOW, "data-forecasts/teamA-modelA/"+self.today+"-teamA-modelA.csv")
+
                 self.not_a_late_submission(success)
                 
         def test_invaid_submission(self):
