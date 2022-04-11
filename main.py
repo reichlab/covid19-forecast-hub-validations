@@ -18,6 +18,7 @@ from forecast_validation import (
     FILENAME_PATTERNS,
     IS_GITHUB_ACTIONS,
     GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+    SUBMISSION_FORMATTING_INSTRUCTION
 )
 from forecast_validation.validation import (
     ValidationStep,
@@ -117,6 +118,7 @@ def setup_validation_run_for_pull_request() -> ValidationRun:
         "IS_GITHUB_ACTIONS": IS_GITHUB_ACTIONS,
         "GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME": \
             GITHUB_TOKEN_ENVIRONMENT_VARIABLE_NAME,
+        "SUBMISSION_FORMATTING_INSTRUCTION": SUBMISSION_FORMATTING_INSTRUCTION
     })
 
     return validation_run

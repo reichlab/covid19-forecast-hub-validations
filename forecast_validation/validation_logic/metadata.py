@@ -32,19 +32,19 @@ def get_all_metadata_filepaths(
         }
     )
 
-def validate_metadata_contents(metadata, filepath, cache):
+def validate_metadata_contents(store: dict[str, Any], metadata, filepath, cache):
 
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
-
+    link: str = store["SUBMISSION_FORMATTING_INSTRUCTION"]
     core = pykwalify.core.Core(
         source_file=filepath, schema_files=[SCHEMA_FILE]
     )
     core.validate(raise_exception=False, silent=True)
 
     if len(core.validation_errors) > 0:
-        metadata_error_output.append("The meta data is not consistent with the specifications mentioned. Check out the guidelines mentioned [`here`](https://github.com/reichlab/covid19-forecast-hub/blob/master/data-processed/METADATA.md) for more information")
+        metadata_error_output.append(f"The meta data is not consistent with the specifications mentioned. Check out the guidelines mentioned [`here`]({link}) for more information")
         metadata_error_output.extend(['METADATA_ERROR: %s' % err for err in core.validation_errors])
         is_metadata_error = True
 
