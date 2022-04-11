@@ -172,7 +172,7 @@ def validate_metadata_files(
     is_metadata_error, metadata_error_output = False, "no errors"
     for file in store["metadata_files"]:
         logger.info("  Checking metadata content for %s", file)
-        is_metadata_error, metadata_error_output = check_metadata_file(file)
+        is_metadata_error, metadata_error_output = check_metadata_file(store = store, filepath = file)
         if is_metadata_error == False:
             logger.info("    %s content validated", file)
             comments.append(
@@ -198,12 +198,12 @@ def validate_metadata_files(
     )
 
 
-def check_metadata_file(filepath, cache={}):
+def check_metadata_file(store: dict[str, Any], filepath, cache={}):
     with open(filepath, 'r') as stream:
         try:
             Loader = yaml.BaseLoader    # Define Loader to avoid true/false auto conversion
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache, store)
             if is_metadata_error:
                 return True, metadata_error_output
             else:
@@ -219,7 +219,7 @@ def check_metadata_file(filepath, cache={}):
 
 
 # Check for metadata file
-def check_for_metadata(filepath, cache= {}):
+def check_for_metadata(store: dict[str, Any],filepath, cache= {}):
     meta_error_outputs = {}
     is_metadata_error = False
     txt_files = []
@@ -228,7 +228,7 @@ def check_for_metadata(filepath, cache= {}):
     is_metadata_error, metadata_error_output = False, "no errors"
     for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
-        is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath, cache=cache)
+        is_metadata_error, metadata_error_output = check_metadata_file(store= store, filepath = metadata_filepath, cache=cache)
         if is_metadata_error:
             meta_error_outputs[metadata_filepath] = metadata_error_output
 
