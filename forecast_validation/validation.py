@@ -173,6 +173,17 @@ class ValidationRun:
                 self._forecast_files |= result.forecast_files
 
             if result.skip_steps_after:
+                # get corresponding pr
+                pull_request: PullRequest = self._store["pull_request"]
+                # get labels
+                labels = result.labels
+                # append labels to pr
+                if len(labels) > 0:
+                    logger.info("Labels to be applied: %s", str(labels))
+                    pull_request.set_labels(*list(labels))
+                else:
+                    logger.info("No labels to be applied")
+                
                 logger.info("Skipping the rest of validation steps")
                 break
 
