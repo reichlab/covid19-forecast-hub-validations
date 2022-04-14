@@ -49,8 +49,13 @@ class ValidationMetadataTest(unittest.TestCase):
     def invalid_license(self, folder_name):
         is_invalid, errors = check_metadata_file(Path("tests/testfiles/"+folder_name+"/teamC-modelC/metadata-teamC-modelC.txt"))
         self.assertTrue(is_invalid)
-        self.assertIn("'license' field must be in `./code/accepted-licenses.csv`", errors[0])
+        self.assertIn("METADATA ERROR: tests/testfiles/"+folder_name+"/teamC-modelC/metadata-teamC-modelC.txt 'license' field must be in `accepted-licenses.csv` 'license' column 'lmn'", errors[0])
 
+    #A valid metadata file with more than one primary model
+    def invalid_model_designation(self, folder_name):
+        is_invalid, errors = check_metadata_file(Path("tests/testfiles/"+folder_name+"/CU-modelA/metadata-CU-modelA.txt"))
+        self.assertTrue(is_invalid)
+        self.assertIn('METADATA ERROR: CU has more than 1 model designated as "primary"', errors[0])
 class TestWithSetupForCovid(ValidationMetadataTest):
     def setUp(self):
         config = "tests/testfiles/covid-validation-config.json"
@@ -80,6 +85,9 @@ class TestWithSetupForCovid(ValidationMetadataTest):
     
     def test_invalid_license(self):
         self.invalid_license(self.config_dict['forecast_folder_name'])
+
+    def test_invalid_model_designation(self):
+        self.invalid_model_designation(self.config_dict['forecast_folder_name'])
     
 
 class TestWithSetupForFlu(ValidationMetadataTest):
@@ -112,6 +120,9 @@ class TestWithSetupForFlu(ValidationMetadataTest):
     
     def test_invalid_license(self):
         self.invalid_license(self.config_dict['forecast_folder_name'])
+
+    def test_invalid_model_designation(self):
+        self.invalid_model_designation(self.config_dict['forecast_folder_name'])
 
 if __name__ == '__main__':
     unittest.main()
