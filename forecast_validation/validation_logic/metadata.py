@@ -9,8 +9,6 @@ import pykwalify.core
 import re
 import yaml
 import logging
-import zoltpy
-from zoltpy.connection import ZoltarConnection
 
 from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
@@ -34,7 +32,7 @@ def get_all_metadata_filepaths(
         }
     )
 
-def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],):
+def validate_metadata_contents(metadata, filepath, cache):
 
     # Initialize output
     is_metadata_error = False
@@ -65,16 +63,6 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
     # Check if every team has only one `team_model_designation` as `primary`
-    if metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
-        conn = zoltpy.connection.ZoltarConnection()
-        conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
-        project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
-        team_names = set(model.team_name for model in project.models)
-        #print(team_names)
-        if metadata['team_name'] in team_names:
-            metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
-            is_metadata_error = True
-
     if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
         if DESIGNATED_MODEL_CACHE_KEY not in cache:
@@ -172,7 +160,7 @@ def validate_metadata_files(
     is_metadata_error, metadata_error_output = False, "no errors"
     for file in store["metadata_files"]:
         logger.info("  Checking metadata content for %s", file)
-        is_metadata_error, metadata_error_output = check_metadata_file(store = store, filepath = file)
+        is_metadata_error, metadata_error_output = check_metadata_file(file)
         if is_metadata_error == False:
             logger.info("    %s content validated", file)
             comments.append(
@@ -198,12 +186,12 @@ def validate_metadata_files(
     )
 
 
-def check_metadata_file(store: dict[str, Any], filepath, cache={}):
+def check_metadata_file(filepath, cache={}):
     with open(filepath, 'r') as stream:
         try:
             Loader = yaml.BaseLoader    # Define Loader to avoid true/false auto conversion
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache, store)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache)
             if is_metadata_error:
                 return True, metadata_error_output
             else:
@@ -219,7 +207,7 @@ def check_metadata_file(store: dict[str, Any], filepath, cache={}):
 
 
 # Check for metadata file
-def check_for_metadata(store: dict[str, Any],filepath, cache= {}):
+def check_for_metadata(filepath, cache= {}):
     meta_error_outputs = {}
     is_metadata_error = False
     txt_files = []
@@ -228,7 +216,7 @@ def check_for_metadata(store: dict[str, Any],filepath, cache= {}):
     is_metadata_error, metadata_error_output = False, "no errors"
     for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
-        is_metadata_error, metadata_error_output = check_metadata_file(store= store, filepath = metadata_filepath, cache=cache)
+        is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath, cache=cache)
         if is_metadata_error:
             meta_error_outputs[metadata_filepath] = metadata_error_output
 
