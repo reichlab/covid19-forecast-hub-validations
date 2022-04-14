@@ -197,9 +197,9 @@ def validate_metadata_files(
         file_errors=errors
     )
 
-  
+
 def check_metadata_file(store: dict[str, Any], filepath, cache={}):
-    with open(filepath, 'rt', encoding='utf8') as stream:
+    with open(filepath, 'r') as stream:
         try:
             Loader = yaml.BaseLoader    # Define Loader to avoid true/false auto conversion
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)
