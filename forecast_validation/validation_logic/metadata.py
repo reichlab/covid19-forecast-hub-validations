@@ -11,6 +11,7 @@ import yaml
 import logging
 import zoltpy
 from zoltpy.connection import ZoltarConnection
+from collections import defaultdict
 
 from forecast_validation import PullRequestFileType
 from forecast_validation.validation import ValidationStepResult
@@ -68,19 +69,18 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
     if metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
         conn = zoltpy.connection.ZoltarConnection()
         conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
-        team_models = {}
+        team_models = defaultdict(list)
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
         for model in project.models:
             if model.team_name in team_models:
-                team_models[model.team_name] += 1
-            else:
-                team_models[model.team_name] = 1
+                team_models[model.team_name].append(model.name)
 
         #-team_names = set(model.team_name for model in project.models)
         #print(team_names)
-        if team_models[metadata['team_name']] and team_models[metadata['team_name']] > 1:
-            metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
-            is_metadata_error = True
+        if team_models[metadata['team_name']]:
+            if metadata['model_name'] not in team_models[metadata['team_name']]:
+                metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
+                is_metadata_error = True
 
     if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
