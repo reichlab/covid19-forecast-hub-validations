@@ -78,6 +78,7 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
         #-team_names = set(model.team_name for model in project.models)
         #print(team_names)
         if team_models[metadata['team_name']]:
+            print( team_models[metadata['team_name']],  metadata['model_name'])
             if metadata['model_name'] not in team_models[metadata['team_name']]:
                 metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
                 is_metadata_error = True
