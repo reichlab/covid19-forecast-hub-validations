@@ -73,8 +73,7 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
         for model in project.models:
             team_models[model.team_name].append(model.name)
-
-        logger.info(team_models)
+            
         if team_models[metadata['team_name']]:
             logger.info( team_models[metadata['team_name']],  metadata['model_name'])
             if metadata['model_name'] not in team_models[metadata['team_name']]:
