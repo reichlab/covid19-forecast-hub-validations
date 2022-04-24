@@ -68,10 +68,17 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
     if metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
         conn = zoltpy.connection.ZoltarConnection()
         conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
+        team_models = {}
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
-        team_names = set(model.team_name for model in project.models)
+        for model in project.models:
+            if model.team_name in team_models:
+                team_models[model.team_name] += 1
+            else:
+                team_models[model.team_name] = 1
+
+        #-team_names = set(model.team_name for model in project.models)
         #print(team_names)
-        if metadata['team_name'] in team_names:
+        if team_models[metadata['team_name']] and team_models[metadata['team_name']] > 1:
             metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
             is_metadata_error = True
 

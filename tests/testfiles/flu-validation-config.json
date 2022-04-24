@@ -1,6 +1,6 @@
 {
   "location_filepath": "data-locations/locations.csv",
-  "hub_repository_name": "cdcepi/Flusight-forecast-data",
+  "HUB_REPOSITORY_NAME": "cdcepi/Flusight-forecast-data",
   "forecast_folder_name": "data-forecasts",
   "target_groups": [
     {
