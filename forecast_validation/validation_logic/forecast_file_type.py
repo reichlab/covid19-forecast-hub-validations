@@ -69,8 +69,9 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
     comments: list[str] = []
     errors: dict[os.PathLike, list[str]] = {}
 
+    forecast_folder_name = store["FORECAST_FOLDER_NAME"]
     logger.info(
-        "Checking if the PR is updating outside the data-processed/ folder..."
+        f"Checking if the PR is updating outside the {forecast_folder_name}/ folder..."
     )
     if (
         PullRequestFileType.OTHER_NONFS in filtered_files or
@@ -87,6 +88,20 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
             "non CSV files, etc.)"
         )
         labels.add(all_labels["other-files-updated"])
+
+    if (
+        PullRequestFileType.MODEL_OTHER_FS in filtered_files 
+    ):
+        success = False
+        logger.info((
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
+            "forecast submission"
+        ))
+        comments.append(
+            "❌ PR contains files submitted in the model folder that are not part of a valid "
+            "forecast submission"
+        )
+  
     else:
         logger.info((
             "✔️ PR does not contain file changes that are not part of a "
@@ -95,18 +110,19 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
         ))
 
     logger.info("Checking if the PR contains misplaced CSVs...")
+    submission_formatting_instruction = store["SUBMISSION_FORMATTING_INSTRUCTION"]
+
     if (PullRequestFileType.FORECAST not in filtered_files and
         PullRequestFileType.OTHER_FS in filtered_files):
         success = False
         logger.info("❌ PR contains misplaced CSVs.")
         for github_file in filtered_files[PullRequestFileType.OTHER_FS]:
             path = pathlib.Path(github_file.filename)
-
             errors[path] = [(
                 "The forecast CSV or metadata file is located in an "
                 "incorrect location and/or is misnamed (see "
-                "[here](https://github.com/reichlab/covid19-forecast-hub/tree/master/data-processed#data-formatting) "
-                "for the correct format. Please correct the errors "
+                f"[here]({submission_formatting_instruction})"
+                " for submission instructions. Please correct the errors "
                 "accordingly.\n"
                 "We will still check any misplaced CSV(s) for "
                 "you, so that you can be sure that the CSVs are correct, "
@@ -150,10 +166,7 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
         # "added", "modified", "renamed", "removed"
         # https://stackoverflow.com/questions/10804476/what-are-the-status-types-for-files-in-the-github-api-v3
         # https://github.com/jitterbit/get-changed-files/commit/cfe8ad4269ed4d2edb7f4e39682a649f6675bf89#diff-4fab5baaca5c14d2de62d8d2fceef376ddddcc8e9509d86cfa5643f51b89ce3dR5
-        if (
-            forecast_file.status == "modified" or
-            forecast_file.status == "removed"
-        ):
+        if forecast_file.status == "modified":
             # if file is modified, fetch the original one and
             # save it to the hub (mirrored) directory
             downloaded_existing_files.add(get_existing_forecast_file(
@@ -161,7 +174,9 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
                 forecast_file,
                 store["HUB_MIRRORED_DIRECTORY_ROOT"]
             ))
+
             changed_forecasts = True
+            
 
     if changed_forecasts:
         logger.info("💡 PR contains updates to existing forecasts")
@@ -175,4 +190,71 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
         },
         labels=labels,
         comments=comments
+    )
+
+def check_removed_files(store: dict[str, Any]) -> ValidationStepResult:
+    """Checks if a PR contains updates to existing forecasts.
+    """
+    labels: set[Label] = set()
+    all_labels: dict[str, Label] = store["possible_labels"]
+    errors: dict[os.PathLike, list[str]] = {}
+    deleted_files_in_hub_mirrored_dir: set[os.PathLike] = set()
+    
+    repository: Repository = store["repository"]
+    filtered_files: dict[PullRequestFileType, list[File]] = (
+        store["filtered_files"]
+    )
+
+    logger.info("Checking if the PR contains updates to existing forecasts/metadata...")
+
+    forecasts = filtered_files.get(PullRequestFileType.FORECAST, [])
+    metadatas = filtered_files.get(PullRequestFileType.METADATA, [])
+    removed_files: bool = False
+    success: bool = True
+
+    for forecast_file in forecasts:
+        if forecast_file.status == "removed":
+            existing_forecast_file = get_existing_forecast_file(
+                repository,
+                forecast_file,
+                store["HUB_MIRRORED_DIRECTORY_ROOT"]
+            )
+            if existing_forecast_file is not None:
+                removed_files = True
+                deleted_files_in_hub_mirrored_dir.add(existing_forecast_file)
+                path = pathlib.Path(forecast_file.filename)
+                errors[path] = [(
+                "The forecast CSV or metadata file is deleted."
+                "Please put the file back as we do not allow file deletion at the moment.")]
+
+    for metadata_file in metadatas:
+        if metadata_file.status == "removed":
+            existing_forecast_file = get_existing_forecast_file(
+                repository,
+                metadata_file,
+                store["HUB_MIRRORED_DIRECTORY_ROOT"]
+            )
+            if existing_forecast_file is not None:
+                removed_files = True
+                deleted_files_in_hub_mirrored_dir.add(existing_forecast_file)
+                path = pathlib.Path(metadata_file.filename)
+                errors[path] = [(
+                "The forecast CSV or metadata file is deleted. "
+                "Please put the file back as we do not allow file deletion at the moment.")]
+
+    if removed_files:
+        success = False
+        logger.info("❌ PR deleted existing forecast/metadata file.")
+        labels.add(all_labels["file-deletion"])
+
+    else:
+        logger.info("✔️ PR does not include file deletion.")
+
+    return ValidationStepResult(
+        success=success,
+        labels=labels,
+        file_errors = errors,
+        to_store={
+            "deleted_existing_files_paths": deleted_files_in_hub_mirrored_dir
+        }
     )

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from github.File import File
 from github.Label import Label
@@ -9,7 +10,6 @@ import pandas as pd
 import pathlib
 import pytz
 import zoltpy.covid19
-
 from forecast_validation import (
     ParseDateError, PullRequestFileType
 )
@@ -71,7 +71,7 @@ def validate_forecast_files(
     for file in files:
         logger.info("  Checking forecast format for %s", file)
         file_result = zoltpy.covid19.validate_quantile_csv_file(
-            file, silent=True
+            file, store["CONFIG_FILE"],silent=True
         )
         if file_result == "no errors":
             logger.info("    %s format validated", file)
@@ -133,7 +133,7 @@ def filename_match_forecast_date_check(
     store: dict[str, Any],
     files: set[os.PathLike]
 ) -> ValidationStepResult:
-
+    allowed_forecast_dates:list[str] = store["FORECAST_DATES"]
     forecast_date_column_name: str = "forecast_date"
     success: bool = True
     errors: dict[os.PathLike, list[str]] = {}
@@ -249,6 +249,18 @@ def filename_match_forecast_date_check(
             ))
             errors[filepath] = error_list
         
+
+        check_allowed_forecast_dates = len(allowed_forecast_dates) > 0
+        # check if date in file name is an allowed forecast date
+        if(check_allowed_forecast_dates):
+            if file_forecast_date.strftime("%Y-%m-%d") not in allowed_forecast_dates:
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"❌ date {file_forecast_date} in filename is not "
+                    f"an allowable forecast_date based on the project configuration file."
+                ))
+                errors[filepath] = error_list
         # forecast dates must match
         while len(forecast_dates) > 0:
             forecast_date = forecast_dates.pop()
@@ -266,7 +278,17 @@ def filename_match_forecast_date_check(
                     f"{forecast_date}."
                 ))
                 errors[filepath] = error_list
-        
+            
+            if(check_allowed_forecast_dates):
+                if forecast_date.strftime("%Y-%m-%d")not in allowed_forecast_dates:
+                    success = False
+                    error_list = errors.get(filepath, [])
+                    error_list.append((
+                        f"❌ date {forecast_date} in forecast file is not "
+                        f"an allowable forecast_date based on the project configuration file."
+                    ))
+                    errors[filepath] = error_list
+
             # forecast dates must be <1day within each other
             existing_file_path = (
                 hub_mirrored_directory_root/filepath
@@ -274,27 +296,39 @@ def filename_match_forecast_date_check(
             today = datetime.datetime.now(
                 pytz.timezone('US/Eastern')
             ).date()
-            if (
-                abs(file_forecast_date - today) > datetime.timedelta(days=1) and
-                not existing_file_path.exists()
-            ):
-                # comments.append((
-                #     f"⚠️ Warning: The forecast file {file} is not made "
-                #     f"today. date of the forecast - {file_forecast_date}, "
-                #     f"today - {today}."
-                # ))
-                logger.warning(
-                    "Forecast file %s is made more than 1 day ago.",
-                    basename
-                )
-                success = False
-                error_list = errors.get(filepath, [])
-                error_list.append((
-                    f"The forecast file {file} is not made "
-                    f"today. date of the forecast - {file_forecast_date}, "
-                    f"today - {today}."
-                ))
-                errors[filepath] = error_list
+
+            # compare validation run date and forecast date if submitting new forecast file
+            if not existing_file_path.exists():
+                if (store["HUB_REPOSITORY_NAME"] == "cdcepi/Flusight-forecast-data"):
+                    if today - file_forecast_date > datetime.timedelta(days=1):
+                        logger.warning(
+                            "Forecast file %s is made more than 1 day ago.",
+                            basename
+                        )
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            f"The forecast file {file} is not associated with a forecast " 
+                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
+                            f"today - {today}."
+                        ))
+                        errors[filepath] = error_list
+
+                else:
+                    # covid hub
+                    if abs(file_forecast_date - today) > datetime.timedelta(days=1):
+                        logger.warning(
+                            "Forecast file %s is made more than 1 day ago.",
+                            basename
+                        )
+                        success = False
+                        error_list = errors.get(filepath, [])
+                        error_list.append((
+                            f"The forecast file {file} is not associated with a forecast " 
+                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
+                            f"today - {today}."
+                        ))
+                        errors[filepath] = error_list
 
     if success:
         success_message = "✔️ Forecast date validation successful."
@@ -384,6 +418,7 @@ def check_new_model(
         file_errors=errors
     )
 
+
 def check_forecast_retraction(
     store: dict[str, Any],
     files: set[os.PathLike]
@@ -394,14 +429,23 @@ def check_forecast_retraction(
     errors: dict[os.PathLike, list[str]] = {}
 
     all_labels: set[Label] = store["possible_labels"]
+    deleted_file_paths: set[os.PathLike] = store["deleted_existing_files_paths"]
+
     hub_mirrored_directory_root: pathlib.Path = (
         store["HUB_MIRRORED_DIRECTORY_ROOT"]
     )
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
+    # if "updates_allowed": check for duplication, retractions and regular updates
+    # this function errors when there's duplication or implicit retractions
+    # if not "updates_allowed": check for duplication and regular updates
+    # this function errors when there's duplication or regular updates
 
-    logger.info("Checking potential forecast (impl./expl.) retractions...")
+    if store["UPDATES_ALLOWED"]:
+        logger.info("Checking potential forecast (impl./expl.) retractions...")
+    else:
+        logger.info("Checking potential forecast (impl./expl.) updates...")
 
     no_files_checked_log: bool = True
     for file in files:
@@ -413,16 +457,24 @@ def check_forecast_retraction(
             hub_mirrored_directory_root/relative_path_str
         ).resolve()
         if existing_file_path.exists():
-            no_files_checked_log: bool = False
-            logger.info(
-                "  Checking existing forecast %s for any retractions",
+            no_files_checked_log = False
+
+            if store["UPDATES_ALLOWED"]:
+                logger.info(
+                    "  Checking existing forecast %s for any retractions",
+                    str(existing_file_path)
+                )
+            else:
+                logger.info(
+                "  Checking existing forecast %s for any updates",
                 str(existing_file_path)
-            )
+                )
+            # compare with forecast files already merged into hub repo
             compare_result: RetractionCheckResult = compare_forecasts(
                 old_forecast_file_path=existing_file_path,
                 new_forecast_file_path=file
             )
-            if compare_result.is_all_duplicate:
+            if compare_result.is_all_duplicate & (existing_file_path not in deleted_file_paths):
                 success = False
                 logger.error(
                     "    ❌ %s contains all duplicate forecast value.",
@@ -430,46 +482,66 @@ def check_forecast_retraction(
                 )
                 labels.add(all_labels["duplicate-forecast"])
                 errors[file] = [compare_result.error]
-            if compare_result.has_implicit_retraction:
-                logger.error(
-                    "    ❌ %s contains implicit retrations.",
-                    relative_path_str
-                )
-                success = False
-                labels.add(all_labels["forecast-implicit-retractions"])
-                error_list = errors.get(file, [])
-                error_list.append((
-                    "Forecast file contains implicit retraction(s), which are "
-                    "disallowed. Please review the retraction rules for a "
-                    "forecast in the wiki [here]"
-                    "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)."
-                ))
-                errors[file] = error_list
-            if compare_result.has_explicit_retraction:
-                logger.info(
-                    "    💡 %s contains explicit retractions.",
-                    relative_path_str
-                )
-                labels.add(all_labels["forecast-retraction"])
-                comments.append(
-                    "💡 Submission contains explicit retractions."
-                )
+            
+            if store["UPDATES_ALLOWED"]: 
+                if compare_result.has_implicit_retraction:
+                    logger.error(
+                        "    ❌ %s contains implicit retrations.",
+                        relative_path_str
+                    )
+                    success = False
+                    labels.add(all_labels["forecast-implicit-retractions"])
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains implicit retraction(s), which are "
+                        "disallowed. Please review the retraction rules for a "
+                        "forecast in the wiki [here]"
+                        "(https://github.com/reichlab/covid19-forecast-hub/wiki/Forecast-Checks)."
+                    ))
+                    errors[file] = error_list
+                if compare_result.has_explicit_retraction:
+                    logger.info(
+                        "    💡 %s contains explicit retractions.",
+                        relative_path_str
+                    )
+                    labels.add(all_labels["forecast-retraction"])
+                    comments.append(
+                        "💡 Submission contains explicit retractions."
+                    )
+
             if compare_result.has_no_retraction_or_duplication:
-                logger.info(
+                labels.add(all_labels["forecast-updated"])
+                if store["UPDATES_ALLOWED"]:
+                    logger.info(
                     "    💡 %s contains updates to existing forecasts",
                     relative_path_str
-                )
-                labels.add(all_labels["forecast-updated"])
-                comments.append(
-                    "💡 Your submission seem to have updated some "
-                    "existing forecasts. Could you provide a reason for the "
-                    "update and confirm that any updated forecasts "
-                    "only used data that were available at the time the "
-                    "original forecasts were made?"
-                )
+                    )
+                    comments.append(
+                        "💡 Your submission seem to have updated some "
+                        "existing forecasts. Could you provide a reason for the "
+                        "update and confirm that any updated forecasts "
+                        "only used data that were available at the time the "
+                        "original forecasts were made?"
+                    )
+                else:
+                    success = False
+                    logger.error(
+                        "    ❌ %s contains updates to existing file.",
+                        relative_path_str
+                    )
+                    error_list = errors.get(file, [])
+                    error_list.append((
+                        "Forecast file contains updates to existing file, which are "
+                        "disallowed."
+                    ))
+                    errors[file] = error_list
+
 
     if no_files_checked_log:
-        logger.info("No retractions detected.")
+        if store["UPDATES_ALLOWED"]:
+            logger.info("No retractions detected.")
+        else:    
+            logger.info("No updates to existing file detected.")
 
     return ValidationStepResult(
         success=success,

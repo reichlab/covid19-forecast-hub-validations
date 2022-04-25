@@ -144,6 +144,7 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         )
         return ValidationStepResult(
             success=True,
+            labels=labels,
             skip_steps_after=True
         )
     else:
@@ -167,7 +168,7 @@ def get_all_models_from_repository(
 
     logger.info("Retrieving all existing model names...")
 
-    model_names: set[str] = get_existing_models(repository)
+    model_names: set[str] = get_existing_models(repository, store["FORECAST_FOLDER_NAME"])
 
     logger.info("All model names successfully retrieved")
 
