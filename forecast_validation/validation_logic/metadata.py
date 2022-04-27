@@ -70,15 +70,20 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
         conn = zoltpy.connection.ZoltarConnection()
         conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
         team_models = defaultdict(list)
+        model_designation = {}
         project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
         for model in project.models:
             team_models[model.team_name].append(model.name)
+            model_designation[model.name] = model.notes
             
         if team_models[metadata['team_name']]:
-            logger.info( team_models[metadata['team_name']],  metadata['model_name'])
             if metadata['model_name'] not in team_models[metadata['team_name']]:
                 metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
                 is_metadata_error = True
+            else:
+                if model_designation[metadata['model_name']] == 'secondary':
+                    metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
+                    is_metadata_error = True
 
     if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
