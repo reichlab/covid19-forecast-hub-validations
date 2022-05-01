@@ -65,25 +65,45 @@ def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any],
         is_metadata_error = True
     metadata['team_abbr'] = metadata['model_abbr'].split('-')[0]
 
+    conn = zoltpy.connection.ZoltarConnection()
+    conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
+    team_models = defaultdict(list)
+    model_designation = {}
+    project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
+    for model in project.models:
+        team_models[model.team_name].append(model.name)
+        model_designation[model.name] = model.notes
+
+    #Check if team has a primary model if a secondary model is submitted
+    if metadata['team_model_designation'] != 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
+        flag = False
+        for model in team_models[metadata['team_name']]:
+            if model_designation[model] == 'primary':
+                flag = True
+                break
+
+        #check if model designation is changed from primary to secondary/ other
+        if model_designation[metadata['model_name']] and not flag and model_designation[metadata['model_name']] == 'primary':
+            metadata_error_output.append('METADATA ERROR: %s should have one model designated as \"primary\" to change model designation of current model' % (metadata['team_abbr']))
+            is_metadata_error = True
+
+        #if a new model is submitted with model designation secondary throw error
+        elif not flag:
+            metadata_error_output.append('METADATA ERROR: %s has no model designated as \"primary\"' % (metadata['team_abbr']))
+            is_metadata_error = True
+
+
     # Check if every team has only one `team_model_designation` as `primary`
-    if metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
-        conn = zoltpy.connection.ZoltarConnection()
-        conn.authenticate(os.environ.get('Z_USERNAME'), os.environ.get('Z_PASSWORD'))
-        team_models = defaultdict(list)
-        model_designation = {}
-        project = [project for project in conn.projects if project.name == 'COVID-19 Forecasts'][0]  # http://127.0.0.1:8000/project/44
-        for model in project.models:
-            team_models[model.team_name].append(model.name)
-            model_designation[model.name] = model.notes
-            
+    elif metadata['team_model_designation'] == 'primary' and store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":
         if team_models[metadata['team_name']]:
-            if metadata['model_name'] not in team_models[metadata['team_name']]:
+            flag = False
+            for model in team_models[metadata['team_name']]:
+                if model_designation[model] == 'primary':
+                    flag = True
+                    break
+            if flag:
                 metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
                 is_metadata_error = True
-            else:
-                if model_designation[metadata['model_name']] == 'secondary':
-                    metadata_error_output.append('METADATA ERROR: %s has more than 1 model designated as \"primary\"' % (metadata['team_abbr']))
-                    is_metadata_error = True
 
     if 'team_abbr' in metadata.keys() and 'team_model_designation' in metadata.keys():
         # add designated primary model acche entry to the cache if not present
