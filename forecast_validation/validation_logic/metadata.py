@@ -281,19 +281,14 @@ def _team_model_desig_dict_from_repo(store, team_abbrs):
     repo = store["repository"]
     data_processed_dirs = repo.get_contents('data-processed')
     team_model_designation_dict = collections.defaultdict(collections.defaultdict)
-    logger.info(f"_team_model_desig_dict_from_repo(): repo={repo}, data_processed_dirs={data_processed_dirs}")
     for data_processed_dir in data_processed_dirs:
         team_abbr = data_processed_dir.name.split('-')[0]  # e.g., 'COVIDhub'
         if team_abbr not in team_abbrs:
             continue
 
         metadata_file_path = f'{data_processed_dir.path}/metadata-{data_processed_dir.name}.txt'
-        logger.info(f"  _team_model_desig_dict_from_repo(): data_processed_dir={data_processed_dir}, "
-                    f"team_abbr={team_abbr}, metadata_file_path={metadata_file_path}")
         metadata_file = repo.get_contents(metadata_file_path)
         metadata = yaml.safe_load(metadata_file.decoded_content)
         team_model_designation_dict[team_abbr][metadata['model_name']] = metadata['team_model_designation']
-        logger.info(f"  _team_model_desig_dict_from_repo(): metadata={metadata}, "
-                    f"team_model_designation_dict={team_model_designation_dict}")
 
     return team_model_designation_dict
