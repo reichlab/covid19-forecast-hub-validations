@@ -246,7 +246,7 @@ class MetadataTeamModelDesignationTest(unittest.TestCase):
         repository.get_contents.side_effect = _get_contents
         store = {"repository": repository}
         with patch('yaml.safe_load', side_effect=_safe_load):
-            act_result = _team_model_desig_dict_from_repo(store)
+            act_result = _team_model_desig_dict_from_repo(store, {'COVIDhub'})
         self.assertEqual({'COVIDhub': {'4_week_ensemble': 'other', 'baseline': 'secondary'}},
                          default_to_regular(act_result))
 

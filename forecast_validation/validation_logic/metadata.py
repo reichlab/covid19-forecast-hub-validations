@@ -205,8 +205,8 @@ def _validate_team_model_designation(store):
 
     :return: error_str as returned by `_compare_team_model_desig_dicts()`
     """
-    repo_dict = _team_model_desig_dict_from_repo(store)
     pr_dict = _team_model_desig_dict_from_pr(store)
+    repo_dict = _team_model_desig_dict_from_repo(store, pr_dict.keys())
     return _compare_team_model_desig_dicts(repo_dict, pr_dict)
 
 
@@ -272,9 +272,10 @@ def _team_model_desig_dict_from_pr(store):
     return team_model_designation_dict
 
 
-def _team_model_desig_dict_from_repo(store):
+def _team_model_desig_dict_from_repo(store, team_abbrs):
     """
     :param store: a dict containing the "repository" key -> a github.Repository
+    :param team_abbrs: a set of team_abbr's to limit the search to. typically pulled from metadata files in a PR
     :return: a model_designation_dict (same as `_team_model_desig_dict_from_pr()` - see)
     """
     repo = store["repository"]
@@ -283,6 +284,9 @@ def _team_model_desig_dict_from_repo(store):
     logger.info(f"_team_model_desig_dict_from_repo(): repo={repo}, data_processed_dirs={data_processed_dirs}")
     for data_processed_dir in data_processed_dirs:
         team_abbr = data_processed_dir.name.split('-')[0]  # e.g., 'COVIDhub'
+        if team_abbr not in team_abbrs:
+            continue
+
         metadata_file_path = f'{data_processed_dir.path}/metadata-{data_processed_dir.name}.txt'
         logger.info(f"  _team_model_desig_dict_from_repo(): data_processed_dir={data_processed_dir}, "
                     f"team_abbr={team_abbr}, metadata_file_path={metadata_file_path}")
