@@ -279,7 +279,7 @@ def _team_model_desig_dict_from_repo(store, team_abbrs):
     :return: a model_designation_dict (same as `_team_model_desig_dict_from_pr()` - see)
     """
     repo = store["repository"]
-    data_processed_dirs = repo.get_contents('data-processed')
+    data_processed_dirs = repo.get_contents(store["FORECAST_FOLDER_NAME"])
     team_model_designation_dict = collections.defaultdict(collections.defaultdict)
     for data_processed_dir in data_processed_dirs:
         team_abbr = data_processed_dir.name.split('-')[0]  # e.g., 'COVIDhub'

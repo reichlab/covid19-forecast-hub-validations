@@ -1,6 +1,5 @@
 import os
 import sys
-from collections import defaultdict
 from unittest.mock import MagicMock, patch
 
 
@@ -220,19 +219,21 @@ class MetadataTeamModelDesignationTest(unittest.TestCase):
         ]}
         act_result = _team_model_desig_dict_from_pr(store)
         self.assertEqual({'COVIDhub': {'4_week_ensemble': 'other', 'baseline': 'secondary'}},
-                         default_to_regular(act_result))
+                         act_result)
 
 
     def test__team_model_desig_dict_from_repo(self):
         def _get_contents(path):
             p1 = MagicMock()
-            p1.name = p1.path = 'COVIDhub-4_week_ensemble'
+            p1.path = 'data-processed/COVIDhub-4_week_ensemble'
+            p1.name = 'COVIDhub-4_week_ensemble'
             p2 = MagicMock()
-            p2.name = p2.path = 'COVIDhub-baseline'
+            p2.path = 'data-processed/COVIDhub-baseline'
+            p2.name = 'COVIDhub-baseline'
             return {'data-processed': [p1, p2],
-                    'COVIDhub-4_week_ensemble/metadata-COVIDhub-4_week_ensemble.txt':
+                    'data-processed/COVIDhub-4_week_ensemble/metadata-COVIDhub-4_week_ensemble.txt':
                         MagicMock(decoded_content='content_4wens'),
-                    'COVIDhub-baseline/metadata-COVIDhub-baseline.txt':
+                    'data-processed/COVIDhub-baseline/metadata-COVIDhub-baseline.txt':
                         MagicMock(decoded_content='content_base')}[path]
 
 
@@ -244,11 +245,11 @@ class MetadataTeamModelDesignationTest(unittest.TestCase):
 
         repository = MagicMock()
         repository.get_contents.side_effect = _get_contents
-        store = {"repository": repository}
+        store = {"repository": repository, "FORECAST_FOLDER_NAME": "data-processed"}
         with patch('yaml.safe_load', side_effect=_safe_load):
             act_result = _team_model_desig_dict_from_repo(store, {'COVIDhub'})
         self.assertEqual({'COVIDhub': {'4_week_ensemble': 'other', 'baseline': 'secondary'}},
-                         default_to_regular(act_result))
+                         act_result)
 
 
     def test_validate_metadata_files_calls__validate_team_model_designation(self):
@@ -256,17 +257,6 @@ class MetadataTeamModelDesignationTest(unittest.TestCase):
                    return_value=(False, 'foo')) as fcn_mock:
             validate_metadata_files({"metadata_files": []})  # store
             fcn_mock.assert_called_once()
-
-
-#
-# utilities
-#
-
-# per https://stackoverflow.com/questions/26496831/how-to-convert-defaultdict-of-defaultdicts-of-defaultdicts-to-dict-of-dicts-o
-def default_to_regular(d):
-    if isinstance(d, defaultdict):
-        d = {k: default_to_regular(v) for k, v in d.items()}
-    return d
 
 
 #
