@@ -31,7 +31,7 @@ def get_all_metadata_filepaths(store: dict[str, Any]) -> ValidationStepResult:
                                               {directory / pathlib.Path(f.filename) for f in metadata_files}})
 
 
-def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any], ):
+def validate_metadata_contents(metadata, filepath):
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
@@ -102,7 +102,7 @@ def validate_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
     logger.info("Checking metadata content...")
     for file in store["metadata_files"]:
         logger.info("  Checking metadata content for %s", file)
-        is_metadata_error, metadata_error_output = check_metadata_file(store=store, filepath=file)
+        is_metadata_error, metadata_error_output = check_metadata_file(file)
         if not is_metadata_error:
             logger.info("    %s content validated", file)
             comments.append(f"✔️ {file} passed (non-filename) content checks.")
@@ -125,12 +125,11 @@ def validate_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
     return ValidationStepResult(success=success, comments=comments, file_errors=errors)
 
 
-def check_metadata_file(store: dict[str, Any], filepath, cache={}):
+def check_metadata_file(filepath):
     with open(filepath, 'rt', encoding='utf8') as stream:
         try:
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)  # specify Loader to avoid true/false auto conversion
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache,
-                                                                                  store)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix())
             if is_metadata_error:
                 return True, metadata_error_output
             else:
@@ -155,8 +154,7 @@ def check_for_metadata(store: dict[str, Any], filepath, cache={}):
     is_metadata_error, metadata_error_output = False, "no errors"
     for metadata_filename in txt_files:
         metadata_filepath = filepath + metadata_filename
-        is_metadata_error, metadata_error_output = check_metadata_file(store=store, filepath=metadata_filepath,
-                                                                       cache=cache)
+        is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath)
         if is_metadata_error:
             meta_error_outputs[metadata_filepath] = metadata_error_output
 
