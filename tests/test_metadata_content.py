@@ -253,10 +253,22 @@ class MetadataTeamModelDesignationTest(unittest.TestCase):
 
 
     def test_validate_metadata_files_calls__validate_team_model_designation(self):
-        with patch('forecast_validation.validation_logic.metadata._validate_team_model_designation',
-                   return_value=(False, 'foo')) as fcn_mock:
-            validate_metadata_files({"metadata_files": []})  # store
+        with patch('forecast_validation.validation_logic.metadata._validate_team_model_designation') as fcn_mock:
+            store = {"HUB_REPOSITORY_NAME": "reichlab/covid19-forecast-hub", "metadata_files": []}
+            validate_metadata_files(store)
             fcn_mock.assert_called_once()
+
+
+    def test_validate_metadata_files_skips_non_covid_hub(self):
+        with patch('forecast_validation.validation_logic.metadata._validate_team_model_designation') as fcn_mock:
+            store = {"HUB_REPOSITORY_NAME": "reichlab/covid19-forecast-hub", "metadata_files": []}
+            validate_metadata_files(store)
+            fcn_mock.assert_called_once()
+
+            store["HUB_REPOSITORY_NAME"] = "cdcepi/Flusight-forecast-data"
+            fcn_mock.reset_mock()
+            validate_metadata_files(store)
+            fcn_mock.assert_not_called()
 
 
 #

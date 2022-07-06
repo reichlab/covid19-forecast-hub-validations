@@ -116,10 +116,11 @@ def validate_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
                 logger.error("    " + error)
 
     # check metadata files at the team level to validate `team_model_designation`
-    error_str = _validate_team_model_designation(store)
-    if error_str:
-        success = False
-        comments.append(error_str)
+    if store["HUB_REPOSITORY_NAME"] == "reichlab/covid19-forecast-hub":  # todo should not be hard-coded
+        error_str = _validate_team_model_designation(store)
+        if error_str:
+            success = False
+            comments.append(error_str)
 
     return ValidationStepResult(success=success, comments=comments, file_errors=errors)
 
