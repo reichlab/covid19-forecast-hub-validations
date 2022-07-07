@@ -1,6 +1,5 @@
 import collections
 import copy
-import glob
 import logging
 import os
 import pathlib
@@ -142,52 +141,6 @@ def check_metadata_file(filepath):
                     \n* Try copying the example metadata file and follow formatting closely \
                     \n Parse Error Message:\n%s \n"
                 % (filepath, exc)]
-
-
-# Check for metadata file
-def check_for_metadata(store: dict[str, Any], filepath, cache={}):
-    meta_error_outputs = {}
-    is_metadata_error = False
-    txt_files = []
-    for metadata_file in glob.iglob(filepath + "*.txt", recursive=False):
-        txt_files += [os.path.basename(metadata_file)]
-    is_metadata_error, metadata_error_output = False, "no errors"
-    for metadata_filename in txt_files:
-        metadata_filepath = filepath + metadata_filename
-        is_metadata_error, metadata_error_output = check_metadata_file(metadata_filepath)
-        if is_metadata_error:
-            meta_error_outputs[metadata_filepath] = metadata_error_output
-
-    return is_metadata_error, meta_error_outputs
-
-
-def get_metadata_model(filepath):
-    team_model = os.path.basename(os.path.dirname(filepath))
-    metadata_filename = "metadata-" + team_model + ".txt"
-    metdata_dir = filepath + metadata_filename
-    model_name = None
-    model_abbr = None
-    with open(metdata_dir, 'r') as stream:
-        try:
-            metadata = yaml.safe_load(stream)
-            # Output model name and model abbr if exists
-            if 'model_name' in metadata.keys():
-                model_name = metadata['model_name']
-            if 'model_abbr' in metadata.keys():
-                model_abbr = metadata['model_abbr']
-
-            return model_name, model_abbr
-        except yaml.YAMLError as exc:
-            return None, None
-
-
-def output_duplicate_models(existing_metadata_name, output_errors):
-    for mname, mfiledir in existing_metadata_name.items():
-        if len(mfiledir) > 1:
-            error_string = ["METADATA ERROR: Found duplicate model abbreviation %s - in %s metadata" %
-                            (mname, mfiledir)]
-            output_errors[mname + "METADATA model_name"] = error_string
-    return output_errors
 
 
 #
