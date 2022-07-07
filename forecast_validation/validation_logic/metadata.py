@@ -1,6 +1,5 @@
 import collections
 import copy
-import glob
 import logging
 import os
 import pathlib
@@ -31,7 +30,7 @@ def get_all_metadata_filepaths(store: dict[str, Any]) -> ValidationStepResult:
                                               {directory / pathlib.Path(f.filename) for f in metadata_files}})
 
 
-def validate_metadata_contents(metadata, filepath, cache, store: dict[str, Any], ):
+def validate_metadata_contents(metadata, filepath):
     # Initialize output
     is_metadata_error = False
     metadata_error_output = []
@@ -102,7 +101,7 @@ def validate_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
     logger.info("Checking metadata content...")
     for file in store["metadata_files"]:
         logger.info("  Checking metadata content for %s", file)
-        is_metadata_error, metadata_error_output = check_metadata_file(store=store, filepath=file)
+        is_metadata_error, metadata_error_output = check_metadata_file(file)
         if not is_metadata_error:
             logger.info("    %s content validated", file)
             comments.append(f"✔️ {file} passed (non-filename) content checks.")
@@ -125,12 +124,11 @@ def validate_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
     return ValidationStepResult(success=success, comments=comments, file_errors=errors)
 
 
-def check_metadata_file(store: dict[str, Any], filepath, cache={}):
+def check_metadata_file(filepath):
     with open(filepath, 'rt', encoding='utf8') as stream:
         try:
             metadata = yaml.load(stream, Loader=yaml.BaseLoader)  # specify Loader to avoid true/false auto conversion
-            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix(), cache,
-                                                                                  store)
+            is_metadata_error, metadata_error_output = validate_metadata_contents(metadata, filepath.as_posix())
             if is_metadata_error:
                 return True, metadata_error_output
             else:
@@ -143,53 +141,6 @@ def check_metadata_file(store: dict[str, Any], filepath, cache={}):
                     \n* Try copying the example metadata file and follow formatting closely \
                     \n Parse Error Message:\n%s \n"
                 % (filepath, exc)]
-
-
-# Check for metadata file
-def check_for_metadata(store: dict[str, Any], filepath, cache={}):
-    meta_error_outputs = {}
-    is_metadata_error = False
-    txt_files = []
-    for metadata_file in glob.iglob(filepath + "*.txt", recursive=False):
-        txt_files += [os.path.basename(metadata_file)]
-    is_metadata_error, metadata_error_output = False, "no errors"
-    for metadata_filename in txt_files:
-        metadata_filepath = filepath + metadata_filename
-        is_metadata_error, metadata_error_output = check_metadata_file(store=store, filepath=metadata_filepath,
-                                                                       cache=cache)
-        if is_metadata_error:
-            meta_error_outputs[metadata_filepath] = metadata_error_output
-
-    return is_metadata_error, meta_error_outputs
-
-
-def get_metadata_model(filepath):
-    team_model = os.path.basename(os.path.dirname(filepath))
-    metadata_filename = "metadata-" + team_model + ".txt"
-    metdata_dir = filepath + metadata_filename
-    model_name = None
-    model_abbr = None
-    with open(metdata_dir, 'r') as stream:
-        try:
-            metadata = yaml.safe_load(stream)
-            # Output model name and model abbr if exists
-            if 'model_name' in metadata.keys():
-                model_name = metadata['model_name']
-            if 'model_abbr' in metadata.keys():
-                model_abbr = metadata['model_abbr']
-
-            return model_name, model_abbr
-        except yaml.YAMLError as exc:
-            return None, None
-
-
-def output_duplicate_models(existing_metadata_name, output_errors):
-    for mname, mfiledir in existing_metadata_name.items():
-        if len(mfiledir) > 1:
-            error_string = ["METADATA ERROR: Found duplicate model abbreviation %s - in %s metadata" %
-                            (mname, mfiledir)]
-            output_errors[mname + "METADATA model_name"] = error_string
-    return output_errors
 
 
 #
