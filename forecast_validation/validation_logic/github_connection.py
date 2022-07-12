@@ -1,10 +1,4 @@
 # external dependencies
-from typing import Any
-from github import Github
-from github.File import File
-from github.Label import Label
-from github.PullRequest import PullRequest
-from github.Repository import Repository
 import itertools
 import json
 import logging
@@ -12,6 +6,13 @@ import os
 import os.path
 import pathlib
 import urllib.request
+from typing import Any
+
+from github import Github
+from github.File import File
+from github.Label import Label
+from github.PullRequest import PullRequest
+from github.Repository import Repository
 
 # internal dependencies
 from forecast_validation import (
@@ -26,7 +27,9 @@ from forecast_validation.utilities.github import (
 )
 from forecast_validation.validation import ValidationStepResult
 
+
 logger = logging.getLogger("hub-validations")
+
 
 def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
     """
@@ -49,7 +52,7 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
             * a dictionary of label names to labels that can be applied to the
                 pull request.
     """
-    
+
     logger.info(
         "Running validations version %s",
         store.get(
@@ -72,7 +75,7 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
         "GH_TOKEN"
     ))
     github: Github = Github(github_PAT) if github_PAT is not None else Github()
-    
+
     # Get specific repository
     repository_name = os.environ.get(
         "GITHUB_REPOSITORY",
@@ -97,6 +100,7 @@ def establish_github_connection(store: dict[str, Any]) -> ValidationStepResult:
         }
     )
 
+
 def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
     """Extracts the pull request that the validations will be run on.
     """
@@ -112,6 +116,7 @@ def extract_pull_request(store: dict[str, Any]) -> ValidationStepResult:
         success=True,
         to_store={"pull_request": pull_request}
     )
+
 
 def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
     """Determines whether the pull request is a forecast submission or not.
@@ -144,6 +149,7 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
         )
         return ValidationStepResult(
             success=True,
+            labels=labels,
             skip_steps_after=True
         )
     else:
@@ -153,21 +159,22 @@ def determine_pull_request_type(store: dict[str, Any]) -> ValidationStepResult:
             "PR can be interpreted as a forecast submission, "
             "proceeding with validations."
         )
-    
+
     return ValidationStepResult(
         success=True,
         labels=labels,
         to_store={"filtered_files": filtered_files}
     )
 
+
 def get_all_models_from_repository(
-    store: dict[str, Any]
+        store: dict[str, Any]
 ) -> ValidationStepResult:
     repository: Repository = store["repository"]
 
     logger.info("Retrieving all existing model names...")
 
-    model_names: set[str] = get_existing_models(repository)
+    model_names: set[str] = get_existing_models(repository, store["FORECAST_FOLDER_NAME"])
 
     logger.info("All model names successfully retrieved")
 
@@ -178,43 +185,26 @@ def get_all_models_from_repository(
         }
     )
 
-def download_all_forecast_and_metadata_files(
-    store: dict[str, Any]
-) -> ValidationStepResult:
-    root_directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
-    filtered_files: dict[PullRequestFileType, list[File]] = (
-        store["filtered_files"]
-    )
 
+def download_all_forecast_and_metadata_files(store: dict[str, Any]) -> ValidationStepResult:
     logger.info("Downloading forecast and metadata files...")
-
-    files = itertools.chain(
-        filtered_files.get(PullRequestFileType.FORECAST, []),
-        filtered_files.get(PullRequestFileType.METADATA, []),
-        filtered_files.get(PullRequestFileType.OTHER_FS, []),
-        filtered_files.get(PullRequestFileType.OTHER_NONFS, []),
-    )
-
+    root_directory: pathlib.Path = store["PULL_REQUEST_DIRECTORY_ROOT"]
+    filtered_files: dict[PullRequestFileType, list[File]] = store["filtered_files"]
+    files = itertools.chain(filtered_files.get(PullRequestFileType.FORECAST, []),
+                            filtered_files.get(PullRequestFileType.METADATA, []),
+                            filtered_files.get(PullRequestFileType.OTHER_FS, []),
+                            filtered_files.get(PullRequestFileType.OTHER_NONFS, []))
     if not root_directory.exists():
         os.makedirs(root_directory, exist_ok=True)
 
     for file in files:
         filepath = pathlib.Path(file.filename)
-
-        parent_directory = (root_directory/filepath.parent).resolve()
+        parent_directory = (root_directory / filepath.parent).resolve()
         if not parent_directory.exists():
             os.makedirs(parent_directory)
 
-        local_path = (
-            root_directory/pathlib.Path(file.filename)
-        ).resolve()
-        urllib.request.urlretrieve(
-            file.raw_url,
-            local_path,
-        )
+        local_path = (root_directory / pathlib.Path(file.filename)).resolve()
+        urllib.request.urlretrieve(file.raw_url, local_path)
 
     logger.info("Download successful")
-
-    return ValidationStepResult(
-        success=True
-    )
+    return ValidationStepResult(success=True)
