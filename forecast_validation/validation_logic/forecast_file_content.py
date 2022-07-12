@@ -145,7 +145,7 @@ def filename_match_forecast_date_check(
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
-    submission_date_window: store["SUBMISSION_DATE_WINDOW"]
+    submission_date_window = store["SUBMISSION_DATE_WINDOW"]
 
     for file in files:
         filepath: pathlib.Path = pathlib.Path(file).relative_to(
