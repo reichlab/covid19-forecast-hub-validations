@@ -310,7 +310,8 @@ def filename_match_forecast_date_check(
                 delay = abs(today - file_forecast_date)
                 logger.warning(
                     "Forecast file %s is made more than %d day(s) ago.",
-                    (basename, delay)
+                    str(basename),
+                    str(delay)
                 )
                 success = False
                 error_list = errors.get(filepath, [])
