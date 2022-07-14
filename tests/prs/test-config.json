@@ -1,0 +1,41 @@
+{
+  "02a": {
+    "dir_name": "Serena-Wang_covid19-forecast-hub_16",
+    "config_file": "covid-validation-config.json",
+    "file_status": "modified",
+    "exp_success": true,
+    "exp_labels": [
+      "data-submission",
+      "passed-validation"
+    ],
+    "exp_comments": [
+      -1
+    ]
+  },
+  "02b": {
+    "dir_name": "Serena-Wang_Flusight-forecast-data_4",
+    "config_file": "flu-validation-config.json",
+    "file_status": "modified",
+    "exp_success": true,
+    "exp_labels": [
+      -1
+    ],
+    "exp_comments": [
+      -1
+    ]
+  },
+  "12a": {
+    "dir_name": "Serena-Wang_covid19-forecast-hub_20",
+    "config_file": "covid-validation-config.json",
+    "file_status": "modified",
+    "exp_success": false,
+    "exp_labels": [
+      "data-submission",
+      "forecast-implicit-retractions"
+    ],
+    "exp_comments": [
+      "There are errors in this PR.",
+      "Forecast file contains implicit retraction(s), which are disallowed."
+    ]
+  }
+}

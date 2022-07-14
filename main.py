@@ -33,11 +33,7 @@ from forecast_validation.validation_logic.forecast_file_type import (
     check_removed_files
 )
 from forecast_validation.validation_logic.github_connection import (
-    establish_github_connection,
-    extract_pull_request,
-    determine_pull_request_type,
-    get_all_models_from_repository,
-    download_all_forecast_and_metadata_files
+    determine_pull_request_type
 )
 from forecast_validation.validation_logic.metadata import (
     get_all_metadata_filepaths,
@@ -48,13 +44,13 @@ logging.config.fileConfig("logging.conf")
 
 # --- configurations and constants end ---
 
-def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
-    # load config file
-    config = os.path.join(project_dir, "project-config.json")
-    f = open(config)
-    config_dict = json.load(f)
-    f.close()
-    
+def setup_validation_run_for_pull_request(project_dir, config_dict) -> ValidationRun:
+    # imported here so that tests can patch via mock:
+    from forecast_validation.validation_logic.github_connection import establish_github_connection, \
+        extract_pull_request, download_all_forecast_and_metadata_files, get_all_models_from_repository
+    from forecast_validation.validation_logic.forecast_file_content import filename_match_forecast_date_check
+
+
     steps = []
    
     # Connect to GitHub
@@ -105,30 +101,30 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
     # Check updates/retractions
     steps.append(ValidationPerFileStep(check_forecast_retraction))
-  
+
     # make new validation run
     validation_run = ValidationRun(steps)
 
     REPOSITORY_ROOT_ONDISK = (pathlib.Path(__file__)/".."/"..").resolve()
     FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
-    PullRequestFileType.FORECAST:
-        re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
-    PullRequestFileType.METADATA:
-        re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
-    PullRequestFileType.LICENSE:
-        re.compile(r"^%s/(.+)/LICENSE|license\.*\.txt$" % config_dict['forecast_folder_name']),
-    PullRequestFileType.MODEL_OTHER_FS:
-        re.compile(r"^%s/(.+)/.*(?<!(csv|txt))$" % config_dict['forecast_folder_name']),
-    PullRequestFileType.OTHER_FS:
-        re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
-}
+        PullRequestFileType.FORECAST:
+            re.compile(r"^%s/(.+)/\d\d\d\d-\d\d-\d\d-\1\.csv$" % config_dict['forecast_folder_name']),
+        PullRequestFileType.METADATA:
+            re.compile(r"^%s/(.+)/metadata-\1\.txt$" % config_dict['forecast_folder_name']),
+        PullRequestFileType.LICENSE:
+            re.compile(r"^%s/(.+)/LICENSE|license\.*\.txt$" % config_dict['forecast_folder_name']),
+        PullRequestFileType.MODEL_OTHER_FS:
+            re.compile(r"^%s/(.+)/.*(?<!(csv|txt))$" % config_dict['forecast_folder_name']),
+        PullRequestFileType.OTHER_FS:
+            re.compile(r"^%s/(.+)\.(csv|txt)$" % config_dict['forecast_folder_name']),
+    }
     # add initial values to store
     validation_run.store.update({
         "VALIDATIONS_VERSION": VALIDATIONS_VERSION,
         "REPOSITORY_ROOT_ONDISK": REPOSITORY_ROOT_ONDISK,
         "HUB_REPOSITORY_NAME": config_dict['hub_repository_name'],
-        "HUB_MIRRORED_DIRECTORY_ROOT": (REPOSITORY_ROOT_ONDISK/"hub").resolve(),
-        "PULL_REQUEST_DIRECTORY_ROOT":  (REPOSITORY_ROOT_ONDISK/"pull_request").resolve(),
+        "HUB_MIRRORED_DIRECTORY_ROOT": (REPOSITORY_ROOT_ONDISK / "hub").resolve(),
+        "PULL_REQUEST_DIRECTORY_ROOT": (REPOSITORY_ROOT_ONDISK / "pull_request").resolve(),
         "POPULATION_DATAFRAME_PATH": os.path.join(project_dir, config_dict['location_filepath']),
         "FILENAME_PATTERNS": FILENAME_PATTERNS,
         "IS_GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS") == "true",
@@ -143,13 +139,15 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
 
     return validation_run
 
+
 def validate_from_pull_request(project_dir: str) -> bool:
-    validation_run: ValidationRun = setup_validation_run_for_pull_request(project_dir)
-    
+    with open(os.path.join(project_dir, "project-config.json")) as fp:
+        config_dict = json.load(fp)
+    validation_run: ValidationRun = setup_validation_run_for_pull_request(project_dir, config_dict)
     validation_run.run()
 
     return validation_run.success
-    
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Validate Pull Request (named arguments refer to config file)'
@@ -158,7 +156,7 @@ if __name__ == '__main__':
     main_args.add_argument('--project_dir', help='directory that contains config file at root and location_filepath key in your config file(default: validation-config.json)')
     args = parser.parse_args()
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        success =  validate_from_pull_request(args.project_dir)
+        success = validate_from_pull_request(args.project_dir)
         if success:
             print("****************** success! ******************")
         else:

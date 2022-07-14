@@ -95,7 +95,9 @@
     }
   ],
   "forecast_dates": [
-    "2022-01-03",
+    "2021-12-13",
+    "2021-12-20",
+    "2022-01-03", 
     "2022-01-10",
     "2022-01-17",
     "2022-01-24",
@@ -112,16 +114,10 @@
     "2022-04-11",
     "2022-04-18",
     "2022-04-25",
-    "2022-05-02",
+    "2022-05-02", 
     "2022-05-09",
-    "2022-05-16",
-    "2022-05-23",
-    "2022-05-30",
-    "2022-06-06",
-    "2022-06-13",
-    "2022-06-20"
+    "2022-05-16"
   ],
   "updates_allowed": false,
-  "automerge_on_passed_validation": false,
-  "submission_formatting_instruction": "https://github.com/cdcepi/Flusight-forecast-data/tree/master/data-forecasts#data-formatting"
+  "automerge_on_passed_validation": false
 }

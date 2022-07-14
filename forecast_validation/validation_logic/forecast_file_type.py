@@ -10,9 +10,7 @@ from forecast_validation import (
     PullRequestFileType
 )
 from forecast_validation.validation import ValidationStepResult
-from forecast_validation.utilities.github import (
-    get_existing_forecast_file
-)
+
 
 logger = logging.getLogger("hub-validations")
 
@@ -148,6 +146,10 @@ def check_file_locations(store: dict[str, Any]) -> ValidationStepResult:
 def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
+    # imported here so that tests can patch via mock:
+    from forecast_validation.utilities.github import get_existing_forecast_file
+
+
     labels: set[Label] = set()
     comments: list[str] = []
     downloaded_existing_files: set[os.PathLike] = set()
@@ -195,6 +197,10 @@ def check_modified_forecasts(store: dict[str, Any]) -> ValidationStepResult:
 def check_removed_files(store: dict[str, Any]) -> ValidationStepResult:
     """Checks if a PR contains updates to existing forecasts.
     """
+    # imported here so that tests can patch via mock:
+    from forecast_validation.utilities.github import get_existing_forecast_file
+
+
     labels: set[Label] = set()
     all_labels: dict[str, Label] = store["possible_labels"]
     errors: dict[os.PathLike, list[str]] = {}
