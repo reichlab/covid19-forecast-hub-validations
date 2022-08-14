@@ -10,6 +10,8 @@ class PullRequestFileType(enum.Enum):
     """
     FORECAST = enum.auto()
     METADATA = enum.auto()
+    LICENSE = enum.auto()
+    MODEL_OTHER_FS = enum.auto()
     OTHER_FS = enum.auto()
     OTHER_NONFS = enum.auto()
 
@@ -21,6 +23,7 @@ class ParseDateError(BaseException):
 
 VALIDATIONS_VERSION: int = 4 # as of 10/16/2021
 METADATA_VERSION: int = 6 # as of 10/16/2021
+"""
 REPOSITORY_ROOT_ONDISK: pathlib.Path = (
     pathlib.Path(__file__)/".."/".."
 ).resolve()
@@ -56,3 +59,4 @@ FILENAME_PATTERNS: dict[PullRequestFileType, re.Pattern] = {
 # The "CI" system environment variable is always set to "true" for GitHub
 # Actions: https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
 IS_GITHUB_ACTIONS: bool = os.environ.get("GITHUB_ACTIONS") == "true"
+ """

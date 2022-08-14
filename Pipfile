@@ -16,15 +16,10 @@ pyyaml = "*"
 pygithub = "*"
 pytz = "*"
 numpy = "*"
+zoltpy = {editable = true, ref = "issue_57", git = "https://github.com/reichlab/zoltpy.git"}
+pykwalify = {editable = true, git = "https://github.com/hannanabdul55/pykwalify.git"}
 
 [dev-packages]
 
 [requires]
 python_version = "3.9"
-
-[packages.zoltpy]
-editable = true
-git = "https://github.com/reichlab/zoltpy"
-
-[packages.pykwalify]
-file = "https://github.com/hannanabdul55/pykwalify/archive/master.zip"

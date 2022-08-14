@@ -1,0 +1,14 @@
+pandas
+certifi
+requests
+pymmwr
+click
+urllib3
+selenium
+webdriver-manager
+pyyaml
+PyGithub
+pytz
+numpy
+git+https://github.com/Serena-Wang/zoltpy/
+https://github.com/hannanabdul55/pykwalify/archive/master.zip
