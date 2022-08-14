@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pandas = "*"
+certifi = "*"
 requests = "*"
 pymmwr = "*"
 click = "*"
