@@ -17,7 +17,7 @@ pygithub = "*"
 pytz = "*"
 numpy = "*"
 zoltpy = {editable = true, ref = "issue_57", git = "https://github.com/reichlab/zoltpy.git"}
-pykwalify = {editable = true, git = "https://github.com/hannanabdul55/pykwalify.git"}
+pykwalify = {editable = true, git = "https://github.com/reichlab/pykwalify.git"}
 
 [dev-packages]
 
