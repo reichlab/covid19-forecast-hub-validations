@@ -145,6 +145,7 @@ def filename_match_forecast_date_check(
     pull_request_directory_root: pathlib.Path = (
         store["PULL_REQUEST_DIRECTORY_ROOT"]
     )
+    submission_date_window = store["SUBMISSION_DATE_WINDOW"]
 
     for file in files:
         filepath: pathlib.Path = pathlib.Path(file).relative_to(
@@ -296,39 +297,30 @@ def filename_match_forecast_date_check(
             today = datetime.datetime.now(
                 pytz.timezone('US/Eastern')
             ).date()
-
-            # compare validation run date and forecast date if submitting new forecast file
-            if not existing_file_path.exists():
-                if (store["HUB_REPOSITORY_NAME"] == "cdcepi/Flusight-forecast-data"):
-                    if today - file_forecast_date > datetime.timedelta(days=1):
-                        logger.warning(
-                            "Forecast file %s is made more than 1 day ago.",
-                            basename
-                        )
-                        success = False
-                        error_list = errors.get(filepath, [])
-                        error_list.append((
-                            f"The forecast file {file} is not associated with a forecast " 
-                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
-                            f"today - {today}."
-                        ))
-                        errors[filepath] = error_list
-
-                else:
-                    # covid hub
-                    if abs(file_forecast_date - today) > datetime.timedelta(days=1):
-                        logger.warning(
-                            "Forecast file %s is made more than 1 day ago.",
-                            basename
-                        )
-                        success = False
-                        error_list = errors.get(filepath, [])
-                        error_list.append((
-                            f"The forecast file {file} is not associated with a forecast " 
-                            f"date within 1 day of today. date of the forecast - {file_forecast_date}, "
-                            f"today - {today}."
-                        ))
-                        errors[filepath] = error_list
+            if (
+                not (today >= file_forecast_date - datetime.timedelta(days=int(submission_date_window["lower"])) and 
+                today <= file_forecast_date + datetime.timedelta(days=int(submission_date_window["upper"])) ) and
+                not existing_file_path.exists()
+            ):
+                # comments.append((
+                #     f"⚠️ Warning: The forecast file {file} is not made "
+                #     f"today. date of the forecast - {file_forecast_date}, "
+                #     f"today - {today}."
+                # ))
+                delay = abs(today - file_forecast_date)
+                logger.warning(
+                    "Forecast file %s is made more than %d day(s) ago.",
+                    str(basename),
+                    int(delay.days)
+                )
+                success = False
+                error_list = errors.get(filepath, [])
+                error_list.append((
+                    f"The forecast file {file} is submitted outside the submission window."
+                    f"date of the forecast - {file_forecast_date}, "
+                    f"today - {today}."
+                ))
+                errors[filepath] = error_list
 
     if success:
         success_message = "✔️ Forecast date validation successful."

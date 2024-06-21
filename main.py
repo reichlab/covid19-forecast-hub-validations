@@ -138,6 +138,7 @@ def setup_validation_run_for_pull_request(project_dir: str) -> ValidationRun:
         "UPDATES_ALLOWED": config_dict['updates_allowed'],
         "AUTOMERGE": config_dict['automerge_on_passed_validation'],
         "FORECAST_FOLDER_NAME": config_dict['forecast_folder_name'],
+        "SUBMISSION_DATE_WINDOW": config_dict['submission_date_window'],
         "SUBMISSION_FORMATTING_INSTRUCTION": config_dict["submission_formatting_instruction"]
     })
 
